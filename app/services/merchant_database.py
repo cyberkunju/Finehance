@@ -206,7 +206,14 @@ class MerchantDatabase:
         
         # Only compare against merchant names (not all aliases - too slow)
         for key in self._merchants.keys():
-            score = SequenceMatcher(None, normalized, key).ratio()
+            matcher = SequenceMatcher(None, normalized, key)
+            # Optimization: check upper bounds before expensive ratio calculation
+            if matcher.real_quick_ratio() <= best_score:
+                continue
+            if matcher.quick_ratio() <= best_score:
+                continue
+
+            score = matcher.ratio()
             if score > best_score:
                 best_score = score
                 best_match = key
