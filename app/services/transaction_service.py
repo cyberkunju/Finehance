@@ -6,7 +6,7 @@ from decimal import Decimal
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import select, func, and_, or_, desc
+from sqlalchemy import select, func, and_, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.transaction import Transaction
@@ -15,8 +15,6 @@ from app.schemas.transaction import (
     TransactionUpdate,
     TransactionFilters,
     Pagination,
-    TransactionType,
-    TransactionSource,
 )
 from app.ml.categorization_engine import CategorizationEngine
 from app.logging_config import get_logger
@@ -27,9 +25,11 @@ logger = get_logger(__name__)
 class TransactionService:
     """Service for managing transactions with CRUD operations and duplicate detection."""
 
-    def __init__(self, db: AsyncSession, categorization_engine: Optional[CategorizationEngine] = None):
+    def __init__(
+        self, db: AsyncSession, categorization_engine: Optional[CategorizationEngine] = None
+    ):
         """Initialize transaction service.
-        
+
         Args:
             db: Database session
             categorization_engine: Optional categorization engine for auto-categorization
@@ -46,53 +46,55 @@ class TransactionService:
         auto_categorize: bool = True,
     ) -> Transaction:
         """Create a new transaction.
-        
+
         Args:
             user_id: User ID
             transaction_data: Transaction creation data
             category: Category (if not provided, will auto-categorize if enabled)
             confidence_score: Confidence score for auto-categorization
             auto_categorize: Whether to automatically categorize if no category provided
-            
+
         Returns:
             Created transaction
-            
+
         Raises:
             ValueError: If category is not provided and auto-categorization is disabled
         """
         # Use provided category or the one from transaction_data
         final_category = category or transaction_data.category
         final_confidence = confidence_score
-        
+
         # Auto-categorize if no category provided and auto-categorization is enabled
         if not final_category and auto_categorize:
             try:
                 prediction = self.categorization_engine.categorize(
                     description=transaction_data.description,
                     amount=transaction_data.amount,
-                    user_id=str(user_id)
+                    user_id=str(user_id),
                 )
                 final_category = prediction.category
                 final_confidence = prediction.confidence
-                
+
                 logger.info(
                     "Transaction auto-categorized",
                     description=transaction_data.description,
                     category=final_category,
                     confidence=final_confidence,
-                    model_type=prediction.model_type
+                    model_type=prediction.model_type,
                 )
             except Exception as e:
                 logger.error(
                     "Auto-categorization failed",
                     description=transaction_data.description,
-                    error=str(e)
+                    error=str(e),
                 )
                 # Fall back to requiring manual category
                 pass
-        
+
         if not final_category:
-            raise ValueError("Category must be provided either in transaction_data, as parameter, or through auto-categorization")
+            raise ValueError(
+                "Category must be provided either in transaction_data, as parameter, or through auto-categorization"
+            )
 
         # Check for duplicates
         duplicate = await self.detect_duplicate(
@@ -101,7 +103,7 @@ class TransactionService:
             date=transaction_data.date,
             description=transaction_data.description,
         )
-        
+
         if duplicate:
             logger.warning(
                 "Duplicate transaction detected",
@@ -148,11 +150,11 @@ class TransactionService:
         user_id: UUID,
     ) -> Optional[Transaction]:
         """Get a transaction by ID.
-        
+
         Args:
             transaction_id: Transaction ID
             user_id: User ID (for authorization)
-            
+
         Returns:
             Transaction if found and belongs to user, None otherwise
         """
@@ -173,12 +175,12 @@ class TransactionService:
         updates: TransactionUpdate,
     ) -> Optional[Transaction]:
         """Update an existing transaction.
-        
+
         Args:
             transaction_id: Transaction ID
             user_id: User ID (for authorization)
             updates: Fields to update
-            
+
         Returns:
             Updated transaction if found, None otherwise
         """
@@ -219,11 +221,11 @@ class TransactionService:
         user_id: UUID,
     ) -> bool:
         """Soft delete a transaction.
-        
+
         Args:
             transaction_id: Transaction ID
             user_id: User ID (for authorization)
-            
+
         Returns:
             True if deleted, False if not found
         """
@@ -255,12 +257,12 @@ class TransactionService:
         pagination: Optional[Pagination] = None,
     ) -> tuple[list[Transaction], int]:
         """List transactions with filtering and pagination.
-        
+
         Args:
             user_id: User ID
             filters: Optional filters
             pagination: Optional pagination parameters
-            
+
         Returns:
             Tuple of (transactions list, total count)
         """
@@ -324,16 +326,16 @@ class TransactionService:
         description: str,
     ) -> Optional[Transaction]:
         """Detect duplicate transaction within 24-hour window.
-        
+
         According to Requirements 4.4 and 13.4, duplicates are detected based on
         matching date, amount, and description within a 24-hour window.
-        
+
         Args:
             user_id: User ID
             amount: Transaction amount
             date: Transaction date
             description: Transaction description
-            
+
         Returns:
             Existing transaction if duplicate found, None otherwise
         """
@@ -374,12 +376,12 @@ class TransactionService:
         pagination: Optional[Pagination] = None,
     ) -> tuple[list[Transaction], int]:
         """Search transactions by description.
-        
+
         Args:
             user_id: User ID
             search_query: Search query string
             pagination: Optional pagination parameters
-            
+
         Returns:
             Tuple of (matching transactions, total count)
         """
@@ -388,17 +390,21 @@ class TransactionService:
 
     async def count_transactions(self, user_id: UUID) -> int:
         """Count total transactions for a user.
-        
+
         Args:
             user_id: User ID
-            
+
         Returns:
             Total number of non-deleted transactions
         """
-        stmt = select(func.count()).select_from(Transaction).where(
-            and_(
-                Transaction.user_id == user_id,
-                Transaction.deleted_at.is_(None),
+        stmt = (
+            select(func.count())
+            .select_from(Transaction)
+            .where(
+                and_(
+                    Transaction.user_id == user_id,
+                    Transaction.deleted_at.is_(None),
+                )
             )
         )
         result = await self.db.execute(stmt)

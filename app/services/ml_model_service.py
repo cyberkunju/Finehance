@@ -15,7 +15,7 @@ class MLModelService:
 
     def __init__(self, db_session: AsyncSession):
         """Initialize ML model service.
-        
+
         Args:
             db_session: Database session for queries
         """
@@ -33,7 +33,7 @@ class MLModelService:
         is_active: bool = False,
     ) -> MLModel:
         """Create a new model version record.
-        
+
         Args:
             model_type: Type of model (CATEGORIZATION or PREDICTION)
             version: Version string (e.g., "1.0.0", "2024-01-30")
@@ -43,17 +43,17 @@ class MLModelService:
             recall: Model recall metric (0-1)
             user_id: User ID for user-specific models, None for global models
             is_active: Whether this version should be active
-            
+
         Returns:
             Created MLModel instance
-            
+
         Raises:
             ValueError: If model_type is invalid or metrics are out of range
         """
         # Validate model type
         if model_type not in ("CATEGORIZATION", "PREDICTION"):
             raise ValueError(f"Invalid model_type: {model_type}")
-        
+
         # Validate metrics
         for metric_name, metric_value in [
             ("accuracy", accuracy),
@@ -61,10 +61,8 @@ class MLModelService:
             ("recall", recall),
         ]:
             if metric_value is not None and not (0 <= metric_value <= 1):
-                raise ValueError(
-                    f"{metric_name} must be between 0 and 1, got {metric_value}"
-                )
-        
+                raise ValueError(f"{metric_name} must be between 0 and 1, got {metric_value}")
+
         model = MLModel(
             model_type=model_type,
             user_id=user_id,
@@ -76,10 +74,10 @@ class MLModelService:
             model_path=model_path,
             is_active=is_active,
         )
-        
+
         self.db.add(model)
         await self.db.flush()
-        
+
         return model
 
     async def get_model_version(
@@ -87,16 +85,14 @@ class MLModelService:
         model_id: UUID,
     ) -> Optional[MLModel]:
         """Get a specific model version by ID.
-        
+
         Args:
             model_id: Model ID
-            
+
         Returns:
             MLModel instance or None if not found
         """
-        result = await self.db.execute(
-            select(MLModel).filter_by(id=model_id)
-        )
+        result = await self.db.execute(select(MLModel).filter_by(id=model_id))
         return result.scalar_one_or_none()
 
     async def get_active_model(
@@ -105,11 +101,11 @@ class MLModelService:
         user_id: Optional[UUID] = None,
     ) -> Optional[MLModel]:
         """Get the currently active model for a type and user.
-        
+
         Args:
             model_type: Type of model (CATEGORIZATION or PREDICTION)
             user_id: User ID for user-specific models, None for global models
-            
+
         Returns:
             Active MLModel instance or None if not found
         """
@@ -131,17 +127,17 @@ class MLModelService:
         is_active: Optional[bool] = None,
     ) -> List[MLModel]:
         """List model versions with optional filters.
-        
+
         Args:
             model_type: Filter by model type
             user_id: Filter by user ID
             is_active: Filter by active status
-            
+
         Returns:
             List of MLModel instances ordered by trained_at descending
         """
         query = select(MLModel)
-        
+
         filters = []
         if model_type is not None:
             filters.append(MLModel.model_type == model_type)
@@ -149,12 +145,12 @@ class MLModelService:
             filters.append(MLModel.user_id == user_id)
         if is_active is not None:
             filters.append(MLModel.is_active == is_active)
-        
+
         if filters:
             query = query.filter(and_(*filters))
-        
+
         query = query.order_by(desc(MLModel.trained_at))
-        
+
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
@@ -166,23 +162,23 @@ class MLModelService:
         recall: Optional[float] = None,
     ) -> Optional[MLModel]:
         """Update metrics for a model version.
-        
+
         Args:
             model_id: Model ID
             accuracy: New accuracy value
             precision: New precision value
             recall: New recall value
-            
+
         Returns:
             Updated MLModel instance or None if not found
-            
+
         Raises:
             ValueError: If metrics are out of range
         """
         model = await self.get_model_version(model_id)
         if not model:
             return None
-        
+
         # Validate metrics
         for metric_name, metric_value in [
             ("accuracy", accuracy),
@@ -190,17 +186,15 @@ class MLModelService:
             ("recall", recall),
         ]:
             if metric_value is not None and not (0 <= metric_value <= 1):
-                raise ValueError(
-                    f"{metric_name} must be between 0 and 1, got {metric_value}"
-                )
-        
+                raise ValueError(f"{metric_name} must be between 0 and 1, got {metric_value}")
+
         if accuracy is not None:
             model.accuracy = accuracy
         if precision is not None:
             model.precision = precision
         if recall is not None:
             model.recall = recall
-        
+
         await self.db.flush()
         return model
 
@@ -209,19 +203,19 @@ class MLModelService:
         model_id: UUID,
     ) -> Optional[MLModel]:
         """Activate a model version and deactivate others of same type/user.
-        
+
         This ensures only one model of each type is active per user.
-        
+
         Args:
             model_id: Model ID to activate
-            
+
         Returns:
             Activated MLModel instance or None if not found
         """
         model = await self.get_model_version(model_id)
         if not model:
             return None
-        
+
         # Deactivate all other models of same type and user
         result = await self.db.execute(
             select(MLModel).filter(
@@ -236,10 +230,10 @@ class MLModelService:
         other_models = result.scalars().all()
         for other_model in other_models:
             other_model.is_active = False
-        
+
         # Activate the target model
         model.is_active = True
-        
+
         await self.db.flush()
         return model
 
@@ -248,17 +242,17 @@ class MLModelService:
         model_id: UUID,
     ) -> Optional[MLModel]:
         """Deactivate a model version.
-        
+
         Args:
             model_id: Model ID to deactivate
-            
+
         Returns:
             Deactivated MLModel instance or None if not found
         """
         model = await self.get_model_version(model_id)
         if not model:
             return None
-        
+
         model.is_active = False
         await self.db.flush()
         return model
@@ -268,12 +262,12 @@ class MLModelService:
         model_id: UUID,
     ) -> Optional[MLModel]:
         """Rollback to a previous model version by activating it.
-        
+
         This is an alias for activate_model_version with clearer intent.
-        
+
         Args:
             model_id: Model ID to rollback to
-            
+
         Returns:
             Activated MLModel instance or None if not found
         """
@@ -286,12 +280,12 @@ class MLModelService:
         limit: int = 10,
     ) -> List[MLModel]:
         """Get version history for a model type.
-        
+
         Args:
             model_type: Type of model (CATEGORIZATION or PREDICTION)
             user_id: User ID for user-specific models, None for global models
             limit: Maximum number of versions to return
-            
+
         Returns:
             List of MLModel instances ordered by trained_at descending
         """
@@ -314,11 +308,11 @@ class MLModelService:
         accuracy_threshold: float = 0.80,
     ) -> dict:
         """Check if model performance meets threshold requirements.
-        
+
         Args:
             model_id: Model ID to check
             accuracy_threshold: Minimum acceptable accuracy (default: 0.80)
-            
+
         Returns:
             Dictionary with performance status:
             {
@@ -329,14 +323,14 @@ class MLModelService:
                 "alert_required": bool,
                 "message": str
             }
-            
+
         Raises:
             ValueError: If model not found
         """
         model = await self.get_model_version(model_id)
         if not model:
             raise ValueError(f"Model {model_id} not found")
-        
+
         # Check if accuracy is available
         if model.accuracy is None:
             return {
@@ -345,12 +339,12 @@ class MLModelService:
                 "threshold": accuracy_threshold,
                 "meets_threshold": False,
                 "alert_required": True,
-                "message": "Model accuracy not available - metrics need to be recorded"
+                "message": "Model accuracy not available - metrics need to be recorded",
             }
-        
+
         meets_threshold = model.accuracy >= accuracy_threshold
         alert_required = not meets_threshold
-        
+
         if meets_threshold:
             message = f"Model performance is acceptable (accuracy: {model.accuracy:.2%})"
         else:
@@ -359,14 +353,14 @@ class MLModelService:
                 f"(accuracy: {model.accuracy:.2%} < {accuracy_threshold:.2%}) - "
                 f"retraining recommended"
             )
-        
+
         return {
             "model_id": model_id,
             "accuracy": model.accuracy,
             "threshold": accuracy_threshold,
             "meets_threshold": meets_threshold,
             "alert_required": alert_required,
-            "message": message
+            "message": message,
         }
 
     async def get_performance_alerts(
@@ -375,23 +369,23 @@ class MLModelService:
         model_type: Optional[str] = None,
     ) -> List[dict]:
         """Get list of models that require performance alerts.
-        
+
         Args:
             accuracy_threshold: Minimum acceptable accuracy (default: 0.80)
             model_type: Filter by model type (optional)
-            
+
         Returns:
             List of alert dictionaries for models below threshold
         """
         # Get all active models
         query = select(MLModel).filter(MLModel.is_active == True)
-        
+
         if model_type:
             query = query.filter(MLModel.model_type == model_type)
-        
+
         result = await self.db.execute(query)
         active_models = result.scalars().all()
-        
+
         alerts = []
         for model in active_models:
             # Check if model has accuracy and if it's below threshold
@@ -411,8 +405,8 @@ class MLModelService:
                         if model.accuracy is not None
                         else f"{model.model_type} model (v{model.version}) "
                         f"has no accuracy metrics recorded"
-                    )
+                    ),
                 }
                 alerts.append(alert)
-        
+
         return alerts

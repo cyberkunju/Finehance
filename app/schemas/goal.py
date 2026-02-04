@@ -10,11 +10,16 @@ from pydantic import BaseModel, Field, field_validator
 
 class GoalCreate(BaseModel):
     """Schema for creating a new goal."""
+
     name: str = Field(..., min_length=1, max_length=100, description="Goal name")
     target_amount: Decimal = Field(..., gt=0, description="Target amount to achieve")
     deadline: Optional[date_type] = Field(None, description="Optional deadline date")
-    category: Optional[str] = Field(None, max_length=50, description="Optional category to link with transactions")
-    initial_amount: Decimal = Field(default=Decimal(0), ge=0, description="Initial amount (default: 0)")
+    category: Optional[str] = Field(
+        None, max_length=50, description="Optional category to link with transactions"
+    )
+    initial_amount: Decimal = Field(
+        default=Decimal(0), ge=0, description="Initial amount (default: 0)"
+    )
 
     @field_validator("target_amount", "initial_amount")
     @classmethod
@@ -25,6 +30,7 @@ class GoalCreate(BaseModel):
 
 class GoalUpdate(BaseModel):
     """Schema for updating a goal."""
+
     name: Optional[str] = Field(None, min_length=1, max_length=100, description="Goal name")
     target_amount: Optional[Decimal] = Field(None, gt=0, description="Target amount")
     deadline: Optional[date_type] = Field(None, description="Deadline date")
@@ -50,6 +56,7 @@ class GoalUpdate(BaseModel):
 
 class GoalProgressUpdate(BaseModel):
     """Schema for updating goal progress."""
+
     amount: Decimal = Field(..., gt=0, description="Amount to add to progress")
 
     @field_validator("amount")
@@ -61,6 +68,7 @@ class GoalProgressUpdate(BaseModel):
 
 class GoalResponse(BaseModel):
     """Schema for goal response."""
+
     id: UUID
     user_id: UUID
     name: str
@@ -77,6 +85,7 @@ class GoalResponse(BaseModel):
 
 class GoalProgressResponse(BaseModel):
     """Schema for goal progress response."""
+
     goal_id: UUID
     name: str
     target_amount: Decimal
@@ -91,6 +100,7 @@ class GoalProgressResponse(BaseModel):
 
 class GoalRiskAlertResponse(BaseModel):
     """Schema for goal risk alert response."""
+
     goal_id: UUID
     name: str
     severity: str

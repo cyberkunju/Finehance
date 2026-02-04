@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field, field_validator
 
 class BudgetCreate(BaseModel):
     """Schema for creating a new budget."""
+
     name: str = Field(..., min_length=1, max_length=100, description="Budget name")
     period_start: date_type = Field(..., description="Budget period start date")
     period_end: date_type = Field(..., description="Budget period end date")
@@ -35,6 +36,7 @@ class BudgetCreate(BaseModel):
 
 class BudgetUpdate(BaseModel):
     """Schema for updating a budget."""
+
     name: Optional[str] = Field(None, min_length=1, max_length=100, description="Budget name")
     allocations: Optional[Dict[str, Decimal]] = Field(None, description="Category allocations")
 
@@ -51,6 +53,7 @@ class BudgetUpdate(BaseModel):
 
 class BudgetResponse(BaseModel):
     """Schema for budget response."""
+
     id: UUID
     user_id: UUID
     name: str
@@ -65,6 +68,7 @@ class BudgetResponse(BaseModel):
 
 class BudgetProgressResponse(BaseModel):
     """Schema for budget progress response."""
+
     category: str
     allocated: Decimal
     spent: Decimal
@@ -75,6 +79,7 @@ class BudgetProgressResponse(BaseModel):
 
 class BudgetAlertResponse(BaseModel):
     """Schema for budget alert response."""
+
     category: str
     allocated: Decimal
     spent: Decimal
@@ -85,6 +90,7 @@ class BudgetAlertResponse(BaseModel):
 
 class BudgetSuggestionResponse(BaseModel):
     """Schema for budget optimization suggestion."""
+
     category: str
     current_allocation: Decimal
     suggested_allocation: Decimal
@@ -96,5 +102,6 @@ class BudgetSuggestionResponse(BaseModel):
 
 class ApplyOptimizationRequest(BaseModel):
     """Schema for applying budget optimization."""
+
     suggestions: list[BudgetSuggestionResponse]
     user_approved: bool = Field(..., description="User approval required")

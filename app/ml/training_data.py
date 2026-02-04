@@ -7,10 +7,10 @@ from typing import List, Tuple
 def generate_synthetic_training_data() -> pd.DataFrame:
     """
     Generate synthetic transaction data for training the global categorization model.
-    
+
     This creates a dataset with transaction descriptions and their corresponding categories.
     In a production environment, this would be replaced with real public datasets.
-    
+
     Returns:
         DataFrame with 'description' and 'category' columns
     """
@@ -32,7 +32,6 @@ def generate_synthetic_training_data() -> pd.DataFrame:
         ("Harris Teeter", "Groceries"),
         ("Stop & Shop", "Groceries"),
         ("Giant Food", "Groceries"),
-        
         # Dining
         ("McDonald's", "Dining"),
         ("Starbucks", "Dining"),
@@ -54,7 +53,6 @@ def generate_synthetic_training_data() -> pd.DataFrame:
         ("Five Guys", "Dining"),
         ("In-N-Out Burger", "Dining"),
         ("Shake Shack", "Dining"),
-        
         # Transportation
         ("Shell Gas Station", "Transportation"),
         ("Chevron", "Transportation"),
@@ -73,7 +71,6 @@ def generate_synthetic_training_data() -> pd.DataFrame:
         ("Jiffy Lube", "Transportation"),
         ("Parking Meter", "Transportation"),
         ("Toll Road", "Transportation"),
-        
         # Utilities
         ("Electric Company", "Utilities"),
         ("Gas Company", "Utilities"),
@@ -87,7 +84,6 @@ def generate_synthetic_training_data() -> pd.DataFrame:
         ("Spectrum", "Utilities"),
         ("T-Mobile", "Utilities"),
         ("Sprint", "Utilities"),
-        
         # Entertainment
         ("Netflix", "Entertainment"),
         ("Spotify", "Entertainment"),
@@ -106,7 +102,6 @@ def generate_synthetic_training_data() -> pd.DataFrame:
         ("PlayStation Store", "Entertainment"),
         ("Xbox Store", "Entertainment"),
         ("Nintendo eShop", "Entertainment"),
-        
         # Healthcare
         ("CVS Pharmacy", "Healthcare"),
         ("Walgreens", "Healthcare"),
@@ -119,7 +114,6 @@ def generate_synthetic_training_data() -> pd.DataFrame:
         ("Medical Clinic", "Healthcare"),
         ("Eye Doctor", "Healthcare"),
         ("Physical Therapy", "Healthcare"),
-        
         # Shopping
         ("Amazon", "Shopping"),
         ("Target", "Shopping"),
@@ -141,7 +135,6 @@ def generate_synthetic_training_data() -> pd.DataFrame:
         ("TJ Maxx", "Shopping"),
         ("Ross", "Shopping"),
         ("Marshalls", "Shopping"),
-        
         # Travel
         ("Hotel Booking", "Travel"),
         ("Marriott", "Travel"),
@@ -152,7 +145,6 @@ def generate_synthetic_training_data() -> pd.DataFrame:
         ("Hertz Rent A Car", "Travel"),
         ("Enterprise Rent-A-Car", "Travel"),
         ("Budget Car Rental", "Travel"),
-        
         # Education
         ("Tuition Payment", "Education"),
         ("Textbook Store", "Education"),
@@ -161,7 +153,6 @@ def generate_synthetic_training_data() -> pd.DataFrame:
         ("Coursera", "Education"),
         ("LinkedIn Learning", "Education"),
         ("School Supplies", "Education"),
-        
         # Housing
         ("Rent Payment", "Housing"),
         ("Mortgage Payment", "Housing"),
@@ -169,7 +160,6 @@ def generate_synthetic_training_data() -> pd.DataFrame:
         ("HOA Fee", "Housing"),
         ("Home Insurance", "Housing"),
         ("Apartment Complex", "Housing"),
-        
         # Insurance
         ("Car Insurance", "Insurance"),
         ("Health Insurance", "Insurance"),
@@ -177,32 +167,27 @@ def generate_synthetic_training_data() -> pd.DataFrame:
         ("Dental Insurance", "Insurance"),
         ("Vision Insurance", "Insurance"),
         ("Renters Insurance", "Insurance"),
-        
         # Salary (Income)
         ("Payroll Deposit", "Salary"),
         ("Direct Deposit", "Salary"),
         ("Salary Payment", "Salary"),
         ("Paycheck", "Salary"),
-        
         # Freelance (Income)
         ("Freelance Payment", "Freelance"),
         ("Consulting Fee", "Freelance"),
         ("Contract Work", "Freelance"),
         ("Upwork Payment", "Freelance"),
         ("Fiverr Payment", "Freelance"),
-        
         # Investment (Income)
         ("Dividend Payment", "Investment"),
         ("Stock Sale", "Investment"),
         ("Interest Income", "Investment"),
         ("Capital Gains", "Investment"),
-        
         # Other Income
         ("Tax Refund", "Other Income"),
         ("Gift Money", "Other Income"),
         ("Bonus", "Other Income"),
         ("Reimbursement", "Other Income"),
-        
         # Other Expenses
         ("ATM Withdrawal", "Other Expenses"),
         ("Bank Fee", "Other Expenses"),
@@ -215,10 +200,10 @@ def generate_synthetic_training_data() -> pd.DataFrame:
         ("Gym Membership", "Other Expenses"),
         ("Fitness Club", "Other Expenses"),
     ]
-    
+
     # Create DataFrame
     df = pd.DataFrame(training_samples, columns=["description", "category"])
-    
+
     # Add variations with different cases and extra words
     variations = []
     for desc, cat in training_samples:
@@ -232,63 +217,63 @@ def generate_synthetic_training_data() -> pd.DataFrame:
         variations.append((f"{desc} 01/15/2024", cat))
         # With amount
         variations.append((f"{desc} $50.00", cat))
-    
+
     # Add variations to DataFrame
     variations_df = pd.DataFrame(variations, columns=["description", "category"])
     df = pd.concat([df, variations_df], ignore_index=True)
-    
+
     # Shuffle the data
     df = df.sample(frac=1, random_state=42).reset_index(drop=True)
-    
+
     return df
 
 
 def preprocess_text(text: str) -> str:
     """
     Preprocess transaction description text.
-    
+
     Steps:
     1. Convert to lowercase
     2. Remove special characters (keep alphanumeric and spaces)
     3. Remove extra whitespace
-    
+
     Args:
         text: Raw transaction description
-        
+
     Returns:
         Preprocessed text
     """
     import re
-    
+
     # Convert to lowercase
     text = text.lower()
-    
+
     # Remove special characters (keep letters, numbers, and spaces)
-    text = re.sub(r'[^a-z0-9\s]', ' ', text)
-    
+    text = re.sub(r"[^a-z0-9\s]", " ", text)
+
     # Remove extra whitespace
-    text = ' '.join(text.split())
-    
+    text = " ".join(text.split())
+
     return text
 
 
 def prepare_training_data() -> Tuple[List[str], List[str]]:
     """
     Prepare training data for the categorization model.
-    
+
     Returns:
         Tuple of (descriptions, categories)
     """
     # Generate synthetic data
     df = generate_synthetic_training_data()
-    
+
     # Preprocess descriptions
-    df['description'] = df['description'].apply(preprocess_text)
-    
+    df["description"] = df["description"].apply(preprocess_text)
+
     # Remove duplicates
-    df = df.drop_duplicates(subset=['description'])
-    
-    return df['description'].tolist(), df['category'].tolist()
+    df = df.drop_duplicates(subset=["description"])
+
+    return df["description"].tolist(), df["category"].tolist()
 
 
 if __name__ == "__main__":
@@ -296,6 +281,6 @@ if __name__ == "__main__":
     descriptions, categories = prepare_training_data()
     print(f"Generated {len(descriptions)} training samples")
     print(f"Categories: {set(categories)}")
-    print(f"\nSample data:")
+    print("\nSample data:")
     for i in range(5):
         print(f"  {descriptions[i]} -> {categories[i]}")

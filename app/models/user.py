@@ -26,57 +26,32 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid.uuid4,
-        index=True
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True
     )
-    email: Mapped[str] = mapped_column(
-        String(255),
-        unique=True,
-        nullable=False,
-        index=True
-    )
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     first_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     last_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=datetime.utcnow,
-        nullable=False
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
-        nullable=False
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
     )
 
     # Relationships
     transactions: Mapped[list["Transaction"]] = relationship(
-        "Transaction",
-        back_populates="user",
-        cascade="all, delete-orphan"
+        "Transaction", back_populates="user", cascade="all, delete-orphan"
     )
     budgets: Mapped[list["Budget"]] = relationship(
-        "Budget",
-        back_populates="user",
-        cascade="all, delete-orphan"
+        "Budget", back_populates="user", cascade="all, delete-orphan"
     )
     financial_goals: Mapped[list["FinancialGoal"]] = relationship(
-        "FinancialGoal",
-        back_populates="user",
-        cascade="all, delete-orphan"
+        "FinancialGoal", back_populates="user", cascade="all, delete-orphan"
     )
     ml_models: Mapped[list["MLModel"]] = relationship(
-        "MLModel",
-        back_populates="user",
-        cascade="all, delete-orphan"
+        "MLModel", back_populates="user", cascade="all, delete-orphan"
     )
     connections: Mapped[list["Connection"]] = relationship(
-        "Connection",
-        back_populates="user",
-        cascade="all, delete-orphan"
+        "Connection", back_populates="user", cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:

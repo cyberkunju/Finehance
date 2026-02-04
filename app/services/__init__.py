@@ -10,5 +10,6 @@ def __getattr__(name):
     """Lazy import for services that have heavy dependencies."""
     if name == "TransactionService":
         from app.services.transaction_service import TransactionService
+
         return TransactionService
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

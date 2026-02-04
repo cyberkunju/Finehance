@@ -19,7 +19,7 @@ def add_app_context(logger: Any, method_name: str, event_dict: EventDict) -> Eve
 
 def configure_logging() -> None:
     """Configure structured logging for the application."""
-    
+
     # Configure standard library logging
     logging.basicConfig(
         format="%(message)s",
@@ -58,10 +58,10 @@ def configure_logging() -> None:
 
 def get_logger(name: str) -> structlog.stdlib.BoundLogger:
     """Get a configured logger instance.
-    
+
     Args:
         name: Logger name (typically __name__ of the module)
-        
+
     Returns:
         Configured structlog logger
     """
@@ -70,7 +70,7 @@ def get_logger(name: str) -> structlog.stdlib.BoundLogger:
 
 def bind_contextvars(**kwargs) -> None:
     """Bind values to structlog context for current async context.
-    
+
     Use this to add request_id, user_id, etc. to all logs in the current request.
     """
     structlog.contextvars.bind_contextvars(**kwargs)

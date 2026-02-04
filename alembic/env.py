@@ -71,10 +71,10 @@ async def run_async_migrations() -> None:
     """Run migrations in async mode."""
     # Convert postgresql:// to postgresql+asyncpg://
     db_url = settings.database_url.replace("postgresql://", "postgresql+asyncpg://")
-    
+
     configuration = config.get_section(config.config_ini_section, {})
     configuration["sqlalchemy.url"] = db_url
-    
+
     connectable = async_engine_from_config(
         configuration,
         prefix="sqlalchemy.",

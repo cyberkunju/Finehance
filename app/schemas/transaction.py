@@ -11,12 +11,14 @@ from pydantic import BaseModel, Field, field_validator
 
 class TransactionType(str, Enum):
     """Transaction type enumeration."""
+
     INCOME = "INCOME"
     EXPENSE = "EXPENSE"
 
 
 class TransactionSource(str, Enum):
     """Transaction source enumeration."""
+
     MANUAL = "MANUAL"
     API = "API"
     FILE_IMPORT = "FILE_IMPORT"
@@ -24,12 +26,19 @@ class TransactionSource(str, Enum):
 
 class TransactionCreate(BaseModel):
     """Schema for creating a new transaction."""
+
     amount: Decimal = Field(..., gt=0, description="Transaction amount")
     date: date_type = Field(..., description="Transaction date")
-    description: str = Field(..., min_length=1, max_length=500, description="Transaction description")
+    description: str = Field(
+        ..., min_length=1, max_length=500, description="Transaction description"
+    )
     type: TransactionType = Field(..., description="Transaction type (INCOME or EXPENSE)")
-    source: TransactionSource = Field(default=TransactionSource.MANUAL, description="Transaction source")
-    category: Optional[str] = Field(None, max_length=50, description="Transaction category (auto-assigned if not provided)")
+    source: TransactionSource = Field(
+        default=TransactionSource.MANUAL, description="Transaction source"
+    )
+    category: Optional[str] = Field(
+        None, max_length=50, description="Transaction category (auto-assigned if not provided)"
+    )
     connection_id: Optional[UUID] = Field(None, description="Connection ID if from Financial API")
 
     @field_validator("amount")
@@ -44,9 +53,12 @@ class TransactionCreate(BaseModel):
 
 class TransactionUpdate(BaseModel):
     """Schema for updating an existing transaction."""
+
     amount: Optional[Decimal] = Field(None, gt=0, description="Transaction amount")
     date: Optional[date_type] = Field(None, description="Transaction date")
-    description: Optional[str] = Field(None, min_length=1, max_length=500, description="Transaction description")
+    description: Optional[str] = Field(
+        None, min_length=1, max_length=500, description="Transaction description"
+    )
     type: Optional[TransactionType] = Field(None, description="Transaction type")
     category: Optional[str] = Field(None, max_length=50, description="Transaction category")
 
@@ -63,6 +75,7 @@ class TransactionUpdate(BaseModel):
 
 class TransactionResponse(BaseModel):
     """Schema for transaction response."""
+
     id: UUID
     user_id: UUID
     amount: Decimal
@@ -81,6 +94,7 @@ class TransactionResponse(BaseModel):
 
 class TransactionFilters(BaseModel):
     """Schema for filtering transactions."""
+
     start_date: Optional[date_type] = Field(None, description="Filter transactions from this date")
     end_date: Optional[date_type] = Field(None, description="Filter transactions until this date")
     category: Optional[str] = Field(None, description="Filter by category")
@@ -101,6 +115,7 @@ class TransactionFilters(BaseModel):
 
 class Pagination(BaseModel):
     """Schema for pagination parameters."""
+
     page: int = Field(default=1, ge=1, description="Page number (1-indexed)")
     page_size: int = Field(default=50, ge=1, le=100, description="Number of items per page")
 
@@ -112,6 +127,7 @@ class Pagination(BaseModel):
 
 class PaginatedTransactionResponse(BaseModel):
     """Schema for paginated transaction list response."""
+
     items: list[TransactionResponse]
     total: int
     page: int

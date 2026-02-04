@@ -1,10 +1,5 @@
 """Tests for database models."""
 
-import uuid
-from datetime import datetime, date
-from decimal import Decimal
-
-import pytest
 from sqlalchemy import inspect
 
 from app.models import (
@@ -58,7 +53,7 @@ class TestUserModel:
         """User should have all required columns."""
         mapper = inspect(User)
         column_names = [col.name for col in mapper.columns]
-        
+
         required_columns = [
             "id",
             "email",
@@ -68,7 +63,7 @@ class TestUserModel:
             "created_at",
             "updated_at",
         ]
-        
+
         for col in required_columns:
             assert col in column_names
 
@@ -86,7 +81,7 @@ class TestUserModel:
         """User should have relationships to other models."""
         mapper = inspect(User)
         relationship_names = [rel.key for rel in mapper.relationships]
-        
+
         expected_relationships = [
             "transactions",
             "budgets",
@@ -94,7 +89,7 @@ class TestUserModel:
             "ml_models",
             "connections",
         ]
-        
+
         for rel in expected_relationships:
             assert rel in relationship_names
 
@@ -106,7 +101,7 @@ class TestTransactionModel:
         """Transaction should have all required columns."""
         mapper = inspect(Transaction)
         column_names = [col.name for col in mapper.columns]
-        
+
         required_columns = [
             "id",
             "user_id",
@@ -122,7 +117,7 @@ class TestTransactionModel:
             "updated_at",
             "deleted_at",
         ]
-        
+
         for col in required_columns:
             assert col in column_names
 
@@ -130,7 +125,7 @@ class TestTransactionModel:
         """Transaction should have foreign keys to User and Connection."""
         mapper = inspect(Transaction)
         fk_columns = {fk.parent.name: fk.column.table.name for fk in mapper.tables[0].foreign_keys}
-        
+
         assert "user_id" in fk_columns
         assert fk_columns["user_id"] == "users"
         assert "connection_id" in fk_columns
@@ -140,9 +135,9 @@ class TestTransactionModel:
         """Transaction should have check constraints for type and source."""
         mapper = inspect(Transaction)
         table = mapper.tables[0]
-        
+
         constraint_names = [c.name for c in table.constraints]
-        
+
         assert "check_transaction_type" in constraint_names
         assert "check_transaction_source" in constraint_names
         assert "check_amount_positive" in constraint_names
@@ -156,7 +151,7 @@ class TestBudgetModel:
         """Budget should have all required columns."""
         mapper = inspect(Budget)
         column_names = [col.name for col in mapper.columns]
-        
+
         required_columns = [
             "id",
             "user_id",
@@ -167,7 +162,7 @@ class TestBudgetModel:
             "created_at",
             "updated_at",
         ]
-        
+
         for col in required_columns:
             assert col in column_names
 
@@ -185,7 +180,7 @@ class TestFinancialGoalModel:
         """FinancialGoal should have all required columns."""
         mapper = inspect(FinancialGoal)
         column_names = [col.name for col in mapper.columns]
-        
+
         required_columns = [
             "id",
             "user_id",
@@ -198,7 +193,7 @@ class TestFinancialGoalModel:
             "created_at",
             "updated_at",
         ]
-        
+
         for col in required_columns:
             assert col in column_names
 
@@ -206,9 +201,9 @@ class TestFinancialGoalModel:
         """FinancialGoal should have check constraints."""
         mapper = inspect(FinancialGoal)
         table = mapper.tables[0]
-        
+
         constraint_names = [c.name for c in table.constraints]
-        
+
         assert "check_goal_status" in constraint_names
         assert "check_target_amount_positive" in constraint_names
         assert "check_current_amount_non_negative" in constraint_names
@@ -221,7 +216,7 @@ class TestMLModelModel:
         """MLModel should have all required columns."""
         mapper = inspect(MLModel)
         column_names = [col.name for col in mapper.columns]
-        
+
         required_columns = [
             "id",
             "model_type",
@@ -234,7 +229,7 @@ class TestMLModelModel:
             "model_path",
             "is_active",
         ]
-        
+
         for col in required_columns:
             assert col in column_names
 
@@ -242,9 +237,9 @@ class TestMLModelModel:
         """MLModel should have check constraints for metrics."""
         mapper = inspect(MLModel)
         table = mapper.tables[0]
-        
+
         constraint_names = [c.name for c in table.constraints]
-        
+
         assert "check_model_type" in constraint_names
         assert "check_accuracy_range" in constraint_names
         assert "check_precision_range" in constraint_names
@@ -258,7 +253,7 @@ class TestConnectionModel:
         """Connection should have all required columns."""
         mapper = inspect(Connection)
         column_names = [col.name for col in mapper.columns]
-        
+
         required_columns = [
             "id",
             "user_id",
@@ -269,7 +264,7 @@ class TestConnectionModel:
             "status",
             "created_at",
         ]
-        
+
         for col in required_columns:
             assert col in column_names
 
@@ -277,9 +272,9 @@ class TestConnectionModel:
         """Connection should have check constraint for status."""
         mapper = inspect(Connection)
         table = mapper.tables[0]
-        
+
         constraint_names = [c.name for c in table.constraints]
-        
+
         assert "check_connection_status" in constraint_names
 
 
@@ -291,7 +286,7 @@ class TestModelIndexes:
         mapper = inspect(Transaction)
         table = mapper.tables[0]
         index_names = [idx.name for idx in table.indexes]
-        
+
         # Check for composite indexes
         assert "idx_transactions_user_date" in index_names
         assert "idx_transactions_user_category" in index_names
@@ -302,7 +297,7 @@ class TestModelIndexes:
         mapper = inspect(Budget)
         table = mapper.tables[0]
         index_names = [idx.name for idx in table.indexes]
-        
+
         assert "idx_budgets_user_period" in index_names
 
     def test_financial_goal_indexes(self):
@@ -310,7 +305,7 @@ class TestModelIndexes:
         mapper = inspect(FinancialGoal)
         table = mapper.tables[0]
         index_names = [idx.name for idx in table.indexes]
-        
+
         assert "idx_financial_goals_user_status" in index_names
         assert "idx_financial_goals_user_deadline" in index_names
 
@@ -319,7 +314,7 @@ class TestModelIndexes:
         mapper = inspect(MLModel)
         table = mapper.tables[0]
         index_names = [idx.name for idx in table.indexes]
-        
+
         assert "idx_ml_models_type_active" in index_names
         assert "idx_ml_models_user_type" in index_names
         assert "idx_ml_models_user_type_active" in index_names
@@ -329,6 +324,6 @@ class TestModelIndexes:
         mapper = inspect(Connection)
         table = mapper.tables[0]
         index_names = [idx.name for idx in table.indexes]
-        
+
         assert "idx_connections_user_status" in index_names
         assert "idx_connections_user_institution" in index_names

@@ -5,7 +5,7 @@ Production-quality prompts that incorporate RAG context
 for improved accuracy and grounding.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 # Valid categories for transaction parsing
 VALID_CATEGORIES = [
@@ -166,10 +166,11 @@ ANALYZE_USER_TEMPLATE_NO_RAG = """
 # PROMPT BUILDER
 # =============================================================================
 
+
 class PromptBuilder:
     """
     Build prompts with RAG context integration.
-    
+
     Usage:
         builder = PromptBuilder()
         system, user = builder.build_parse_prompt(
@@ -177,7 +178,7 @@ class PromptBuilder:
             rag_context="MERCHANT: Whole Foods..."
         )
     """
-    
+
     @staticmethod
     def build_parse_prompt(
         transaction: str,
@@ -185,16 +186,16 @@ class PromptBuilder:
     ) -> tuple[str, str]:
         """
         Build system and user prompts for parse mode.
-        
+
         Args:
             transaction: Raw transaction description
             rag_context: Formatted RAG context string
-            
+
         Returns:
             Tuple of (system_prompt, user_prompt)
         """
         system = PARSE_SYSTEM_PROMPT
-        
+
         if rag_context:
             user = PARSE_USER_TEMPLATE.format(
                 rag_context=rag_context,
@@ -204,9 +205,9 @@ class PromptBuilder:
             user = PARSE_USER_TEMPLATE_NO_RAG.format(
                 transaction=transaction,
             )
-        
+
         return system, user
-    
+
     @staticmethod
     def build_chat_prompt(
         query: str,
@@ -214,16 +215,16 @@ class PromptBuilder:
     ) -> tuple[str, str]:
         """
         Build system and user prompts for chat mode.
-        
+
         Args:
             query: User's question
             rag_context: Formatted RAG context string
-            
+
         Returns:
             Tuple of (system_prompt, user_prompt)
         """
         system = CHAT_SYSTEM_PROMPT
-        
+
         if rag_context:
             user = CHAT_USER_TEMPLATE.format(
                 rag_context=rag_context,
@@ -233,9 +234,9 @@ class PromptBuilder:
             user = CHAT_USER_TEMPLATE_NO_RAG.format(
                 query=query,
             )
-        
+
         return system, user
-    
+
     @staticmethod
     def build_analyze_prompt(
         query: str,
@@ -243,16 +244,16 @@ class PromptBuilder:
     ) -> tuple[str, str]:
         """
         Build system and user prompts for analyze mode.
-        
+
         Args:
             query: Analysis request
             rag_context: Formatted RAG context string
-            
+
         Returns:
             Tuple of (system_prompt, user_prompt)
         """
         system = ANALYZE_SYSTEM_PROMPT
-        
+
         if rag_context:
             user = ANALYZE_USER_TEMPLATE.format(
                 rag_context=rag_context,
@@ -262,9 +263,9 @@ class PromptBuilder:
             user = ANALYZE_USER_TEMPLATE_NO_RAG.format(
                 query=query,
             )
-        
+
         return system, user
-    
+
     @staticmethod
     def format_chatml(
         system_prompt: str,
@@ -273,26 +274,26 @@ class PromptBuilder:
     ) -> str:
         """
         Format prompts into ChatML format for Qwen models.
-        
+
         Args:
             system_prompt: System message
             user_prompt: User message
             conversation_history: Previous conversation turns
-            
+
         Returns:
             ChatML formatted prompt string
         """
         prompt = f"<|im_start|>system\n{system_prompt}<|im_end|>\n"
-        
+
         # Add conversation history
         if conversation_history:
             for turn in conversation_history:
                 role = "user" if turn["role"] == "user" else "assistant"
                 prompt += f"<|im_start|>{role}\n{turn['content']}<|im_end|>\n"
-        
+
         # Add current user message
         prompt += f"<|im_start|>user\n{user_prompt}<|im_end|>\n<|im_start|>assistant\n"
-        
+
         return prompt
 
 

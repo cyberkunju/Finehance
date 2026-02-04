@@ -10,6 +10,7 @@ Provides:
 # Brain service requires torch - only import if available
 try:
     from .brain_service import FinancialBrain, BrainMode, BrainResponse
+
     BRAIN_AVAILABLE = True
 except ImportError:
     BRAIN_AVAILABLE = False
@@ -54,7 +55,7 @@ except ImportError:
 
 __all__ = [
     "FinancialBrain",
-    "BrainMode", 
+    "BrainMode",
     "BrainResponse",
     "BRAIN_AVAILABLE",
     "ConfidenceCalculator",

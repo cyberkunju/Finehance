@@ -16,12 +16,12 @@ logger = get_logger(__name__)
 
 class CacheManager:
     """Redis cache manager for the application."""
-    
+
     # Default TTLs in seconds
     DEFAULT_TTL = 300  # 5 minutes
     SHORT_TTL = 60  # 1 minute
     LONG_TTL = 3600  # 1 hour
-    
+
     # Key prefixes for namespacing
     PREFIX = "ai_finance:"
 
@@ -58,10 +58,10 @@ class CacheManager:
 
     async def get(self, key: str) -> Optional[Any]:
         """Get value from cache.
-        
+
         Args:
             key: Cache key
-            
+
         Returns:
             Cached value or None if not found
         """
@@ -81,19 +81,14 @@ class CacheManager:
             logger.error("Cache get error", key=key, error=str(e))
             return None
 
-    async def set(
-        self,
-        key: str,
-        value: Any,
-        expire: Optional[int] = None
-    ) -> bool:
+    async def set(self, key: str, value: Any, expire: Optional[int] = None) -> bool:
         """Set value in cache.
-        
+
         Args:
             key: Cache key
             value: Value to cache
             expire: Expiration time in seconds (optional, defaults to DEFAULT_TTL)
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -113,10 +108,10 @@ class CacheManager:
 
     async def delete(self, key: str) -> bool:
         """Delete value from cache.
-        
+
         Args:
             key: Cache key
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -133,10 +128,10 @@ class CacheManager:
 
     async def get_many(self, keys: list[str]) -> dict[str, Any]:
         """Get multiple values from cache.
-        
+
         Args:
             keys: List of cache keys
-            
+
         Returns:
             Dict mapping keys to values (only found keys)
         """
@@ -161,11 +156,11 @@ class CacheManager:
 
     async def set_many(self, items: dict[str, Any], expire: Optional[int] = None) -> bool:
         """Set multiple values in cache.
-        
+
         Args:
             items: Dict of key-value pairs
             expire: Expiration time in seconds
-            
+
         Returns:
             True if successful
         """
@@ -187,10 +182,10 @@ class CacheManager:
 
     async def clear_pattern(self, pattern: str) -> int:
         """Clear all keys matching a pattern.
-        
+
         Args:
             pattern: Key pattern (e.g., "user:*")
-            
+
         Returns:
             Number of keys deleted
         """
@@ -203,7 +198,7 @@ class CacheManager:
             keys = []
             async for key in self.redis.scan_iter(match=full_pattern):
                 keys.append(key)
-            
+
             if keys:
                 deleted = await self.redis.delete(*keys)
                 logger.info("Cleared cache keys", pattern=pattern, count=deleted)
@@ -226,22 +221,21 @@ cache_manager = CacheManager()
 
 
 def cached(
-    key_prefix: str,
-    expire: Optional[int] = None,
-    key_builder: Optional[Callable[..., str]] = None
+    key_prefix: str, expire: Optional[int] = None, key_builder: Optional[Callable[..., str]] = None
 ):
     """Decorator for caching async function results.
-    
+
     Args:
         key_prefix: Prefix for the cache key
         expire: TTL in seconds
         key_builder: Optional function to build cache key from args
-        
+
     Example:
         @cached("user", expire=300)
         async def get_user(user_id: int):
             ...
     """
+
     def decorator(func: Callable):
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -254,25 +248,27 @@ def cached(
                 key_parts.extend(f"{k}={v}" for k, v in sorted(kwargs.items()))
                 key_hash = hashlib.md5(":".join(key_parts).encode()).hexdigest()[:16]
                 cache_key = f"{key_prefix}:{key_hash}"
-            
+
             # Try cache first
             cached_value = await cache_manager.get(cache_key)
             if cached_value is not None:
                 return cached_value
-            
+
             # Call function and cache result
             result = await func(*args, **kwargs)
             if result is not None:
                 await cache_manager.set(cache_key, result, expire)
-            
+
             return result
+
         return wrapper
+
     return decorator
 
 
 async def get_cache() -> CacheManager:
     """Dependency for getting cache manager.
-    
+
     Returns:
         CacheManager instance
     """

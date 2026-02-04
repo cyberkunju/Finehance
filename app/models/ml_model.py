@@ -6,9 +6,7 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import (
-    String, DateTime, Float, Boolean, ForeignKey, Index, CheckConstraint
-)
+from sqlalchemy import String, DateTime, Float, Boolean, ForeignKey, Index, CheckConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -24,22 +22,19 @@ class MLModel(Base):
     __tablename__ = "ml_models"
 
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid.uuid4,
-        index=True
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True
     )
     model_type: Mapped[str] = mapped_column(
         String(50),
         nullable=False,
         index=True,
-        comment="Type of model: CATEGORIZATION or PREDICTION"
+        comment="Type of model: CATEGORIZATION or PREDICTION",
     )
     user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=True,
-        comment="NULL for global models, user_id for user-specific models"
+        comment="NULL for global models, user_id for user-specific models",
     )
     version: Mapped[str] = mapped_column(String(20), nullable=False)
     accuracy: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
@@ -47,37 +42,24 @@ class MLModel(Base):
     recall: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     trained_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     model_path: Mapped[str] = mapped_column(
-        String(500),
-        nullable=False,
-        comment="Path to model file in storage (S3 or file system)"
+        String(500), nullable=False, comment="Path to model file in storage (S3 or file system)"
     )
-    is_active: Mapped[bool] = mapped_column(
-        Boolean,
-        default=True,
-        nullable=False,
-        index=True
-    )
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False, index=True)
 
     # Relationships
     user: Mapped[Optional["User"]] = relationship("User", back_populates="ml_models")
 
     # Table constraints
     __table_args__ = (
+        CheckConstraint("model_type IN ('CATEGORIZATION', 'PREDICTION')", name="check_model_type"),
         CheckConstraint(
-            "model_type IN ('CATEGORIZATION', 'PREDICTION')",
-            name="check_model_type"
+            "accuracy IS NULL OR (accuracy >= 0 AND accuracy <= 1)", name="check_accuracy_range"
         ),
         CheckConstraint(
-            "accuracy IS NULL OR (accuracy >= 0 AND accuracy <= 1)",
-            name="check_accuracy_range"
+            "precision IS NULL OR (precision >= 0 AND precision <= 1)", name="check_precision_range"
         ),
         CheckConstraint(
-            "precision IS NULL OR (precision >= 0 AND precision <= 1)",
-            name="check_precision_range"
-        ),
-        CheckConstraint(
-            "recall IS NULL OR (recall >= 0 AND recall <= 1)",
-            name="check_recall_range"
+            "recall IS NULL OR (recall >= 0 AND recall <= 1)", name="check_recall_range"
         ),
         # Composite indexes for common queries
         Index("idx_ml_models_type_active", "model_type", "is_active"),
