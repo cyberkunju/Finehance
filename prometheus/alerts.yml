@@ -1,0 +1,237 @@
+# Prometheus Alert Rules for AI Finance Platform
+# See: https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/
+
+groups:
+  # =============================================================================
+  # AI Brain Service Alerts
+  # =============================================================================
+  - name: ai_brain_alerts
+    rules:
+      # High error rate
+      - alert: AIBrainHighErrorRate
+        expr: |
+          sum(rate(ai_brain_errors_total[5m])) 
+          / sum(rate(ai_brain_requests_total[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          service: ai-brain
+        annotations:
+          summary: "AI Brain error rate is high"
+          description: "AI Brain error rate is {{ $value | humanizePercentage }} over the last 5 minutes"
+
+      # Circuit breaker open
+      - alert: AIBrainCircuitOpen
+        expr: ai_brain_circuit_state == 1
+        for: 1m
+        labels:
+          severity: warning
+          service: ai-brain
+        annotations:
+          summary: "AI Brain circuit breaker is OPEN"
+          description: "Circuit breaker has opened due to failures. Fallback mode active."
+
+      # High queue depth
+      - alert: AIBrainQueueBacklog
+        expr: ai_brain_queue_depth > 10
+        for: 2m
+        labels:
+          severity: warning
+          service: ai-brain
+        annotations:
+          summary: "AI Brain request queue is backing up"
+          description: "{{ $value }} requests waiting in queue"
+
+      # Slow response times
+      - alert: AIBrainSlowResponses
+        expr: |
+          histogram_quantile(0.95, 
+            sum(rate(ai_brain_request_duration_seconds_bucket[5m])) by (le, mode)
+          ) > 30
+        for: 5m
+        labels:
+          severity: warning
+          service: ai-brain
+        annotations:
+          summary: "AI Brain P95 latency is high"
+          description: "P95 latency is {{ $value | humanizeDuration }} for mode {{ $labels.mode }}"
+
+      # Queue timeouts
+      - alert: AIBrainQueueTimeouts
+        expr: rate(ai_brain_queue_timeout_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          service: ai-brain
+        annotations:
+          summary: "AI Brain queue timeouts occurring"
+          description: "{{ $value | humanize }} queue timeouts per second"
+
+  # =============================================================================
+  # GPU Alerts
+  # =============================================================================
+  - name: gpu_alerts
+    rules:
+      # GPU memory high usage
+      - alert: GPUMemoryHigh
+        expr: gpu_memory_utilization_percent > 90
+        for: 5m
+        labels:
+          severity: warning
+          service: gpu
+        annotations:
+          summary: "GPU memory utilization is high"
+          description: "GPU {{ $labels.gpu_index }} memory at {{ $value | humanize }}%"
+
+      # GPU memory critical
+      - alert: GPUMemoryCritical
+        expr: gpu_memory_utilization_percent > 95
+        for: 2m
+        labels:
+          severity: critical
+          service: gpu
+        annotations:
+          summary: "GPU memory utilization is critical"
+          description: "GPU {{ $labels.gpu_index }} memory at {{ $value | humanize }}% - OOM risk"
+
+      # GPU temperature high
+      - alert: GPUTemperatureHigh
+        expr: gpu_temperature_celsius > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: gpu
+        annotations:
+          summary: "GPU temperature is high"
+          description: "GPU {{ $labels.gpu_index }} at {{ $value }}°C"
+
+      # GPU temperature critical
+      - alert: GPUTemperatureCritical
+        expr: gpu_temperature_celsius > 90
+        for: 1m
+        labels:
+          severity: critical
+          service: gpu
+        annotations:
+          summary: "GPU temperature is critical"
+          description: "GPU {{ $labels.gpu_index }} at {{ $value }}°C - throttling likely"
+
+      # GPU utilization high sustained
+      - alert: GPUUtilizationSustainedHigh
+        expr: gpu_utilization_percent > 95
+        for: 10m
+        labels:
+          severity: warning
+          service: gpu
+        annotations:
+          summary: "GPU utilization sustained high"
+          description: "GPU {{ $labels.gpu_index }} at {{ $value }}% for 10+ minutes"
+
+      # GPU not available
+      - alert: GPUUnavailable
+        expr: gpu_available == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: gpu
+        annotations:
+          summary: "GPU is not available"
+          description: "No GPU detected or NVML failed to initialize"
+
+  # =============================================================================
+  # Application Alerts
+  # =============================================================================
+  - name: application_alerts
+    rules:
+      # High HTTP error rate
+      - alert: HighHTTPErrorRate
+        expr: |
+          sum(rate(ai_finance_http_requests_total{status=~"5.."}[5m]))
+          / sum(rate(ai_finance_http_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          service: app
+        annotations:
+          summary: "High HTTP 5xx error rate"
+          description: "{{ $value | humanizePercentage }} of requests returning 5xx errors"
+
+      # Slow HTTP responses
+      - alert: SlowHTTPResponses
+        expr: |
+          histogram_quantile(0.95, 
+            sum(rate(ai_finance_http_request_duration_seconds_bucket[5m])) by (le)
+          ) > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: app
+        annotations:
+          summary: "HTTP P95 latency is high"
+          description: "P95 latency is {{ $value | humanizeDuration }}"
+
+      # Many requests in progress
+      - alert: HighRequestConcurrency
+        expr: http_requests_inprogress > 50
+        for: 2m
+        labels:
+          severity: warning
+          service: app
+        annotations:
+          summary: "Many concurrent HTTP requests"
+          description: "{{ $value }} requests currently being processed"
+
+  # =============================================================================
+  # Security Alerts
+  # =============================================================================
+  - name: security_alerts
+    rules:
+      # Input guard blocking many requests
+      - alert: HighInputBlockRate
+        expr: sum(rate(ai_brain_input_blocked_total[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: security
+        annotations:
+          summary: "High rate of blocked inputs"
+          description: "{{ $value | humanize }} inputs blocked per second - possible attack"
+
+      # Specific attack type spike
+      - alert: PromptInjectionAttempts
+        expr: rate(ai_brain_input_blocked_total{attack_type="instruction_override"}[5m]) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+          service: security
+        annotations:
+          summary: "Prompt injection attempts detected"
+          description: "{{ $value | humanize }} prompt injection attempts per second"
+
+      # PII masking activity
+      - alert: HighPIIMaskingRate
+        expr: sum(rate(ai_brain_pii_masked_total[5m])) > 1
+        for: 5m
+        labels:
+          severity: info
+          service: security
+        annotations:
+          summary: "High PII masking activity"
+          description: "{{ $value | humanize }} PII instances masked per second"
+
+  # =============================================================================
+  # Rate Limiting Alerts
+  # =============================================================================
+  - name: rate_limit_alerts
+    rules:
+      # High rate of rate-limited requests
+      - alert: HighRateLimitHits
+        expr: |
+          sum(rate(ai_finance_http_requests_total{status="429"}[5m])) > 1
+        for: 5m
+        labels:
+          severity: info
+          service: app
+        annotations:
+          summary: "High rate of rate-limited requests"
+          description: "{{ $value | humanize }} 429 responses per second"

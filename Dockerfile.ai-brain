@@ -1,0 +1,69 @@
+# AI Brain LLM Service Dockerfile
+# Optimized for NVIDIA RTX 4060 (8GB VRAM)
+# Uses PyTorch 2.1.2 + CUDA 12.1 for best compatibility
+
+FROM pytorch/pytorch:2.1.2-cuda12.1-cudnn8-runtime
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    HF_HOME=/app/ai_brain/.cache/huggingface
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user for security
+# Using UID 1000 which is standard for first non-root user
+ARG UID=1000
+ARG GID=1000
+RUN groupadd --gid ${GID} aiuser \
+    && useradd --uid ${UID} --gid ${GID} --shell /bin/bash --create-home aiuser
+
+# Set working directory
+WORKDIR /app/ai_brain
+
+# Upgrade pip
+RUN pip install --no-cache-dir --upgrade pip
+
+# Install ML dependencies with strict version pinning for compatibility
+# These versions are tested to work together
+RUN pip install --no-cache-dir \
+    transformers==4.44.0 \
+    accelerate==0.33.0 \
+    peft>=0.14.0 \
+    bitsandbytes==0.43.3 \
+    sentencepiece==0.2.0 \
+    protobuf==4.25.3 \
+    einops==0.8.0 \
+    scipy==1.13.1
+
+# Install API dependencies
+RUN pip install --no-cache-dir \
+    fastapi==0.111.0 \
+    uvicorn==0.30.1 \
+    pydantic==2.7.4 \
+    httpx==0.27.0
+
+# Copy AI Brain code
+COPY --chown=aiuser:aiuser ai_brain/ .
+
+# Create cache and models directories with correct ownership
+RUN mkdir -p /app/ai_brain/models /app/ai_brain/.cache/huggingface \
+    && chown -R aiuser:aiuser /app/ai_brain
+
+# Switch to non-root user for security
+# This prevents container escape attacks from having root access
+USER aiuser
+
+# Expose port
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=180s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Run the inference server
+CMD ["python", "inference/brain_service.py", "--server", "--host", "0.0.0.0", "--port", "8080"]

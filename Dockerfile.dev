@@ -1,0 +1,65 @@
+ARG PYTHON_VERSION=3.11
+FROM python:${PYTHON_VERSION}-slim
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    POETRY_VERSION=1.7.1 \
+    POETRY_HOME=/opt/poetry \
+    POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_CREATE=false
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies including build tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # Build essentials
+    gcc \
+    g++ \
+    make \
+    # PostgreSQL client and dev libraries
+    postgresql-client \
+    libpq-dev \
+    # Git for version control
+    git \
+    # Curl for downloading
+    curl \
+    # Additional utilities
+    vim \
+    nano \
+    less \
+    procps \
+    # For scientific computing (numpy, scipy)
+    gfortran \
+    libopenblas-dev \
+    liblapack-dev \
+    # Cleanup
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Poetry
+RUN curl -sSL https://install.python-poetry.org | python3 - && \
+    ln -s /opt/poetry/bin/poetry /usr/local/bin/poetry
+
+# Copy dependency files
+COPY pyproject.toml poetry.lock* ./
+
+# Install Python dependencies
+RUN poetry install --no-interaction --no-ansi --no-root --with dev
+
+# Create necessary directories
+RUN mkdir -p /app/models /app/data /app/logs
+
+# Copy application code
+COPY . .
+
+# Install the application in development mode
+RUN poetry install --no-interaction --no-ansi
+
+# Expose port for FastAPI
+EXPOSE 8000
+
+# Default command - keep container running for interactive development
+CMD ["/bin/bash"]

@@ -1,0 +1,16 @@
+# Grafana dashboard provisioning
+# See: https://grafana.com/docs/grafana/latest/administration/provisioning/
+
+apiVersion: 1
+
+providers:
+  - name: 'AI Finance Dashboards'
+    orgId: 1
+    folder: 'AI Finance Platform'
+    folderUid: 'ai-finance'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards

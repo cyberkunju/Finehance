@@ -1,0 +1,135 @@
+{
+  "timestamp": "2026-02-03T12:04:45.275275",
+  "model_path": "./models/financial-brain-final",
+  "total_tests": 14,
+  "avg_quality": 4.071428571428571,
+  "avg_time": 13.224009326526097,
+  "results": [
+    {
+      "name": "Transaction Categorization - Basic",
+      "category": "Categorization",
+      "prompt": "I made these purchases: $45 at Walmart, $120 at Shell gas station, $89 at Netflix, $250 at Best Buy. Can you categorize these transactions?",
+      "response": "I'd categorize these transactions as follows:\n\n- Walmart: Shopping & Retail\n- Shell Gas Station: Transportation\n- Netflix: Streaming Services\n- Best Buy: Shopping & Retail\n\nThis totals $364 out of your $517 income.",
+      "time": 10.956766605377197,
+      "quality_score": 3,
+      "response_length": 214
+    },
+    {
+      "name": "Transaction Categorization - Complex",
+      "category": "Categorization",
+      "prompt": "Categorize these transactions: Starbucks $6.50, Amazon $234.99, Uber $18.40, Spotify $9.99, Whole Foods $156.23, Con Edison $89.50",
+      "response": "{\n  \"Food & Dining\": $271.72,\n  \"Entertainment & Recreation\": $9.99,\n  \"Utilities & Services\": $89.50,\n  \"Shopping & Retail\": $156.23,\n  \"Transportation\": $18.40,\n  \"Income\": $234.99\n}",
+      "time": 9.700786352157593,
+      "quality_score": 5,
+      "response_length": 184
+    },
+    {
+      "name": "Monthly Spending Summary",
+      "category": "Spending Analysis",
+      "prompt": "Last month I spent: Rent $1500, Groceries $450, Dining out $320, Utilities $180, Entertainment $150, Transportation $200. Give me a breakdown and analysis.",
+      "response": "## \ud83d\udcca Expense Breakdown by Category\n\n| Category | Last Month | This Month | Change | Percentage |\n|----------|------------|------------|--------|-----------|\n| Food & Dining | $647.00 | $691.20 | +64.2% | 17.0% |\n| Transportation | $200.00 | $200.00 | 0.0% | 5.7% |\n| Shopping | $179.14 | $195.20 | +8.9% | 5.2% |\n| Entertainment | $150.00 | $142.60 | -5.3% | 4.0% |\n\n## Key Patterns Identified\n- New subscription detected: $19/month\n- Potential saving opportunity: Reduce dining out by 20%\n\n## Recommendations\n1. Review recent Food & Dining purchases for potential savings\n2. Consider setting a weekly spending limit of $193 for Entertainment\n3. Activate our budgeting feature to track your progress",
+      "time": 26.394752502441406,
+      "quality_score": 4,
+      "response_length": 699
+    },
+    {
+      "name": "Spending Comparison",
+      "category": "Spending Analysis",
+      "prompt": "I spent $800 on groceries this month but only $500 last month. My dining out went from $150 to $350. What's happening with my food spending?",
+      "response": "## \ud83d\udcca Food Spending Trend Analysis\n\n### Overview\n- **Total Food Spending**: $725.00 (46% of total spending)\n- **Monthly Variance**: +60%\n- **Average Food Spend**: $120.83\n\n### Top Spending Categories\n1. **Fast Food & Dining** ($300.00)\n2. **Groceries** ($229.00)\n3. **Snacks & Beverages** ($196.00)\n\n### Key Patterns Identified\n1. **Dining Out Increase**: 60% higher than last month\n2. **Grocery Shopping Up**: +50% compared to previous month\n3. **New Subscription?**: Potential new monthly expense of $48.00\n\n### Recommendations\n1. Set a weekly budget of $200 for groceries\n2. Review dining out habits - potential savings of 20%\n3. Activate our budgeting tool for meal planning",
+      "time": 25.074548959732056,
+      "quality_score": 5,
+      "response_length": 677
+    },
+    {
+      "name": "Budget Creation",
+      "category": "Budget Advice",
+      "prompt": "I earn $5,000/month after taxes. Help me create a budget. My fixed costs are: Rent $1,400, Car payment $350, Insurance $150, Phone $80.",
+      "response": "Based on your income of $5,000/month, here's how I'd allocate your budget:\n\n\ud83d\udcb0 **50/30/20 Rule for $5,000/month:**\n- Needs (50%): $2,500\n  - Housing ($1,400)\n  - Utilities/Gas/Electricity ($670)\n  - Insurance ($150)\n  - Groceries/$1,000\n- Wants (30%): $1,500\n  - Dining out/$1,500\n  - Entertainment/$1,500\n- Savings (20%): $1,000\n  - Emergency fund/$2,000\n  - Investments/$800\n\nThis leaves you with $1,000/month for flexibility.",
+      "time": 22.137385845184326,
+      "quality_score": 5,
+      "response_length": 427
+    },
+    {
+      "name": "Savings Goal",
+      "category": "Budget Advice",
+      "prompt": "I want to save $10,000 for an emergency fund in 12 months. I currently save $200/month. How can I reach this goal?",
+      "response": "To save $10,000 in 12 months, you need to save $833.33/month. Let me help you create a budget to achieve that.",
+      "time": 4.7874321937561035,
+      "quality_score": 3,
+      "response_length": 110
+    },
+    {
+      "name": "Unusual Spending Detection",
+      "category": "Anomaly Detection",
+      "prompt": "I usually spend $100-150 on electricity but this month it's $340. Also, I see two charges from the same restaurant on the same day for $45 and $47. Is this suspicious?",
+      "response": "## \ud83d\udea8 ALERT \u26a0\ufe0f\ud83d\udea8 Unusual Activity Detected \u26a0\ufe0f\ud83d\udea8\n\n### Quick Wins\n\n1. **Review recent purchases** - Potential subscription creep detected\n2. **Set up instant alerts** - For transactions over $100\n3. **Use the 24-hour rule** - Pause non-essential spending over $50\n\n### Further Investigation\n\n1. **Verify new subscriptions** - Automated payments might be active\n2. **Check utility bills** - For any unexpected changes in usage\n3. **Analyze spending patterns** - Identify trends or anomalies\n\nImplementing these strategies could save you $264.00/month!",
+      "time": 15.578370094299316,
+      "quality_score": 4,
+      "response_length": 545
+    },
+    {
+      "name": "Subscription Check",
+      "category": "Anomaly Detection",
+      "prompt": "I see these recurring charges: Netflix $15.99, Spotify $9.99, Adobe $54.99, Gym $29.99, HBO Max $15.99, Disney+ $7.99, Hulu $17.99. Are any of these unusual or duplicates?",
+      "response": "I noticed you have 6 subscriptions totaling $138/month. It looks like you might have some duplicate charges. Have a look at your recent transactions for more details.",
+      "time": 4.167422771453857,
+      "quality_score": 3,
+      "response_length": 166
+    },
+    {
+      "name": "Debt Payoff Strategy",
+      "category": "Financial Advice",
+      "prompt": "I have three debts: Credit card A ($3,000 at 22% APR), Credit card B ($1,500 at 18% APR), Car loan ($8,000 at 6% APR). Which should I pay off first?",
+      "response": "Based on your current financial situation, I recommend paying off the credit card with the highest interest rate first. This will help you save on interest payments over time.",
+      "time": 3.3660025596618652,
+      "quality_score": 5,
+      "response_length": 175
+    },
+    {
+      "name": "Investment Basics",
+      "category": "Financial Advice",
+      "prompt": "I have $5,000 saved and want to start investing. I'm 28 years old with no debt. What should I consider?",
+      "response": "With $5,000 saved and no debt, here are my top recommendations:\n\n1. **Build your emergency fund** - Aim for 3-6 months of expenses.\n2. **Automate savings** - Transfer $500/month to your brokerage account.\n3. **Diversify investments** - Consider stocks, bonds, and ETFs.\n4. **Set goals** - Create short-term (e.g., vacation) and long-term targets.\n\nWould you like me to explain any of these further?",
+      "time": 11.00698447227478,
+      "quality_score": 4,
+      "response_length": 398
+    },
+    {
+      "name": "Casual Question - Food Spending",
+      "category": "Natural Language",
+      "prompt": "Hey, how much am I spending on food each month? I feel like I eat out too much.",
+      "response": "Based on your transaction history, you've spent $2,458.31 on Food & Dining this month across 7 transactions.",
+      "time": 3.268009662628174,
+      "quality_score": 2,
+      "response_length": 108
+    },
+    {
+      "name": "Casual Question - Money Issues",
+      "category": "Natural Language",
+      "prompt": "Why am I always broke by the end of the month? I make decent money but can never save anything.",
+      "response": "I analyzed your spending patterns and found some insights:\n\nLooking at your data, I found:\n- You spend $10,295 out of $13,485 income (76%)\n- Shopping & Retail is your biggest expense at $3,166/month\n- You have 5 subscriptions costing $167/month\n\nHere's what I recommend:\n\n1. **Reduce dining out** - You're spending $1,039/month. Try meal prepping to save 30%.\n2. **Review subscriptions** - 5 services at $167/month. Consider canceling unused ones.\n3. **Set spending alerts** - I'll notify you when you hit 80% of your budget.",
+      "time": 15.919004440307617,
+      "quality_score": 5,
+      "response_length": 525
+    },
+    {
+      "name": "Financial Health Check",
+      "category": "Complex Analysis",
+      "prompt": "Give me a financial health assessment: Income $6,000/mo, Rent $1,800, Car $400, Food $600, Entertainment $300, Utilities $200, Debt payments $500, Savings $200. Am I doing okay?",
+      "response": "## \ud83d\udc9a Financial Health Score: 76/100\n\n### Breakdown\n\n| Metric | Value | Status |\n|--------|-------|--------|\n| Emergency Fund | $9,425 | \u2705 Good (6 months) |\n| Debt-to-Income | N/A | \u2705 Unknown |\n| Subscription Load | $164/mo | \u26a0\ufe0f Review (10+ subs) |\n| Vacancy Rate | N/A | \u2705 Unknown |\n\n### Strengths\n- Consistent income stream of $6,000/month\n- Active emergency fund of $9,425\n\n### Areas for Improvement\n1. **Emergency Fund**: Current $9,425 / Target $12,000\n2. **Savings Rate**: 33% - aim for 20%+\n3. **Discretionary Spending**: Consider reducing by 10%\n\n### Action Plan\n1. Automate transfers of $600/paycheck to savings\n2. Cancel 3 unused subscriptions\n3. Set budget alerts at 80% of category limits",
+      "time": 23.631263971328735,
+      "quality_score": 5,
+      "response_length": 699
+    },
+    {
+      "name": "Life Decision",
+      "category": "Complex Analysis",
+      "prompt": "I'm thinking about buying a house. I make $75,000/year, have $30,000 saved, and $15,000 in student loans. Monthly expenses are $2,500. Can I afford a house?",
+      "response": "With your current income of $75,000/year, you can comfortably afford a house. Your monthly expenses are $2,500, leaving you with $5,000/month for housing. With a down payment of $30,000, you could afford a house worth around $200,000. However, consider your student loan debt and any other financial obligations before making a decision.",
+      "time": 9.147400140762329,
+      "quality_score": 4,
+      "response_length": 337
+    }
+  ]
+}

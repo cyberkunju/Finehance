@@ -1,0 +1,75 @@
+# Prometheus configuration for AI Finance Platform
+# See: https://prometheus.io/docs/prometheus/latest/configuration/configuration/
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'ai-finance-monitor'
+
+# Alerting configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+          # Add alertmanager target if configured
+          # - alertmanager:9093
+
+# Rule files for alerting
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    metrics_path: /metrics
+
+  # FastAPI Application metrics
+  - job_name: 'ai-finance-app'
+    static_configs:
+      - targets: ['dev:8000']
+    metrics_path: /metrics
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    honor_labels: true
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'dev'
+
+  # AI Brain Service (if running)
+  - job_name: 'ai-brain'
+    static_configs:
+      - targets: ['ai-brain:8080']
+    metrics_path: /metrics
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    # Don't fail if AI Brain is not running
+    honor_labels: true
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'ai-brain'
+
+  # PostgreSQL Exporter (if deployed)
+  # - job_name: 'postgres'
+  #   static_configs:
+  #     - targets: ['postgres-exporter:9187']
+
+  # Redis Exporter (if deployed)
+  # - job_name: 'redis'
+  #   static_configs:
+  #     - targets: ['redis-exporter:9121']
+
+  # Node Exporter for system metrics (if deployed)
+  # - job_name: 'node'
+  #   static_configs:
+  #     - targets: ['node-exporter:9100']
+
+  # NVIDIA GPU Exporter (if deployed separately)
+  # - job_name: 'nvidia-gpu'
+  #   static_configs:
+  #     - targets: ['nvidia-exporter:9400']

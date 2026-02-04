@@ -1,0 +1,2150 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-02-04",
+  "total_merchants": 512,
+  
+  "merchants": {
+    "amazon": {
+      "canonical_name": "Amazon",
+      "category": "Shopping & Retail",
+      "subcategory": "Online Shopping",
+      "aliases": ["amzn", "amzn mktp", "amazon.com", "amzn.com", "amazon marketplace", "amzn digital", "amzn web services"],
+      "is_recurring": false
+    },
+    "amazon prime": {
+      "canonical_name": "Amazon Prime",
+      "category": "Subscriptions",
+      "subcategory": "Membership",
+      "aliases": ["prime membership", "amazon prime member", "amzn prime"],
+      "is_recurring": true,
+      "typical_amounts": [14.99, 139.00]
+    },
+    "amazon fresh": {
+      "canonical_name": "Amazon Fresh",
+      "category": "Groceries",
+      "subcategory": "Grocery Delivery",
+      "aliases": ["amzn fresh", "amazon wholefoods"],
+      "is_recurring": false
+    },
+    "whole foods": {
+      "canonical_name": "Whole Foods Market",
+      "category": "Groceries",
+      "subcategory": "Supermarket",
+      "aliases": ["wholefds", "wholefoods", "whole foods mkt", "wfm", "whole foods market"],
+      "is_recurring": false
+    },
+    "trader joes": {
+      "canonical_name": "Trader Joe's",
+      "category": "Groceries",
+      "subcategory": "Supermarket",
+      "aliases": ["trader joe's", "trader joe", "tjs"],
+      "is_recurring": false
+    },
+    "costco": {
+      "canonical_name": "Costco",
+      "category": "Groceries",
+      "subcategory": "Warehouse Club",
+      "aliases": ["costco wholesale", "costco whse", "costco gas"],
+      "is_recurring": false
+    },
+    "walmart": {
+      "canonical_name": "Walmart",
+      "category": "Shopping & Retail",
+      "subcategory": "Department Store",
+      "aliases": ["wmt", "walmart supercenter", "wal-mart", "walmart.com", "walmart grocery"],
+      "is_recurring": false
+    },
+    "walmart grocery": {
+      "canonical_name": "Walmart Grocery",
+      "category": "Groceries",
+      "subcategory": "Grocery Delivery",
+      "aliases": ["walmart grocery pickup"],
+      "is_recurring": false
+    },
+    "target": {
+      "canonical_name": "Target",
+      "category": "Shopping & Retail",
+      "subcategory": "Department Store",
+      "aliases": ["tgt", "target.com", "target store"],
+      "is_recurring": false
+    },
+    "safeway": {
+      "canonical_name": "Safeway",
+      "category": "Groceries",
+      "subcategory": "Supermarket",
+      "aliases": ["safeway store"],
+      "is_recurring": false
+    },
+    "kroger": {
+      "canonical_name": "Kroger",
+      "category": "Groceries",
+      "subcategory": "Supermarket",
+      "aliases": ["kroger fuel", "kroger pharmacy"],
+      "is_recurring": false
+    },
+    "publix": {
+      "canonical_name": "Publix",
+      "category": "Groceries",
+      "subcategory": "Supermarket",
+      "aliases": ["publix super market", "publix supermarket"],
+      "is_recurring": false
+    },
+    "aldi": {
+      "canonical_name": "ALDI",
+      "category": "Groceries",
+      "subcategory": "Discount Supermarket",
+      "aliases": ["aldi us", "aldi store"],
+      "is_recurring": false
+    },
+    "wegmans": {
+      "canonical_name": "Wegmans",
+      "category": "Groceries",
+      "subcategory": "Supermarket",
+      "aliases": ["wegmans food market"],
+      "is_recurring": false
+    },
+    "sprouts": {
+      "canonical_name": "Sprouts Farmers Market",
+      "category": "Groceries",
+      "subcategory": "Organic Supermarket",
+      "aliases": ["sprouts farmers", "sprouts market"],
+      "is_recurring": false
+    },
+    "heb": {
+      "canonical_name": "H-E-B",
+      "category": "Groceries",
+      "subcategory": "Supermarket",
+      "aliases": ["h-e-b", "heb grocery", "heb plus"],
+      "is_recurring": false
+    },
+    "food lion": {
+      "canonical_name": "Food Lion",
+      "category": "Groceries",
+      "subcategory": "Supermarket",
+      "aliases": ["foodlion"],
+      "is_recurring": false
+    },
+    "giant": {
+      "canonical_name": "Giant Food",
+      "category": "Groceries",
+      "subcategory": "Supermarket",
+      "aliases": ["giant food", "giant eagle", "giant supermarket"],
+      "is_recurring": false
+    },
+    "stop and shop": {
+      "canonical_name": "Stop & Shop",
+      "category": "Groceries",
+      "subcategory": "Supermarket",
+      "aliases": ["stop & shop", "stopandshop"],
+      "is_recurring": false
+    },
+    "albertsons": {
+      "canonical_name": "Albertsons",
+      "category": "Groceries",
+      "subcategory": "Supermarket",
+      "aliases": ["albertsons market"],
+      "is_recurring": false
+    },
+    "vons": {
+      "canonical_name": "Vons",
+      "category": "Groceries",
+      "subcategory": "Supermarket",
+      "aliases": [],
+      "is_recurring": false
+    },
+    "ralphs": {
+      "canonical_name": "Ralphs",
+      "category": "Groceries",
+      "subcategory": "Supermarket",
+      "aliases": [],
+      "is_recurring": false
+    },
+    "harris teeter": {
+      "canonical_name": "Harris Teeter",
+      "category": "Groceries",
+      "subcategory": "Supermarket",
+      "aliases": ["harristeeter"],
+      "is_recurring": false
+    },
+    "winco": {
+      "canonical_name": "WinCo Foods",
+      "category": "Groceries",
+      "subcategory": "Warehouse Supermarket",
+      "aliases": ["winco foods"],
+      "is_recurring": false
+    },
+    "meijer": {
+      "canonical_name": "Meijer",
+      "category": "Groceries",
+      "subcategory": "Supercenter",
+      "aliases": [],
+      "is_recurring": false
+    },
+    "piggly wiggly": {
+      "canonical_name": "Piggly Wiggly",
+      "category": "Groceries",
+      "subcategory": "Supermarket",
+      "aliases": ["pig wiggly"],
+      "is_recurring": false
+    },
+    "bi-lo": {
+      "canonical_name": "BI-LO",
+      "category": "Groceries",
+      "subcategory": "Supermarket",
+      "aliases": ["bilo"],
+      "is_recurring": false
+    },
+    "food4less": {
+      "canonical_name": "Food 4 Less",
+      "category": "Groceries",
+      "subcategory": "Discount Supermarket",
+      "aliases": ["food 4 less"],
+      "is_recurring": false
+    },
+    "shaws": {
+      "canonical_name": "Shaw's",
+      "category": "Groceries",
+      "subcategory": "Supermarket",
+      "aliases": ["shaw's", "shaws supermarket"],
+      "is_recurring": false
+    },
+    "stater bros": {
+      "canonical_name": "Stater Bros",
+      "category": "Groceries",
+      "subcategory": "Supermarket",
+      "aliases": ["staterbros", "stater brothers"],
+      "is_recurring": false
+    },
+    "instacart": {
+      "canonical_name": "Instacart",
+      "category": "Groceries",
+      "subcategory": "Grocery Delivery",
+      "aliases": ["insta cart"],
+      "is_recurring": false
+    },
+    "shipt": {
+      "canonical_name": "Shipt",
+      "category": "Groceries",
+      "subcategory": "Grocery Delivery",
+      "aliases": [],
+      "is_recurring": false
+    },
+    
+    "mcdonalds": {
+      "canonical_name": "McDonald's",
+      "category": "Fast Food",
+      "subcategory": "Burgers",
+      "aliases": ["mcdonald's", "mcd", "mickey d's", "mcdonald"],
+      "is_recurring": false
+    },
+    "burger king": {
+      "canonical_name": "Burger King",
+      "category": "Fast Food",
+      "subcategory": "Burgers",
+      "aliases": ["bk", "burgerking"],
+      "is_recurring": false
+    },
+    "wendys": {
+      "canonical_name": "Wendy's",
+      "category": "Fast Food",
+      "subcategory": "Burgers",
+      "aliases": ["wendy's", "wendys restaurant"],
+      "is_recurring": false
+    },
+    "taco bell": {
+      "canonical_name": "Taco Bell",
+      "category": "Fast Food",
+      "subcategory": "Mexican",
+      "aliases": ["tacobell", "tbell"],
+      "is_recurring": false
+    },
+    "chick fil a": {
+      "canonical_name": "Chick-fil-A",
+      "category": "Fast Food",
+      "subcategory": "Chicken",
+      "aliases": ["chick-fil-a", "chickfila", "cfa"],
+      "is_recurring": false
+    },
+    "chipotle": {
+      "canonical_name": "Chipotle",
+      "category": "Fast Food",
+      "subcategory": "Mexican",
+      "aliases": ["chipotle mexican", "chipotle grill"],
+      "is_recurring": false
+    },
+    "subway": {
+      "canonical_name": "Subway",
+      "category": "Fast Food",
+      "subcategory": "Sandwiches",
+      "aliases": ["subway restaurant", "subway sandwiches"],
+      "is_recurring": false
+    },
+    "dominos": {
+      "canonical_name": "Domino's",
+      "category": "Fast Food",
+      "subcategory": "Pizza",
+      "aliases": ["domino's", "dominos pizza"],
+      "is_recurring": false
+    },
+    "pizza hut": {
+      "canonical_name": "Pizza Hut",
+      "category": "Fast Food",
+      "subcategory": "Pizza",
+      "aliases": ["pizzahut"],
+      "is_recurring": false
+    },
+    "papa johns": {
+      "canonical_name": "Papa John's",
+      "category": "Fast Food",
+      "subcategory": "Pizza",
+      "aliases": ["papa john's", "papajohns"],
+      "is_recurring": false
+    },
+    "little caesars": {
+      "canonical_name": "Little Caesars",
+      "category": "Fast Food",
+      "subcategory": "Pizza",
+      "aliases": ["littlecaesars", "little caesar's"],
+      "is_recurring": false
+    },
+    "kfc": {
+      "canonical_name": "KFC",
+      "category": "Fast Food",
+      "subcategory": "Chicken",
+      "aliases": ["kentucky fried chicken", "kentucky fried"],
+      "is_recurring": false
+    },
+    "popeyes": {
+      "canonical_name": "Popeyes",
+      "category": "Fast Food",
+      "subcategory": "Chicken",
+      "aliases": ["popeye's", "popeyes louisiana"],
+      "is_recurring": false
+    },
+    "five guys": {
+      "canonical_name": "Five Guys",
+      "category": "Fast Food",
+      "subcategory": "Burgers",
+      "aliases": ["fiveguys", "five guys burgers"],
+      "is_recurring": false
+    },
+    "in-n-out": {
+      "canonical_name": "In-N-Out Burger",
+      "category": "Fast Food",
+      "subcategory": "Burgers",
+      "aliases": ["in n out", "innout", "in and out"],
+      "is_recurring": false
+    },
+    "whataburger": {
+      "canonical_name": "Whataburger",
+      "category": "Fast Food",
+      "subcategory": "Burgers",
+      "aliases": ["what a burger"],
+      "is_recurring": false
+    },
+    "sonic": {
+      "canonical_name": "Sonic Drive-In",
+      "category": "Fast Food",
+      "subcategory": "Drive-In",
+      "aliases": ["sonic drive in", "sonic drivein"],
+      "is_recurring": false
+    },
+    "arbys": {
+      "canonical_name": "Arby's",
+      "category": "Fast Food",
+      "subcategory": "Sandwiches",
+      "aliases": ["arby's"],
+      "is_recurring": false
+    },
+    "jack in the box": {
+      "canonical_name": "Jack in the Box",
+      "category": "Fast Food",
+      "subcategory": "Burgers",
+      "aliases": ["jackinthebox", "jitb"],
+      "is_recurring": false
+    },
+    "carls jr": {
+      "canonical_name": "Carl's Jr.",
+      "category": "Fast Food",
+      "subcategory": "Burgers",
+      "aliases": ["carl's jr", "hardees", "hardee's"],
+      "is_recurring": false
+    },
+    "del taco": {
+      "canonical_name": "Del Taco",
+      "category": "Fast Food",
+      "subcategory": "Mexican",
+      "aliases": ["deltaco"],
+      "is_recurring": false
+    },
+    "wingstop": {
+      "canonical_name": "Wingstop",
+      "category": "Fast Food",
+      "subcategory": "Wings",
+      "aliases": ["wing stop"],
+      "is_recurring": false
+    },
+    "buffalo wild wings": {
+      "canonical_name": "Buffalo Wild Wings",
+      "category": "Fast Food",
+      "subcategory": "Wings",
+      "aliases": ["bww", "bdubs", "b dubs"],
+      "is_recurring": false
+    },
+    "raising canes": {
+      "canonical_name": "Raising Cane's",
+      "category": "Fast Food",
+      "subcategory": "Chicken",
+      "aliases": ["raising cane's", "canes", "raisingcanes"],
+      "is_recurring": false
+    },
+    "zaxbys": {
+      "canonical_name": "Zaxby's",
+      "category": "Fast Food",
+      "subcategory": "Chicken",
+      "aliases": ["zaxby's"],
+      "is_recurring": false
+    },
+    "jersey mikes": {
+      "canonical_name": "Jersey Mike's",
+      "category": "Fast Food",
+      "subcategory": "Sandwiches",
+      "aliases": ["jersey mike's", "jerseymikes"],
+      "is_recurring": false
+    },
+    "jimmy johns": {
+      "canonical_name": "Jimmy John's",
+      "category": "Fast Food",
+      "subcategory": "Sandwiches",
+      "aliases": ["jimmy john's", "jimmyjohns", "jj"],
+      "is_recurring": false
+    },
+    "firehouse subs": {
+      "canonical_name": "Firehouse Subs",
+      "category": "Fast Food",
+      "subcategory": "Sandwiches",
+      "aliases": ["firehousesubs"],
+      "is_recurring": false
+    },
+    "panera": {
+      "canonical_name": "Panera Bread",
+      "category": "Fast Food",
+      "subcategory": "Bakery Cafe",
+      "aliases": ["panera bread", "panerabread"],
+      "is_recurring": false
+    },
+    "qdoba": {
+      "canonical_name": "Qdoba",
+      "category": "Fast Food",
+      "subcategory": "Mexican",
+      "aliases": ["qdoba mexican"],
+      "is_recurring": false
+    },
+    "moes": {
+      "canonical_name": "Moe's Southwest Grill",
+      "category": "Fast Food",
+      "subcategory": "Mexican",
+      "aliases": ["moe's", "moes southwest"],
+      "is_recurring": false
+    },
+    "panda express": {
+      "canonical_name": "Panda Express",
+      "category": "Fast Food",
+      "subcategory": "Chinese",
+      "aliases": ["pandaexpress"],
+      "is_recurring": false
+    },
+    "noodles and company": {
+      "canonical_name": "Noodles & Company",
+      "category": "Fast Food",
+      "subcategory": "Noodles",
+      "aliases": ["noodles & company", "noodles co"],
+      "is_recurring": false
+    },
+    "culvers": {
+      "canonical_name": "Culver's",
+      "category": "Fast Food",
+      "subcategory": "Burgers",
+      "aliases": ["culver's"],
+      "is_recurring": false
+    },
+    "shake shack": {
+      "canonical_name": "Shake Shack",
+      "category": "Fast Food",
+      "subcategory": "Burgers",
+      "aliases": ["shakeshack"],
+      "is_recurring": false
+    },
+    "cook out": {
+      "canonical_name": "Cook Out",
+      "category": "Fast Food",
+      "subcategory": "Burgers",
+      "aliases": ["cookout"],
+      "is_recurring": false
+    },
+    
+    "starbucks": {
+      "canonical_name": "Starbucks",
+      "category": "Coffee & Beverages",
+      "subcategory": "Coffee Shop",
+      "aliases": ["sbux", "starbucks coffee"],
+      "is_recurring": false
+    },
+    "dunkin": {
+      "canonical_name": "Dunkin'",
+      "category": "Coffee & Beverages",
+      "subcategory": "Coffee Shop",
+      "aliases": ["dunkin donuts", "dunkin'", "dd"],
+      "is_recurring": false
+    },
+    "peets coffee": {
+      "canonical_name": "Peet's Coffee",
+      "category": "Coffee & Beverages",
+      "subcategory": "Coffee Shop",
+      "aliases": ["peet's coffee", "peet's", "peets"],
+      "is_recurring": false
+    },
+    "dutch bros": {
+      "canonical_name": "Dutch Bros",
+      "category": "Coffee & Beverages",
+      "subcategory": "Coffee Shop",
+      "aliases": ["dutchbros", "dutch brothers"],
+      "is_recurring": false
+    },
+    "philz coffee": {
+      "canonical_name": "Philz Coffee",
+      "category": "Coffee & Beverages",
+      "subcategory": "Coffee Shop",
+      "aliases": ["philz"],
+      "is_recurring": false
+    },
+    "blue bottle": {
+      "canonical_name": "Blue Bottle Coffee",
+      "category": "Coffee & Beverages",
+      "subcategory": "Coffee Shop",
+      "aliases": ["blue bottle coffee", "bluebottle"],
+      "is_recurring": false
+    },
+    "caribou coffee": {
+      "canonical_name": "Caribou Coffee",
+      "category": "Coffee & Beverages",
+      "subcategory": "Coffee Shop",
+      "aliases": ["caribou"],
+      "is_recurring": false
+    },
+    "tim hortons": {
+      "canonical_name": "Tim Hortons",
+      "category": "Coffee & Beverages",
+      "subcategory": "Coffee Shop",
+      "aliases": ["tims", "timhortons"],
+      "is_recurring": false
+    },
+    "jamba juice": {
+      "canonical_name": "Jamba",
+      "category": "Coffee & Beverages",
+      "subcategory": "Smoothie",
+      "aliases": ["jamba", "jambajuice"],
+      "is_recurring": false
+    },
+    "smoothie king": {
+      "canonical_name": "Smoothie King",
+      "category": "Coffee & Beverages",
+      "subcategory": "Smoothie",
+      "aliases": ["smoothieking"],
+      "is_recurring": false
+    },
+    "tropical smoothie": {
+      "canonical_name": "Tropical Smoothie Cafe",
+      "category": "Coffee & Beverages",
+      "subcategory": "Smoothie",
+      "aliases": ["tropical smoothie cafe", "tropicalsmoothie"],
+      "is_recurring": false
+    },
+    
+    "uber": {
+      "canonical_name": "Uber",
+      "category": "Transportation",
+      "subcategory": "Rideshare",
+      "aliases": ["uber trip", "uber ride", "uber technologies", "uber bv"],
+      "is_recurring": false
+    },
+    "lyft": {
+      "canonical_name": "Lyft",
+      "category": "Transportation",
+      "subcategory": "Rideshare",
+      "aliases": ["lyft ride", "lyft inc"],
+      "is_recurring": false
+    },
+    "uber eats": {
+      "canonical_name": "Uber Eats",
+      "category": "Food Delivery",
+      "subcategory": "Delivery Service",
+      "aliases": ["ubereats", "uber eat"],
+      "is_recurring": false
+    },
+    "doordash": {
+      "canonical_name": "DoorDash",
+      "category": "Food Delivery",
+      "subcategory": "Delivery Service",
+      "aliases": ["door dash", "dd", "doordash inc"],
+      "is_recurring": false
+    },
+    "grubhub": {
+      "canonical_name": "Grubhub",
+      "category": "Food Delivery",
+      "subcategory": "Delivery Service",
+      "aliases": ["grub hub", "grubhub inc"],
+      "is_recurring": false
+    },
+    "postmates": {
+      "canonical_name": "Postmates",
+      "category": "Food Delivery",
+      "subcategory": "Delivery Service",
+      "aliases": [],
+      "is_recurring": false
+    },
+    "gopuff": {
+      "canonical_name": "Gopuff",
+      "category": "Food Delivery",
+      "subcategory": "Convenience Delivery",
+      "aliases": ["go puff"],
+      "is_recurring": false
+    },
+    
+    "shell": {
+      "canonical_name": "Shell",
+      "category": "Gas & Fuel",
+      "subcategory": "Gas Station",
+      "aliases": ["shell oil", "shell service"],
+      "is_recurring": false
+    },
+    "chevron": {
+      "canonical_name": "Chevron",
+      "category": "Gas & Fuel",
+      "subcategory": "Gas Station",
+      "aliases": ["chevron texaco"],
+      "is_recurring": false
+    },
+    "exxon": {
+      "canonical_name": "Exxon",
+      "category": "Gas & Fuel",
+      "subcategory": "Gas Station",
+      "aliases": ["exxonmobil", "exxon mobil"],
+      "is_recurring": false
+    },
+    "mobil": {
+      "canonical_name": "Mobil",
+      "category": "Gas & Fuel",
+      "subcategory": "Gas Station",
+      "aliases": [],
+      "is_recurring": false
+    },
+    "bp": {
+      "canonical_name": "BP",
+      "category": "Gas & Fuel",
+      "subcategory": "Gas Station",
+      "aliases": ["british petroleum"],
+      "is_recurring": false
+    },
+    "arco": {
+      "canonical_name": "ARCO",
+      "category": "Gas & Fuel",
+      "subcategory": "Gas Station",
+      "aliases": ["arco ampm"],
+      "is_recurring": false
+    },
+    "76": {
+      "canonical_name": "76",
+      "category": "Gas & Fuel",
+      "subcategory": "Gas Station",
+      "aliases": ["76 gas", "union 76"],
+      "is_recurring": false
+    },
+    "circle k": {
+      "canonical_name": "Circle K",
+      "category": "Gas & Fuel",
+      "subcategory": "Gas Station",
+      "aliases": ["circlek"],
+      "is_recurring": false
+    },
+    "speedway": {
+      "canonical_name": "Speedway",
+      "category": "Gas & Fuel",
+      "subcategory": "Gas Station",
+      "aliases": [],
+      "is_recurring": false
+    },
+    "wawa": {
+      "canonical_name": "Wawa",
+      "category": "Gas & Fuel",
+      "subcategory": "Gas Station",
+      "aliases": [],
+      "is_recurring": false
+    },
+    "sheetz": {
+      "canonical_name": "Sheetz",
+      "category": "Gas & Fuel",
+      "subcategory": "Gas Station",
+      "aliases": [],
+      "is_recurring": false
+    },
+    "quiktrip": {
+      "canonical_name": "QuikTrip",
+      "category": "Gas & Fuel",
+      "subcategory": "Gas Station",
+      "aliases": ["qt", "quik trip"],
+      "is_recurring": false
+    },
+    "racetrac": {
+      "canonical_name": "RaceTrac",
+      "category": "Gas & Fuel",
+      "subcategory": "Gas Station",
+      "aliases": ["race trac"],
+      "is_recurring": false
+    },
+    "casey's": {
+      "canonical_name": "Casey's",
+      "category": "Gas & Fuel",
+      "subcategory": "Gas Station",
+      "aliases": ["caseys", "casey's general store"],
+      "is_recurring": false
+    },
+    "sunoco": {
+      "canonical_name": "Sunoco",
+      "category": "Gas & Fuel",
+      "subcategory": "Gas Station",
+      "aliases": [],
+      "is_recurring": false
+    },
+    "marathon": {
+      "canonical_name": "Marathon",
+      "category": "Gas & Fuel",
+      "subcategory": "Gas Station",
+      "aliases": ["marathon gas"],
+      "is_recurring": false
+    },
+    "valero": {
+      "canonical_name": "Valero",
+      "category": "Gas & Fuel",
+      "subcategory": "Gas Station",
+      "aliases": [],
+      "is_recurring": false
+    },
+    "sinclair": {
+      "canonical_name": "Sinclair",
+      "category": "Gas & Fuel",
+      "subcategory": "Gas Station",
+      "aliases": ["sinclair gas"],
+      "is_recurring": false
+    },
+    "phillips 66": {
+      "canonical_name": "Phillips 66",
+      "category": "Gas & Fuel",
+      "subcategory": "Gas Station",
+      "aliases": ["phillips66"],
+      "is_recurring": false
+    },
+    "7-eleven": {
+      "canonical_name": "7-Eleven",
+      "category": "Convenience",
+      "subcategory": "Convenience Store",
+      "aliases": ["7 eleven", "7eleven", "7-11", "seven eleven"],
+      "is_recurring": false
+    },
+    "ampm": {
+      "canonical_name": "ampm",
+      "category": "Convenience",
+      "subcategory": "Convenience Store",
+      "aliases": ["am pm", "am/pm"],
+      "is_recurring": false
+    },
+    
+    "netflix": {
+      "canonical_name": "Netflix",
+      "category": "Subscriptions",
+      "subcategory": "Streaming",
+      "aliases": ["netflix.com", "netflix inc"],
+      "is_recurring": true,
+      "typical_amounts": [6.99, 15.49, 22.99]
+    },
+    "spotify": {
+      "canonical_name": "Spotify",
+      "category": "Subscriptions",
+      "subcategory": "Music Streaming",
+      "aliases": ["spotify.com", "spotify ab", "spotify usa"],
+      "is_recurring": true,
+      "typical_amounts": [4.99, 10.99, 16.99]
+    },
+    "hulu": {
+      "canonical_name": "Hulu",
+      "category": "Subscriptions",
+      "subcategory": "Streaming",
+      "aliases": ["hulu.com", "hulu llc"],
+      "is_recurring": true,
+      "typical_amounts": [7.99, 17.99]
+    },
+    "disney plus": {
+      "canonical_name": "Disney+",
+      "category": "Subscriptions",
+      "subcategory": "Streaming",
+      "aliases": ["disney+", "disneyplus", "disney plus"],
+      "is_recurring": true,
+      "typical_amounts": [7.99, 13.99]
+    },
+    "hbo max": {
+      "canonical_name": "Max (HBO)",
+      "category": "Subscriptions",
+      "subcategory": "Streaming",
+      "aliases": ["hbo", "hbo now", "max", "hbomax"],
+      "is_recurring": true,
+      "typical_amounts": [9.99, 15.99]
+    },
+    "apple music": {
+      "canonical_name": "Apple Music",
+      "category": "Subscriptions",
+      "subcategory": "Music Streaming",
+      "aliases": ["apple.com/bill music", "itunes music"],
+      "is_recurring": true,
+      "typical_amounts": [5.99, 10.99, 16.99]
+    },
+    "apple tv": {
+      "canonical_name": "Apple TV+",
+      "category": "Subscriptions",
+      "subcategory": "Streaming",
+      "aliases": ["apple tv+", "apple.com/bill tv"],
+      "is_recurring": true,
+      "typical_amounts": [9.99]
+    },
+    "apple one": {
+      "canonical_name": "Apple One",
+      "category": "Subscriptions",
+      "subcategory": "Bundle",
+      "aliases": ["apple.com/bill one"],
+      "is_recurring": true,
+      "typical_amounts": [19.95, 25.95, 37.95]
+    },
+    "apple icloud": {
+      "canonical_name": "iCloud",
+      "category": "Subscriptions",
+      "subcategory": "Cloud Storage",
+      "aliases": ["icloud", "apple.com/bill icloud"],
+      "is_recurring": true,
+      "typical_amounts": [0.99, 2.99, 9.99]
+    },
+    "youtube premium": {
+      "canonical_name": "YouTube Premium",
+      "category": "Subscriptions",
+      "subcategory": "Streaming",
+      "aliases": ["youtube prem", "google youtube"],
+      "is_recurring": true,
+      "typical_amounts": [13.99, 22.99]
+    },
+    "youtube music": {
+      "canonical_name": "YouTube Music",
+      "category": "Subscriptions",
+      "subcategory": "Music Streaming",
+      "aliases": ["google youtube music"],
+      "is_recurring": true,
+      "typical_amounts": [10.99]
+    },
+    "peacock": {
+      "canonical_name": "Peacock",
+      "category": "Subscriptions",
+      "subcategory": "Streaming",
+      "aliases": ["peacocktv", "nbc peacock"],
+      "is_recurring": true,
+      "typical_amounts": [5.99, 11.99]
+    },
+    "paramount plus": {
+      "canonical_name": "Paramount+",
+      "category": "Subscriptions",
+      "subcategory": "Streaming",
+      "aliases": ["paramount+", "cbs all access", "paramountplus"],
+      "is_recurring": true,
+      "typical_amounts": [5.99, 11.99]
+    },
+    "audible": {
+      "canonical_name": "Audible",
+      "category": "Subscriptions",
+      "subcategory": "Audiobooks",
+      "aliases": ["audible.com", "audible inc"],
+      "is_recurring": true,
+      "typical_amounts": [14.95]
+    },
+    "kindle unlimited": {
+      "canonical_name": "Kindle Unlimited",
+      "category": "Subscriptions",
+      "subcategory": "Books",
+      "aliases": ["kindle unlmtd"],
+      "is_recurring": true,
+      "typical_amounts": [11.99]
+    },
+    "adobe": {
+      "canonical_name": "Adobe",
+      "category": "Subscriptions",
+      "subcategory": "Software",
+      "aliases": ["adobe.com", "adobe creative cloud", "adobe cc"],
+      "is_recurring": true,
+      "typical_amounts": [10.99, 22.99, 54.99]
+    },
+    "microsoft 365": {
+      "canonical_name": "Microsoft 365",
+      "category": "Subscriptions",
+      "subcategory": "Software",
+      "aliases": ["microsoft office", "office 365", "ms 365", "mssvc"],
+      "is_recurring": true,
+      "typical_amounts": [6.99, 9.99, 12.99]
+    },
+    "google one": {
+      "canonical_name": "Google One",
+      "category": "Subscriptions",
+      "subcategory": "Cloud Storage",
+      "aliases": ["google storage", "google.com/one"],
+      "is_recurring": true,
+      "typical_amounts": [1.99, 2.99, 9.99]
+    },
+    "dropbox": {
+      "canonical_name": "Dropbox",
+      "category": "Subscriptions",
+      "subcategory": "Cloud Storage",
+      "aliases": ["dropbox.com"],
+      "is_recurring": true,
+      "typical_amounts": [11.99, 19.99]
+    },
+    "github": {
+      "canonical_name": "GitHub",
+      "category": "Subscriptions",
+      "subcategory": "Developer Tools",
+      "aliases": ["github.com"],
+      "is_recurring": true,
+      "typical_amounts": [4.00, 21.00]
+    },
+    "notion": {
+      "canonical_name": "Notion",
+      "category": "Subscriptions",
+      "subcategory": "Productivity",
+      "aliases": ["notion.so"],
+      "is_recurring": true,
+      "typical_amounts": [8.00, 10.00]
+    },
+    "chatgpt": {
+      "canonical_name": "ChatGPT Plus",
+      "category": "Subscriptions",
+      "subcategory": "AI Tools",
+      "aliases": ["openai", "openai.com", "chatgpt plus"],
+      "is_recurring": true,
+      "typical_amounts": [20.00]
+    },
+    "planet fitness": {
+      "canonical_name": "Planet Fitness",
+      "category": "Subscriptions",
+      "subcategory": "Gym Membership",
+      "aliases": ["planetfitness", "planet fit"],
+      "is_recurring": true,
+      "typical_amounts": [10.00, 24.99]
+    },
+    "la fitness": {
+      "canonical_name": "LA Fitness",
+      "category": "Subscriptions",
+      "subcategory": "Gym Membership",
+      "aliases": ["lafitness"],
+      "is_recurring": true,
+      "typical_amounts": [29.99, 34.99]
+    },
+    "anytime fitness": {
+      "canonical_name": "Anytime Fitness",
+      "category": "Subscriptions",
+      "subcategory": "Gym Membership",
+      "aliases": ["anytimefitness"],
+      "is_recurring": true,
+      "typical_amounts": [38.00, 48.00]
+    },
+    "equinox": {
+      "canonical_name": "Equinox",
+      "category": "Subscriptions",
+      "subcategory": "Gym Membership",
+      "aliases": ["equinox gym"],
+      "is_recurring": true,
+      "typical_amounts": [150.00, 200.00]
+    },
+    "peloton": {
+      "canonical_name": "Peloton",
+      "category": "Subscriptions",
+      "subcategory": "Fitness App",
+      "aliases": ["onepeloton"],
+      "is_recurring": true,
+      "typical_amounts": [12.99, 44.00]
+    },
+    
+    "best buy": {
+      "canonical_name": "Best Buy",
+      "category": "Shopping & Retail",
+      "subcategory": "Electronics",
+      "aliases": ["bestbuy", "best buy.com"],
+      "is_recurring": false
+    },
+    "home depot": {
+      "canonical_name": "The Home Depot",
+      "category": "Shopping & Retail",
+      "subcategory": "Home Improvement",
+      "aliases": ["homedepot", "the home depot"],
+      "is_recurring": false
+    },
+    "lowes": {
+      "canonical_name": "Lowe's",
+      "category": "Shopping & Retail",
+      "subcategory": "Home Improvement",
+      "aliases": ["lowe's", "lowes home"],
+      "is_recurring": false
+    },
+    "ikea": {
+      "canonical_name": "IKEA",
+      "category": "Shopping & Retail",
+      "subcategory": "Furniture",
+      "aliases": ["ikea.com"],
+      "is_recurring": false
+    },
+    "wayfair": {
+      "canonical_name": "Wayfair",
+      "category": "Shopping & Retail",
+      "subcategory": "Furniture",
+      "aliases": ["wayfair.com"],
+      "is_recurring": false
+    },
+    "bed bath beyond": {
+      "canonical_name": "Bed Bath & Beyond",
+      "category": "Shopping & Retail",
+      "subcategory": "Home Goods",
+      "aliases": ["bed bath & beyond", "bedbath"],
+      "is_recurring": false
+    },
+    "tj maxx": {
+      "canonical_name": "TJ Maxx",
+      "category": "Shopping & Retail",
+      "subcategory": "Discount",
+      "aliases": ["tjmaxx", "t.j. maxx"],
+      "is_recurring": false
+    },
+    "marshalls": {
+      "canonical_name": "Marshalls",
+      "category": "Shopping & Retail",
+      "subcategory": "Discount",
+      "aliases": ["marshall's"],
+      "is_recurring": false
+    },
+    "ross": {
+      "canonical_name": "Ross",
+      "category": "Shopping & Retail",
+      "subcategory": "Discount",
+      "aliases": ["ross dress for less", "ross stores"],
+      "is_recurring": false
+    },
+    "kohls": {
+      "canonical_name": "Kohl's",
+      "category": "Shopping & Retail",
+      "subcategory": "Department Store",
+      "aliases": ["kohl's", "kohlsdeptstore"],
+      "is_recurring": false
+    },
+    "macys": {
+      "canonical_name": "Macy's",
+      "category": "Shopping & Retail",
+      "subcategory": "Department Store",
+      "aliases": ["macy's", "macys.com"],
+      "is_recurring": false
+    },
+    "nordstrom": {
+      "canonical_name": "Nordstrom",
+      "category": "Shopping & Retail",
+      "subcategory": "Department Store",
+      "aliases": ["nordstrom.com", "nordstrom rack"],
+      "is_recurring": false
+    },
+    "jcpenney": {
+      "canonical_name": "JCPenney",
+      "category": "Shopping & Retail",
+      "subcategory": "Department Store",
+      "aliases": ["jc penney", "jcp", "penneys"],
+      "is_recurring": false
+    },
+    "sears": {
+      "canonical_name": "Sears",
+      "category": "Shopping & Retail",
+      "subcategory": "Department Store",
+      "aliases": ["sears.com"],
+      "is_recurring": false
+    },
+    "dillards": {
+      "canonical_name": "Dillard's",
+      "category": "Shopping & Retail",
+      "subcategory": "Department Store",
+      "aliases": ["dillard's"],
+      "is_recurring": false
+    },
+    "apple store": {
+      "canonical_name": "Apple Store",
+      "category": "Shopping & Retail",
+      "subcategory": "Electronics",
+      "aliases": ["apple.com", "apple retail"],
+      "is_recurring": false
+    },
+    "microsoft store": {
+      "canonical_name": "Microsoft Store",
+      "category": "Shopping & Retail",
+      "subcategory": "Electronics",
+      "aliases": ["microsoftstore"],
+      "is_recurring": false
+    },
+    "gamestop": {
+      "canonical_name": "GameStop",
+      "category": "Shopping & Retail",
+      "subcategory": "Gaming",
+      "aliases": ["game stop"],
+      "is_recurring": false
+    },
+    "staples": {
+      "canonical_name": "Staples",
+      "category": "Shopping & Retail",
+      "subcategory": "Office Supplies",
+      "aliases": ["staples.com"],
+      "is_recurring": false
+    },
+    "office depot": {
+      "canonical_name": "Office Depot",
+      "category": "Shopping & Retail",
+      "subcategory": "Office Supplies",
+      "aliases": ["officedepot", "office max", "officemax"],
+      "is_recurring": false
+    },
+    "dollar general": {
+      "canonical_name": "Dollar General",
+      "category": "Shopping & Retail",
+      "subcategory": "Discount",
+      "aliases": ["dollargeneral", "dg"],
+      "is_recurring": false
+    },
+    "dollar tree": {
+      "canonical_name": "Dollar Tree",
+      "category": "Shopping & Retail",
+      "subcategory": "Discount",
+      "aliases": ["dollartree"],
+      "is_recurring": false
+    },
+    "family dollar": {
+      "canonical_name": "Family Dollar",
+      "category": "Shopping & Retail",
+      "subcategory": "Discount",
+      "aliases": ["familydollar"],
+      "is_recurring": false
+    },
+    "five below": {
+      "canonical_name": "Five Below",
+      "category": "Shopping & Retail",
+      "subcategory": "Discount",
+      "aliases": ["fivebelow", "5 below"],
+      "is_recurring": false
+    },
+    "big lots": {
+      "canonical_name": "Big Lots",
+      "category": "Shopping & Retail",
+      "subcategory": "Discount",
+      "aliases": ["biglots"],
+      "is_recurring": false
+    },
+    "nike": {
+      "canonical_name": "Nike",
+      "category": "Shopping & Retail",
+      "subcategory": "Clothing",
+      "aliases": ["nike.com", "nike store"],
+      "is_recurring": false
+    },
+    "adidas": {
+      "canonical_name": "Adidas",
+      "category": "Shopping & Retail",
+      "subcategory": "Clothing",
+      "aliases": ["adidas.com"],
+      "is_recurring": false
+    },
+    "foot locker": {
+      "canonical_name": "Foot Locker",
+      "category": "Shopping & Retail",
+      "subcategory": "Footwear",
+      "aliases": ["footlocker"],
+      "is_recurring": false
+    },
+    "finish line": {
+      "canonical_name": "Finish Line",
+      "category": "Shopping & Retail",
+      "subcategory": "Footwear",
+      "aliases": ["finishline"],
+      "is_recurring": false
+    },
+    "dsw": {
+      "canonical_name": "DSW",
+      "category": "Shopping & Retail",
+      "subcategory": "Footwear",
+      "aliases": ["dsw shoe", "designer shoe warehouse"],
+      "is_recurring": false
+    },
+    "old navy": {
+      "canonical_name": "Old Navy",
+      "category": "Shopping & Retail",
+      "subcategory": "Clothing",
+      "aliases": ["oldnavy"],
+      "is_recurring": false
+    },
+    "gap": {
+      "canonical_name": "Gap",
+      "category": "Shopping & Retail",
+      "subcategory": "Clothing",
+      "aliases": ["gap.com", "gapinc"],
+      "is_recurring": false
+    },
+    "banana republic": {
+      "canonical_name": "Banana Republic",
+      "category": "Shopping & Retail",
+      "subcategory": "Clothing",
+      "aliases": ["bananarepublic"],
+      "is_recurring": false
+    },
+    "h&m": {
+      "canonical_name": "H&M",
+      "category": "Shopping & Retail",
+      "subcategory": "Clothing",
+      "aliases": ["hm", "h and m", "hm.com"],
+      "is_recurring": false
+    },
+    "zara": {
+      "canonical_name": "Zara",
+      "category": "Shopping & Retail",
+      "subcategory": "Clothing",
+      "aliases": ["zara.com"],
+      "is_recurring": false
+    },
+    "forever 21": {
+      "canonical_name": "Forever 21",
+      "category": "Shopping & Retail",
+      "subcategory": "Clothing",
+      "aliases": ["forever21"],
+      "is_recurring": false
+    },
+    "uniqlo": {
+      "canonical_name": "Uniqlo",
+      "category": "Shopping & Retail",
+      "subcategory": "Clothing",
+      "aliases": ["uniqlo.com"],
+      "is_recurring": false
+    },
+    "lululemon": {
+      "canonical_name": "Lululemon",
+      "category": "Shopping & Retail",
+      "subcategory": "Athletic Wear",
+      "aliases": ["lululemon athletica"],
+      "is_recurring": false
+    },
+    "athleta": {
+      "canonical_name": "Athleta",
+      "category": "Shopping & Retail",
+      "subcategory": "Athletic Wear",
+      "aliases": ["athleta.com"],
+      "is_recurring": false
+    },
+    "sephora": {
+      "canonical_name": "Sephora",
+      "category": "Shopping & Retail",
+      "subcategory": "Beauty",
+      "aliases": ["sephora.com"],
+      "is_recurring": false
+    },
+    "ulta": {
+      "canonical_name": "Ulta Beauty",
+      "category": "Shopping & Retail",
+      "subcategory": "Beauty",
+      "aliases": ["ulta beauty", "ulta.com"],
+      "is_recurring": false
+    },
+    "bath and body works": {
+      "canonical_name": "Bath & Body Works",
+      "category": "Shopping & Retail",
+      "subcategory": "Beauty",
+      "aliases": ["bath & body works", "bbw"],
+      "is_recurring": false
+    },
+    "cvs": {
+      "canonical_name": "CVS Pharmacy",
+      "category": "Healthcare",
+      "subcategory": "Pharmacy",
+      "aliases": ["cvs pharmacy", "cvs health"],
+      "is_recurring": false
+    },
+    "walgreens": {
+      "canonical_name": "Walgreens",
+      "category": "Healthcare",
+      "subcategory": "Pharmacy",
+      "aliases": ["walgreens pharmacy"],
+      "is_recurring": false
+    },
+    "rite aid": {
+      "canonical_name": "Rite Aid",
+      "category": "Healthcare",
+      "subcategory": "Pharmacy",
+      "aliases": ["riteaid"],
+      "is_recurring": false
+    },
+    "petco": {
+      "canonical_name": "Petco",
+      "category": "Shopping & Retail",
+      "subcategory": "Pet Supplies",
+      "aliases": ["petco.com"],
+      "is_recurring": false
+    },
+    "petsmart": {
+      "canonical_name": "PetSmart",
+      "category": "Shopping & Retail",
+      "subcategory": "Pet Supplies",
+      "aliases": ["pet smart"],
+      "is_recurring": false
+    },
+    "chewy": {
+      "canonical_name": "Chewy",
+      "category": "Shopping & Retail",
+      "subcategory": "Pet Supplies",
+      "aliases": ["chewy.com"],
+      "is_recurring": false
+    },
+    "petsuppliesplus": {
+      "canonical_name": "Pet Supplies Plus",
+      "category": "Shopping & Retail",
+      "subcategory": "Pet Supplies",
+      "aliases": ["pet supplies plus"],
+      "is_recurring": false
+    },
+    "autozone": {
+      "canonical_name": "AutoZone",
+      "category": "Shopping & Retail",
+      "subcategory": "Auto Parts",
+      "aliases": ["auto zone"],
+      "is_recurring": false
+    },
+    "oreilly": {
+      "canonical_name": "O'Reilly Auto Parts",
+      "category": "Shopping & Retail",
+      "subcategory": "Auto Parts",
+      "aliases": ["o'reilly", "oreillys", "oreilly auto"],
+      "is_recurring": false
+    },
+    "advance auto": {
+      "canonical_name": "Advance Auto Parts",
+      "category": "Shopping & Retail",
+      "subcategory": "Auto Parts",
+      "aliases": ["advance auto parts", "advanceauto"],
+      "is_recurring": false
+    },
+    "napa": {
+      "canonical_name": "NAPA Auto Parts",
+      "category": "Shopping & Retail",
+      "subcategory": "Auto Parts",
+      "aliases": ["napa auto", "napa auto parts"],
+      "is_recurring": false
+    },
+    
+    "venmo": {
+      "canonical_name": "Venmo",
+      "category": "Transfers",
+      "subcategory": "P2P Payment",
+      "aliases": ["venmo cashout", "venmo.com"],
+      "is_recurring": false
+    },
+    "zelle": {
+      "canonical_name": "Zelle",
+      "category": "Transfers",
+      "subcategory": "P2P Payment",
+      "aliases": ["zelle payment", "zellepay"],
+      "is_recurring": false
+    },
+    "paypal": {
+      "canonical_name": "PayPal",
+      "category": "Transfers",
+      "subcategory": "P2P Payment",
+      "aliases": ["paypal.com", "paypal payment", "paypal transfer"],
+      "is_recurring": false
+    },
+    "cash app": {
+      "canonical_name": "Cash App",
+      "category": "Transfers",
+      "subcategory": "P2P Payment",
+      "aliases": ["cashapp", "square cash", "cash app cash"],
+      "is_recurring": false
+    },
+    "apple pay": {
+      "canonical_name": "Apple Pay Cash",
+      "category": "Transfers",
+      "subcategory": "P2P Payment",
+      "aliases": ["apple cash", "applepay"],
+      "is_recurring": false
+    },
+    "google pay": {
+      "canonical_name": "Google Pay",
+      "category": "Transfers",
+      "subcategory": "P2P Payment",
+      "aliases": ["googlepay", "gpay"],
+      "is_recurring": false
+    },
+    "wire transfer": {
+      "canonical_name": "Wire Transfer",
+      "category": "Transfers",
+      "subcategory": "Bank Transfer",
+      "aliases": ["wire xfer", "wire trfr"],
+      "is_recurring": false
+    },
+    "ach": {
+      "canonical_name": "ACH Transfer",
+      "category": "Transfers",
+      "subcategory": "Bank Transfer",
+      "aliases": ["ach payment", "ach debit", "ach credit", "ach transfer"],
+      "is_recurring": false
+    },
+    
+    "att": {
+      "canonical_name": "AT&T",
+      "category": "Bills & Utilities",
+      "subcategory": "Phone/Internet",
+      "aliases": ["at&t", "at&t wireless", "att wireless", "att mobility"],
+      "is_recurring": true
+    },
+    "verizon": {
+      "canonical_name": "Verizon",
+      "category": "Bills & Utilities",
+      "subcategory": "Phone/Internet",
+      "aliases": ["verizon wireless", "vzw", "vz wireless"],
+      "is_recurring": true
+    },
+    "tmobile": {
+      "canonical_name": "T-Mobile",
+      "category": "Bills & Utilities",
+      "subcategory": "Phone/Internet",
+      "aliases": ["t-mobile", "t mobile", "tmobile usa"],
+      "is_recurring": true
+    },
+    "sprint": {
+      "canonical_name": "Sprint",
+      "category": "Bills & Utilities",
+      "subcategory": "Phone/Internet",
+      "aliases": ["sprint pcs", "sprint wireless"],
+      "is_recurring": true
+    },
+    "xfinity": {
+      "canonical_name": "Xfinity",
+      "category": "Bills & Utilities",
+      "subcategory": "Cable/Internet",
+      "aliases": ["xfinity comcast", "comcast xfinity", "comcast"],
+      "is_recurring": true
+    },
+    "spectrum": {
+      "canonical_name": "Spectrum",
+      "category": "Bills & Utilities",
+      "subcategory": "Cable/Internet",
+      "aliases": ["spectrum cable", "charter spectrum", "charter communications"],
+      "is_recurring": true
+    },
+    "cox": {
+      "canonical_name": "Cox Communications",
+      "category": "Bills & Utilities",
+      "subcategory": "Cable/Internet",
+      "aliases": ["cox cable", "cox communications"],
+      "is_recurring": true
+    },
+    "optimum": {
+      "canonical_name": "Optimum",
+      "category": "Bills & Utilities",
+      "subcategory": "Cable/Internet",
+      "aliases": ["optimum online", "cablevision"],
+      "is_recurring": true
+    },
+    "fios": {
+      "canonical_name": "Verizon Fios",
+      "category": "Bills & Utilities",
+      "subcategory": "Cable/Internet",
+      "aliases": ["verizon fios", "fios tv"],
+      "is_recurring": true
+    },
+    "directv": {
+      "canonical_name": "DirecTV",
+      "category": "Bills & Utilities",
+      "subcategory": "Cable/Satellite",
+      "aliases": ["direct tv", "att directv"],
+      "is_recurring": true
+    },
+    "dish": {
+      "canonical_name": "DISH Network",
+      "category": "Bills & Utilities",
+      "subcategory": "Cable/Satellite",
+      "aliases": ["dish network", "dishnetwork"],
+      "is_recurring": true
+    },
+    "pge": {
+      "canonical_name": "PG&E",
+      "category": "Bills & Utilities",
+      "subcategory": "Electric",
+      "aliases": ["pg&e", "pacific gas electric", "pacific gas and electric"],
+      "is_recurring": true
+    },
+    "southern california edison": {
+      "canonical_name": "Southern California Edison",
+      "category": "Bills & Utilities",
+      "subcategory": "Electric",
+      "aliases": ["sce", "socal edison", "edison"],
+      "is_recurring": true
+    },
+    "duke energy": {
+      "canonical_name": "Duke Energy",
+      "category": "Bills & Utilities",
+      "subcategory": "Electric",
+      "aliases": ["duke power"],
+      "is_recurring": true
+    },
+    "con edison": {
+      "canonical_name": "Con Edison",
+      "category": "Bills & Utilities",
+      "subcategory": "Electric",
+      "aliases": ["coned", "consolidated edison"],
+      "is_recurring": true
+    },
+    "national grid": {
+      "canonical_name": "National Grid",
+      "category": "Bills & Utilities",
+      "subcategory": "Electric/Gas",
+      "aliases": ["nationalgrid"],
+      "is_recurring": true
+    },
+    "socal gas": {
+      "canonical_name": "SoCalGas",
+      "category": "Bills & Utilities",
+      "subcategory": "Gas",
+      "aliases": ["southern california gas", "socalgas"],
+      "is_recurring": true
+    },
+    "water": {
+      "canonical_name": "Water Utility",
+      "category": "Bills & Utilities",
+      "subcategory": "Water",
+      "aliases": ["water bill", "municipal water", "city water"],
+      "is_recurring": true
+    },
+    "state farm": {
+      "canonical_name": "State Farm",
+      "category": "Insurance",
+      "subcategory": "Insurance",
+      "aliases": ["statefarm", "state farm insurance"],
+      "is_recurring": true
+    },
+    "geico": {
+      "canonical_name": "GEICO",
+      "category": "Insurance",
+      "subcategory": "Insurance",
+      "aliases": ["geico insurance"],
+      "is_recurring": true
+    },
+    "progressive": {
+      "canonical_name": "Progressive",
+      "category": "Insurance",
+      "subcategory": "Insurance",
+      "aliases": ["progressive insurance"],
+      "is_recurring": true
+    },
+    "allstate": {
+      "canonical_name": "Allstate",
+      "category": "Insurance",
+      "subcategory": "Insurance",
+      "aliases": ["allstate insurance"],
+      "is_recurring": true
+    },
+    "liberty mutual": {
+      "canonical_name": "Liberty Mutual",
+      "category": "Insurance",
+      "subcategory": "Insurance",
+      "aliases": ["libertymutual"],
+      "is_recurring": true
+    },
+    "usaa": {
+      "canonical_name": "USAA",
+      "category": "Insurance",
+      "subcategory": "Insurance",
+      "aliases": ["usaa insurance"],
+      "is_recurring": true
+    },
+    
+    "amc": {
+      "canonical_name": "AMC Theatres",
+      "category": "Entertainment",
+      "subcategory": "Movies",
+      "aliases": ["amc theaters", "amc theatre"],
+      "is_recurring": false
+    },
+    "regal": {
+      "canonical_name": "Regal Cinemas",
+      "category": "Entertainment",
+      "subcategory": "Movies",
+      "aliases": ["regal cinemas", "regal theatres"],
+      "is_recurring": false
+    },
+    "cinemark": {
+      "canonical_name": "Cinemark",
+      "category": "Entertainment",
+      "subcategory": "Movies",
+      "aliases": ["cinemark theatres"],
+      "is_recurring": false
+    },
+    "ticketmaster": {
+      "canonical_name": "Ticketmaster",
+      "category": "Entertainment",
+      "subcategory": "Tickets",
+      "aliases": ["ticketmaster.com", "tm"],
+      "is_recurring": false
+    },
+    "stubhub": {
+      "canonical_name": "StubHub",
+      "category": "Entertainment",
+      "subcategory": "Tickets",
+      "aliases": ["stub hub"],
+      "is_recurring": false
+    },
+    "eventbrite": {
+      "canonical_name": "Eventbrite",
+      "category": "Entertainment",
+      "subcategory": "Tickets",
+      "aliases": ["eventbrite.com"],
+      "is_recurring": false
+    },
+    "dave and busters": {
+      "canonical_name": "Dave & Buster's",
+      "category": "Entertainment",
+      "subcategory": "Arcade/Restaurant",
+      "aliases": ["dave & busters", "daveandbusters"],
+      "is_recurring": false
+    },
+    "topgolf": {
+      "canonical_name": "Topgolf",
+      "category": "Entertainment",
+      "subcategory": "Sports Entertainment",
+      "aliases": ["top golf"],
+      "is_recurring": false
+    },
+    "bowling": {
+      "canonical_name": "Bowling",
+      "category": "Entertainment",
+      "subcategory": "Recreation",
+      "aliases": ["bowling alley", "bowl"],
+      "is_recurring": false
+    },
+    "steam": {
+      "canonical_name": "Steam",
+      "category": "Entertainment",
+      "subcategory": "Gaming",
+      "aliases": ["steampowered", "steam games", "valve steam"],
+      "is_recurring": false
+    },
+    "playstation": {
+      "canonical_name": "PlayStation Store",
+      "category": "Entertainment",
+      "subcategory": "Gaming",
+      "aliases": ["ps store", "playstation network", "psn", "sony playstation"],
+      "is_recurring": false
+    },
+    "xbox": {
+      "canonical_name": "Xbox",
+      "category": "Entertainment",
+      "subcategory": "Gaming",
+      "aliases": ["xbox live", "microsoft xbox"],
+      "is_recurring": false
+    },
+    "nintendo": {
+      "canonical_name": "Nintendo",
+      "category": "Entertainment",
+      "subcategory": "Gaming",
+      "aliases": ["nintendo eshop", "nintendo store"],
+      "is_recurring": false
+    },
+    
+    "hilton": {
+      "canonical_name": "Hilton",
+      "category": "Travel",
+      "subcategory": "Hotels",
+      "aliases": ["hilton hotel", "hilton.com", "hampton inn", "doubletree", "embassy suites"],
+      "is_recurring": false
+    },
+    "marriott": {
+      "canonical_name": "Marriott",
+      "category": "Travel",
+      "subcategory": "Hotels",
+      "aliases": ["marriott hotel", "marriott.com", "courtyard", "residence inn", "ritz carlton"],
+      "is_recurring": false
+    },
+    "hyatt": {
+      "canonical_name": "Hyatt",
+      "category": "Travel",
+      "subcategory": "Hotels",
+      "aliases": ["hyatt hotel", "hyatt.com", "hyatt regency"],
+      "is_recurring": false
+    },
+    "ihg": {
+      "canonical_name": "IHG",
+      "category": "Travel",
+      "subcategory": "Hotels",
+      "aliases": ["holiday inn", "crowne plaza", "intercontinental"],
+      "is_recurring": false
+    },
+    "wyndham": {
+      "canonical_name": "Wyndham",
+      "category": "Travel",
+      "subcategory": "Hotels",
+      "aliases": ["wyndham hotel", "days inn", "ramada", "la quinta"],
+      "is_recurring": false
+    },
+    "airbnb": {
+      "canonical_name": "Airbnb",
+      "category": "Travel",
+      "subcategory": "Vacation Rentals",
+      "aliases": ["airbnb.com", "air bnb"],
+      "is_recurring": false
+    },
+    "vrbo": {
+      "canonical_name": "Vrbo",
+      "category": "Travel",
+      "subcategory": "Vacation Rentals",
+      "aliases": ["vrbo.com", "vacation rental"],
+      "is_recurring": false
+    },
+    "expedia": {
+      "canonical_name": "Expedia",
+      "category": "Travel",
+      "subcategory": "Travel Booking",
+      "aliases": ["expedia.com"],
+      "is_recurring": false
+    },
+    "booking.com": {
+      "canonical_name": "Booking.com",
+      "category": "Travel",
+      "subcategory": "Travel Booking",
+      "aliases": ["booking", "bookingcom"],
+      "is_recurring": false
+    },
+    "kayak": {
+      "canonical_name": "Kayak",
+      "category": "Travel",
+      "subcategory": "Travel Booking",
+      "aliases": ["kayak.com"],
+      "is_recurring": false
+    },
+    "priceline": {
+      "canonical_name": "Priceline",
+      "category": "Travel",
+      "subcategory": "Travel Booking",
+      "aliases": ["priceline.com"],
+      "is_recurring": false
+    },
+    "southwest": {
+      "canonical_name": "Southwest Airlines",
+      "category": "Travel",
+      "subcategory": "Airlines",
+      "aliases": ["southwest air", "swa", "southwest.com"],
+      "is_recurring": false
+    },
+    "united": {
+      "canonical_name": "United Airlines",
+      "category": "Travel",
+      "subcategory": "Airlines",
+      "aliases": ["united air", "united.com"],
+      "is_recurring": false
+    },
+    "american airlines": {
+      "canonical_name": "American Airlines",
+      "category": "Travel",
+      "subcategory": "Airlines",
+      "aliases": ["aa", "american air", "aa.com"],
+      "is_recurring": false
+    },
+    "delta": {
+      "canonical_name": "Delta Airlines",
+      "category": "Travel",
+      "subcategory": "Airlines",
+      "aliases": ["delta air", "delta.com"],
+      "is_recurring": false
+    },
+    "jetblue": {
+      "canonical_name": "JetBlue",
+      "category": "Travel",
+      "subcategory": "Airlines",
+      "aliases": ["jet blue", "jetblue.com"],
+      "is_recurring": false
+    },
+    "spirit": {
+      "canonical_name": "Spirit Airlines",
+      "category": "Travel",
+      "subcategory": "Airlines",
+      "aliases": ["spirit air", "spirit.com"],
+      "is_recurring": false
+    },
+    "frontier": {
+      "canonical_name": "Frontier Airlines",
+      "category": "Travel",
+      "subcategory": "Airlines",
+      "aliases": ["frontier air"],
+      "is_recurring": false
+    },
+    "hertz": {
+      "canonical_name": "Hertz",
+      "category": "Travel",
+      "subcategory": "Car Rental",
+      "aliases": ["hertz rental", "hertz.com"],
+      "is_recurring": false
+    },
+    "enterprise": {
+      "canonical_name": "Enterprise",
+      "category": "Travel",
+      "subcategory": "Car Rental",
+      "aliases": ["enterprise rent", "enterprise.com"],
+      "is_recurring": false
+    },
+    "avis": {
+      "canonical_name": "Avis",
+      "category": "Travel",
+      "subcategory": "Car Rental",
+      "aliases": ["avis rental", "avis.com"],
+      "is_recurring": false
+    },
+    "budget": {
+      "canonical_name": "Budget",
+      "category": "Travel",
+      "subcategory": "Car Rental",
+      "aliases": ["budget rental", "budget.com"],
+      "is_recurring": false
+    },
+    "national": {
+      "canonical_name": "National Car Rental",
+      "category": "Travel",
+      "subcategory": "Car Rental",
+      "aliases": ["national rental"],
+      "is_recurring": false
+    },
+    "turo": {
+      "canonical_name": "Turo",
+      "category": "Travel",
+      "subcategory": "Car Rental",
+      "aliases": ["turo.com"],
+      "is_recurring": false
+    },
+    "parking": {
+      "canonical_name": "Parking",
+      "category": "Transportation",
+      "subcategory": "Parking",
+      "aliases": ["parking lot", "parking garage", "park meter"],
+      "is_recurring": false
+    },
+    "toll": {
+      "canonical_name": "Toll",
+      "category": "Transportation",
+      "subcategory": "Tolls",
+      "aliases": ["toll road", "ez pass", "fastrak", "sunpass", "toll fee"],
+      "is_recurring": false
+    },
+    
+    "doctor": {
+      "canonical_name": "Doctor/Physician",
+      "category": "Healthcare",
+      "subcategory": "Medical",
+      "aliases": ["dr office", "physician", "medical office", "doctor office"],
+      "is_recurring": false
+    },
+    "dentist": {
+      "canonical_name": "Dentist",
+      "category": "Healthcare",
+      "subcategory": "Dental",
+      "aliases": ["dental office", "dental care"],
+      "is_recurring": false
+    },
+    "hospital": {
+      "canonical_name": "Hospital",
+      "category": "Healthcare",
+      "subcategory": "Medical",
+      "aliases": ["medical center", "emergency room", "er"],
+      "is_recurring": false
+    },
+    "urgent care": {
+      "canonical_name": "Urgent Care",
+      "category": "Healthcare",
+      "subcategory": "Medical",
+      "aliases": ["urgentcare"],
+      "is_recurring": false
+    },
+    "labcorp": {
+      "canonical_name": "LabCorp",
+      "category": "Healthcare",
+      "subcategory": "Laboratory",
+      "aliases": ["laboratory corp"],
+      "is_recurring": false
+    },
+    "quest diagnostics": {
+      "canonical_name": "Quest Diagnostics",
+      "category": "Healthcare",
+      "subcategory": "Laboratory",
+      "aliases": ["quest"],
+      "is_recurring": false
+    },
+    "optical": {
+      "canonical_name": "Vision/Optical",
+      "category": "Healthcare",
+      "subcategory": "Vision",
+      "aliases": ["eye doctor", "optometrist", "lenscrafters", "pearle vision"],
+      "is_recurring": false
+    },
+    
+    "tuition": {
+      "canonical_name": "Tuition",
+      "category": "Education",
+      "subcategory": "School",
+      "aliases": ["university", "college", "school fee"],
+      "is_recurring": false
+    },
+    "studentloan": {
+      "canonical_name": "Student Loan",
+      "category": "Education",
+      "subcategory": "Loans",
+      "aliases": ["student loan", "navient", "nelnet", "sallie mae", "mohela", "great lakes"],
+      "is_recurring": true
+    },
+    "coursera": {
+      "canonical_name": "Coursera",
+      "category": "Education",
+      "subcategory": "Online Learning",
+      "aliases": ["coursera.com"],
+      "is_recurring": true
+    },
+    "udemy": {
+      "canonical_name": "Udemy",
+      "category": "Education",
+      "subcategory": "Online Learning",
+      "aliases": ["udemy.com"],
+      "is_recurring": false
+    },
+    "skillshare": {
+      "canonical_name": "Skillshare",
+      "category": "Education",
+      "subcategory": "Online Learning",
+      "aliases": ["skillshare.com"],
+      "is_recurring": true
+    },
+    "masterclass": {
+      "canonical_name": "MasterClass",
+      "category": "Education",
+      "subcategory": "Online Learning",
+      "aliases": ["masterclass.com"],
+      "is_recurring": true
+    },
+    "linkedin learning": {
+      "canonical_name": "LinkedIn Learning",
+      "category": "Education",
+      "subcategory": "Online Learning",
+      "aliases": ["linkedinlearning", "lynda", "lynda.com"],
+      "is_recurring": true
+    },
+    
+    "daycare": {
+      "canonical_name": "Daycare/Childcare",
+      "category": "Childcare",
+      "subcategory": "Daycare",
+      "aliases": ["childcare", "child care", "kids care"],
+      "is_recurring": true
+    },
+    "preschool": {
+      "canonical_name": "Preschool",
+      "category": "Childcare",
+      "subcategory": "Education",
+      "aliases": ["pre-school", "pre school"],
+      "is_recurring": true
+    },
+    
+    "rent": {
+      "canonical_name": "Rent",
+      "category": "Housing",
+      "subcategory": "Rent",
+      "aliases": ["rent payment", "apartment rent", "monthly rent"],
+      "is_recurring": true
+    },
+    "mortgage": {
+      "canonical_name": "Mortgage",
+      "category": "Housing",
+      "subcategory": "Mortgage",
+      "aliases": ["mortgage payment", "home loan"],
+      "is_recurring": true
+    },
+    "hoa": {
+      "canonical_name": "HOA",
+      "category": "Housing",
+      "subcategory": "Fees",
+      "aliases": ["hoa fee", "homeowners association", "condo fee"],
+      "is_recurring": true
+    },
+    
+    "atm": {
+      "canonical_name": "ATM Withdrawal",
+      "category": "Cash & ATM",
+      "subcategory": "Withdrawal",
+      "aliases": ["atm withdrawal", "cash withdrawal", "atm cash"],
+      "is_recurring": false
+    },
+    "atm deposit": {
+      "canonical_name": "ATM Deposit",
+      "category": "Cash & ATM",
+      "subcategory": "Deposit",
+      "aliases": ["cash deposit", "atm dep"],
+      "is_recurring": false
+    },
+    
+    "charity": {
+      "canonical_name": "Charity/Donation",
+      "category": "Giving",
+      "subcategory": "Charitable",
+      "aliases": ["donation", "charitable", "non-profit", "nonprofit"],
+      "is_recurring": false
+    },
+    "church": {
+      "canonical_name": "Church/Religious",
+      "category": "Giving",
+      "subcategory": "Religious",
+      "aliases": ["tithe", "offering", "religious"],
+      "is_recurring": false
+    },
+    
+    "direct deposit": {
+      "canonical_name": "Direct Deposit",
+      "category": "Income",
+      "subcategory": "Payroll",
+      "aliases": ["payroll", "salary", "paycheck", "pay deposit"],
+      "is_recurring": true
+    },
+    "interest": {
+      "canonical_name": "Interest",
+      "category": "Income",
+      "subcategory": "Interest",
+      "aliases": ["interest payment", "interest earned", "interest income"],
+      "is_recurring": true
+    },
+    "dividend": {
+      "canonical_name": "Dividend",
+      "category": "Income",
+      "subcategory": "Investment",
+      "aliases": ["dividend payment", "stock dividend"],
+      "is_recurring": false
+    },
+    "refund": {
+      "canonical_name": "Refund",
+      "category": "Income",
+      "subcategory": "Refund",
+      "aliases": ["tax refund", "purchase refund", "return refund"],
+      "is_recurring": false
+    }
+  },
+  
+  "patterns": [
+    {"regex": "^amzn|^amazon", "merchant": "amazon"},
+    {"regex": "^amzn\\s*prime|amazon\\s*prime", "merchant": "amazon prime"},
+    {"regex": "^amzn\\s*fresh|amazon\\s*fresh|^amazon\\s*wf", "merchant": "amazon fresh"},
+    {"regex": "^wholefds|^whole\\s*foods", "merchant": "whole foods"},
+    {"regex": "^tgt\\s|^target", "merchant": "target"},
+    {"regex": "^wmt\\s|^walmart|^wal-?mart", "merchant": "walmart"},
+    {"regex": "^costco|^costco\\s*whse", "merchant": "costco"},
+    {"regex": "^uber(?!\\s*eats)", "merchant": "uber"},
+    {"regex": "^uber\\s*eats|^ubereats", "merchant": "uber eats"},
+    {"regex": "^lyft", "merchant": "lyft"},
+    {"regex": "^doordash|^dd\\s", "merchant": "doordash"},
+    {"regex": "^grubhub|^grub\\s*hub", "merchant": "grubhub"},
+    {"regex": "^starbucks|^sbux", "merchant": "starbucks"},
+    {"regex": "^dunkin|^dd\\s*donuts", "merchant": "dunkin"},
+    {"regex": "^mcdonald|^mcd\\s", "merchant": "mcdonalds"},
+    {"regex": "^chick-?fil-?a|^cfa\\s", "merchant": "chick fil a"},
+    {"regex": "^chipotle", "merchant": "chipotle"},
+    {"regex": "^netflix", "merchant": "netflix"},
+    {"regex": "^spotify", "merchant": "spotify"},
+    {"regex": "^hulu", "merchant": "hulu"},
+    {"regex": "^disney\\+|^disneyplus", "merchant": "disney plus"},
+    {"regex": "^apple\\.com/bill|^apple music|^itunes|^apple tv", "merchant": "apple music"},
+    {"regex": "^youtube\\s*prem", "merchant": "youtube premium"},
+    {"regex": "^hbo|^max\\s", "merchant": "hbo max"},
+    {"regex": "^venmo", "merchant": "venmo"},
+    {"regex": "^zelle", "merchant": "zelle"},
+    {"regex": "^paypal", "merchant": "paypal"},
+    {"regex": "^cash\\s*app|^square\\s*cash", "merchant": "cash app"},
+    {"regex": "^shell\\s|shell\\s*oil", "merchant": "shell"},
+    {"regex": "^chevron", "merchant": "chevron"},
+    {"regex": "^exxon|^mobil", "merchant": "exxon"},
+    {"regex": "^bp\\s", "merchant": "bp"},
+    {"regex": "^7-?eleven|^7-?11", "merchant": "7-eleven"},
+    {"regex": "^att\\s|^at&t", "merchant": "att"},
+    {"regex": "^verizon|^vzw", "merchant": "verizon"},
+    {"regex": "^t-?mobile", "merchant": "tmobile"},
+    {"regex": "^xfinity|^comcast", "merchant": "xfinity"},
+    {"regex": "^spectrum|^charter", "merchant": "spectrum"},
+    {"regex": "^best\\s*buy|^bestbuy", "merchant": "best buy"},
+    {"regex": "^home\\s*depot", "merchant": "home depot"},
+    {"regex": "^lowe's|^lowes", "merchant": "lowes"},
+    {"regex": "^cvs", "merchant": "cvs"},
+    {"regex": "^walgreens|^walgreen", "merchant": "walgreens"},
+    {"regex": "^sq\\s*\\*|^square\\s*\\*|^sq\\*", "merchant": "square", "note": "Square payment - check merchant after asterisk"},
+    {"regex": "^tst\\s*\\*", "merchant": "toast", "note": "Toast payment - check merchant after asterisk"},
+    {"regex": "atm\\s*(withdrawal|w/d)", "merchant": "atm"},
+    {"regex": "(direct|payroll)\\s*dep(osit)?", "merchant": "direct deposit"},
+    {"regex": "^interest\\s*(payment|earned)?", "merchant": "interest"}
+  ],
+  
+  "categories": [
+    "Groceries",
+    "Fast Food",
+    "Restaurants",
+    "Coffee & Beverages",
+    "Food Delivery",
+    "Transportation",
+    "Gas & Fuel",
+    "Shopping & Retail",
+    "Subscriptions",
+    "Bills & Utilities",
+    "Entertainment",
+    "Travel",
+    "Healthcare",
+    "Insurance",
+    "Education",
+    "Childcare",
+    "Housing",
+    "Transfers",
+    "Income",
+    "Cash & ATM",
+    "Convenience",
+    "Giving",
+    "Other"
+  ],
+  
+  "subcategories": {
+    "Groceries": ["Supermarket", "Organic Supermarket", "Warehouse Club", "Discount Supermarket", "Grocery Delivery"],
+    "Fast Food": ["Burgers", "Pizza", "Mexican", "Chicken", "Sandwiches", "Wings", "Chinese", "Noodles", "Bakery Cafe", "Drive-In"],
+    "Restaurants": ["Fine Dining", "Casual Dining", "Family Restaurant", "Bar & Grill"],
+    "Coffee & Beverages": ["Coffee Shop", "Smoothie", "Tea", "Juice Bar"],
+    "Food Delivery": ["Delivery Service", "Convenience Delivery"],
+    "Transportation": ["Rideshare", "Public Transit", "Parking", "Tolls", "Taxi"],
+    "Gas & Fuel": ["Gas Station"],
+    "Shopping & Retail": ["Online Shopping", "Department Store", "Electronics", "Home Improvement", "Furniture", "Home Goods", "Discount", "Office Supplies", "Clothing", "Athletic Wear", "Footwear", "Beauty", "Pet Supplies", "Auto Parts", "Gaming"],
+    "Subscriptions": ["Streaming", "Music Streaming", "Cloud Storage", "Software", "Gym Membership", "Fitness App", "Audiobooks", "Books", "Membership", "Bundle", "Developer Tools", "Productivity", "AI Tools"],
+    "Bills & Utilities": ["Phone/Internet", "Cable/Internet", "Cable/Satellite", "Electric", "Gas", "Water", "Electric/Gas"],
+    "Entertainment": ["Movies", "Tickets", "Arcade/Restaurant", "Sports Entertainment", "Recreation", "Gaming"],
+    "Travel": ["Hotels", "Vacation Rentals", "Travel Booking", "Airlines", "Car Rental"],
+    "Healthcare": ["Pharmacy", "Medical", "Dental", "Laboratory", "Vision"],
+    "Insurance": ["Insurance"],
+    "Education": ["School", "Loans", "Online Learning"],
+    "Childcare": ["Daycare", "Education"],
+    "Housing": ["Rent", "Mortgage", "Fees"],
+    "Transfers": ["P2P Payment", "Bank Transfer"],
+    "Income": ["Payroll", "Interest", "Investment", "Refund"],
+    "Cash & ATM": ["Withdrawal", "Deposit"],
+    "Convenience": ["Convenience Store"],
+    "Giving": ["Charitable", "Religious"]
+  }
+}

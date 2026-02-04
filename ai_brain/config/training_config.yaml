@@ -1,0 +1,122 @@
+# 🧠 Unified Financial AI Brain - Training Configuration
+# Model: Qwen2.5-3B-Instruct with QLoRA
+# Optimized for 8GB VRAM (RTX 4060 / 3060 / etc.)
+
+# =============================================================================
+# BASE MODEL CONFIGURATION
+# =============================================================================
+base_model: Qwen/Qwen2.5-3B-Instruct
+model_type: AutoModelForCausalLM
+tokenizer_type: AutoTokenizer
+trust_remote_code: true
+
+# =============================================================================
+# QUANTIZATION (4-bit for low VRAM)
+# =============================================================================
+load_in_4bit: true
+load_in_8bit: false
+
+# BnB 4-bit config
+bnb_4bit_compute_dtype: bfloat16
+bnb_4bit_use_double_quant: true
+bnb_4bit_quant_type: nf4
+
+# =============================================================================
+# LoRA CONFIGURATION
+# =============================================================================
+adapter: qlora
+lora_r: 64                    # LoRA rank (higher = more capacity, more VRAM)
+lora_alpha: 128               # Alpha scaling
+lora_dropout: 0.05
+lora_fan_in_fan_out: false
+
+# Target all linear layers for maximum learning
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+
+lora_target_linear: true      # Target all linear layers
+
+# =============================================================================
+# DATASET CONFIGURATION
+# =============================================================================
+datasets:
+  - path: ./data/processed/financial_brain_training.jsonl
+    type: sharegpt                # Conversation format
+    conversation: chatml          # Qwen uses ChatML format
+
+# Data processing
+dataset_prepared_path: ./data/prepared
+shuffle_merged_datasets: true
+
+# =============================================================================
+# TRAINING PARAMETERS
+# =============================================================================
+# Sequence length
+sequence_len: 2048
+sample_packing: true              # Pack multiple samples for efficiency
+pad_to_sequence_len: true
+
+# Batch configuration (optimized for 8GB VRAM)
+micro_batch_size: 2
+gradient_accumulation_steps: 8    # Effective batch size = 16
+num_epochs: 3
+
+# Optimizer (8-bit for memory efficiency)
+optimizer: paged_adamw_8bit
+lr_scheduler: cosine
+learning_rate: 2e-4
+weight_decay: 0.01
+warmup_ratio: 0.03
+
+# Gradient handling
+max_grad_norm: 1.0
+gradient_checkpointing: true      # Crucial for low VRAM!
+gradient_checkpointing_kwargs:
+  use_reentrant: false
+
+# Precision
+bf16: true                        # Use BF16 if GPU supports it
+fp16: false
+tf32: true                        # Enable TF32 for speed on Ampere+
+
+# =============================================================================
+# MEMORY OPTIMIZATION
+# =============================================================================
+# Flash Attention 2 (faster + less VRAM)
+flash_attention: true
+flash_attn_cross_entropy: false
+flash_attn_rms_norm: true
+flash_attn_fuse_qkv: true
+
+# xFormers (alternative if Flash Attention not available)
+xformers_attention: false
+
+# =============================================================================
+# OUTPUT & LOGGING
+# =============================================================================
+output_dir: ./models/financial-brain-qlora
+hub_model_id: null                # Set if pushing to HuggingFace Hub
+
+# Logging
+logging_steps: 10
+eval_steps: 100
+save_steps: 500
+save_strategy: steps
+save_total_limit: 3
+
+# Weights & Biases (optional)
+wandb_project: financial-ai-brain
+wandb_run_name: qwen2.5-3b-qlora
+wandb_log_model: false
+
+# =============================================================================
+# SPECIAL TOKENS (for Qwen ChatML format)
+# =============================================================================
+special_tokens:
+  pad_token: "

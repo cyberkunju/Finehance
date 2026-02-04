@@ -1,0 +1,65 @@
+# 🧠 Unified Financial AI Brain - Requirements
+# Optimized for QLoRA training on 8GB VRAM
+
+# =============================================================================
+# CORE TRAINING DEPENDENCIES
+# =============================================================================
+torch>=2.1.0
+transformers>=4.40.0
+datasets>=2.18.0
+accelerate>=0.28.0
+peft>=0.10.0
+
+# Quantization
+bitsandbytes>=0.43.0
+
+# Memory-efficient training
+unsloth[colab-new]>=2024.3
+
+# Flash Attention (optional but recommended)
+# flash-attn>=2.5.0  # Requires CUDA compilation
+
+# =============================================================================
+# DATA PROCESSING
+# =============================================================================
+pandas>=2.0.0
+numpy>=1.24.0
+pyarrow>=15.0.0
+tqdm>=4.66.0
+
+# =============================================================================
+# INFERENCE & SERVING
+# =============================================================================
+vllm>=0.3.0               # Fast inference (optional)
+einops>=0.7.0
+sentencepiece>=0.2.0
+protobuf>=4.25.0
+
+# =============================================================================
+# RAG & EMBEDDINGS
+# =============================================================================
+sentence-transformers>=2.5.0
+faiss-cpu>=1.8.0          # Vector store (CPU version)
+# faiss-gpu                 # Use this if you have GPU
+
+# =============================================================================
+# API & INTEGRATION
+# =============================================================================
+fastapi>=0.110.0
+uvicorn>=0.27.0
+pydantic>=2.6.0
+
+# =============================================================================
+# UTILITIES
+# =============================================================================
+python-dotenv>=1.0.0
+wandb>=0.16.0             # Logging (optional)
+tensorboard>=2.16.0       # Logging (optional)
+rich>=13.7.0              # Beautiful console output
+typer>=0.9.0              # CLI
+
+# =============================================================================
+# JUPYTER (optional, for notebooks)
+# =============================================================================
+jupyter>=1.0.0
+ipywidgets>=8.1.0
