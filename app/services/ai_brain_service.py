@@ -1018,7 +1018,6 @@ class AIBrainService:
             parts.append(f"Top spending categories: {', '.join(f'{cat} (${amt:,.2f})' for cat, amt in top_categories)}.")
         
         if "goals" in context:
-            goals_progress = [(g["name"], g.get("current", 0) / g["target"] * 100) for g in context["goals"]]
             parts.append(f"You have {len(context['goals'])} active goals.")
         
         return " ".join(parts) if parts else "No analysis data available."

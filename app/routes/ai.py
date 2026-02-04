@@ -12,14 +12,12 @@ from slowapi.util import get_remote_address
 from app.database import get_db
 from app.services.ai_brain_service import (
     AIBrainService,
-    AIBrainMode,
-    AIBrainResponse,
     get_ai_brain,
 )
 from app.config import settings
 from app.logging_config import get_logger
-from app.middleware.input_guard import InputGuard, ThreatLevel
-from app.middleware.output_guard import OutputGuard, Severity
+from app.middleware.input_guard import InputGuard
+from app.middleware.output_guard import OutputGuard
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -458,7 +456,6 @@ async def _build_user_context(db: AsyncSession, user_id: UUID) -> dict:
     from sqlalchemy import select, func, and_
     from datetime import datetime, timedelta
     from app.models.transaction import Transaction
-    from app.models.budget import Budget
     
     # Get spending by category for last 30 days
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
@@ -499,7 +496,7 @@ async def _build_user_context(db: AsyncSession, user_id: UUID) -> dict:
 
 async def _get_recent_transactions(db: AsyncSession, user_id: UUID, limit: int = 50) -> list:
     """Get recent transactions for context."""
-    from sqlalchemy import select, desc
+    from sqlalchemy import select, desc, and_
     from app.models.transaction import Transaction
     
     stmt = select(Transaction).where(
@@ -526,13 +523,13 @@ async def _get_recent_transactions(db: AsyncSession, user_id: UUID, limit: int =
 
 async def _get_user_goals(db: AsyncSession, user_id: UUID) -> list:
     """Get user's financial goals."""
-    from sqlalchemy import select
-    from app.models.goal import Goal
+    from sqlalchemy import select, and_
+    from app.models.financial_goal import FinancialGoal
     
-    stmt = select(Goal).where(
+    stmt = select(FinancialGoal).where(
         and_(
-            Goal.user_id == user_id,
-            Goal.deleted_at.is_(None),
+            FinancialGoal.user_id == user_id,
+            FinancialGoal.status == "ACTIVE",
         )
     )
     
@@ -544,7 +541,7 @@ async def _get_user_goals(db: AsyncSession, user_id: UUID) -> list:
             "name": g.name,
             "target": float(g.target_amount),
             "current": float(g.current_amount),
-            "deadline": g.target_date.isoformat() if g.target_date else None,
+            "deadline": g.deadline.isoformat() if g.deadline else None,
         }
         for g in goals
     ]
