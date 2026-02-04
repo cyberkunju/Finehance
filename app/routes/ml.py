@@ -221,36 +221,71 @@ async def batch_categorize(
     engine: CategorizationEngine = Depends(get_categorization_engine)
 ) -> dict:
     """Categorize multiple transactions at once."""
-    from decimal import Decimal
+    from fastapi.concurrency import run_in_threadpool
     
     results = []
     errors = []
     
+    valid_indices = []
+    valid_descriptions = []
+    valid_amounts = []
+
+    # 1. Pre-validate and prepare data
     for i, txn in enumerate(request.transactions):
-        try:
-            description = txn.get("description", "")
-            amount = txn.get("amount")
-            
-            if not description:
-                errors.append({"index": i, "error": "Missing description"})
-                continue
-            
-            prediction = engine.categorize(
-                description=description,
-                amount=Decimal(str(amount)) if amount else None,
-                user_id=str(request.user_id) if request.user_id else None,
-            )
-            
+        description = txn.get("description", "")
+        if not description:
+            errors.append({"index": i, "error": "Missing description"})
+            continue
+
+        valid_indices.append(i)
+        valid_descriptions.append(description)
+
+        # Parse amount
+        raw_amount = txn.get("amount")
+        amount = None
+        if raw_amount is not None:
+            try:
+                amount = Decimal(str(raw_amount))
+            except Exception:
+                pass
+        valid_amounts.append(amount)
+
+    if not valid_descriptions:
+        return {
+            "results": [],
+            "errors": errors,
+            "total": len(request.transactions),
+            "successful": 0,
+            "failed": len(errors),
+        }
+
+    try:
+        # 2. Run batch categorization in thread pool
+        user_id_str = str(request.user_id) if request.user_id else None
+
+        predictions = await run_in_threadpool(
+            engine.categorize_batch,
+            descriptions=valid_descriptions,
+            amounts=valid_amounts,
+            user_id=user_id_str
+        )
+
+        # 3. Map results back
+        for idx, description, prediction in zip(valid_indices, valid_descriptions, predictions):
             results.append({
-                "index": i,
+                "index": idx,
                 "description": description,
                 "category": prediction.category,
                 "confidence": prediction.confidence,
                 "model_type": prediction.model_type,
             })
             
-        except Exception as e:
-            errors.append({"index": i, "error": str(e)})
+    except Exception as e:
+        # If batch fails completely
+        logger.error("Batch categorization failed", error=str(e))
+        # Add all to errors
+        for idx in valid_indices:
+             errors.append({"index": idx, "error": f"Batch processing failed: {str(e)}"})
     
     return {
         "results": results,
