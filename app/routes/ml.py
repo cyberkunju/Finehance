@@ -146,7 +146,7 @@ async def get_user_model_status(
     """Get user-specific model status."""
     has_model = engine.has_user_model(str(user_id))
     correction_count = engine.get_correction_count(str(user_id))
-    accuracy = engine.get_model_accuracy(str(user_id)) if has_model else None
+    accuracy = await engine.get_model_accuracy(str(user_id)) if has_model else None
     
     return UserModelStatus(
         has_model=has_model,
@@ -172,7 +172,7 @@ async def categorize_transaction(
     
     try:
         # Get prediction from ML model
-        prediction = engine.categorize(
+        prediction = await engine.categorize(
             description=request.description,
             amount=Decimal(str(request.amount)) if request.amount else None,
             user_id=str(request.user_id) if request.user_id else None,
@@ -235,7 +235,7 @@ async def batch_categorize(
                 errors.append({"index": i, "error": "Missing description"})
                 continue
             
-            prediction = engine.categorize(
+            prediction = await engine.categorize(
                 description=description,
                 amount=Decimal(str(amount)) if amount else None,
                 user_id=str(request.user_id) if request.user_id else None,
@@ -318,7 +318,7 @@ async def train_user_model(
         success = engine._train_user_model(str(user_id), corrections)
         
         if success:
-            accuracy = engine.get_model_accuracy(str(user_id))
+            accuracy = await engine.get_model_accuracy(str(user_id))
             return {
                 "success": True,
                 "accuracy": accuracy,
