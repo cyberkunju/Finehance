@@ -1,6 +1,6 @@
 """Budget optimizer service for analyzing spending patterns and suggesting optimizations."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Dict, List, Optional
 from uuid import UUID
@@ -65,7 +65,7 @@ class BudgetOptimizer:
             Dictionary mapping category to SpendingPattern
         """
         # Calculate date range
-        end_date = datetime.utcnow().date()
+        end_date = datetime.now(timezone.utc).date()
         start_date = end_date - timedelta(days=months * 30)
 
         # Query spending by category
@@ -300,7 +300,7 @@ class BudgetOptimizer:
             new_allocations[suggestion.category] = float(suggestion.suggested_allocation)
 
         budget.allocations = new_allocations
-        budget.updated_at = datetime.utcnow()
+        budget.updated_at = datetime.now(timezone.utc)
 
         await self.db.flush()
         await self.db.refresh(budget)

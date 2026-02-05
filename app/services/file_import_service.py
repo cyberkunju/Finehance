@@ -589,7 +589,7 @@ class FileImportService:
                 error_count += 1
 
         # Commit all changes
-        await self.db.commit()
+        await self.db.flush()
 
         result = ImportResult(
             imported=imported,

@@ -1,6 +1,6 @@
 """Prediction engine for forecasting future expenses using ARIMA models."""
 
-from datetime import datetime, timedelta, date as date_type
+from datetime import datetime, timedelta, date as date_type, timezone
 from decimal import Decimal
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
@@ -74,7 +74,7 @@ class PredictionEngine:
             Time series as pandas Series with date index, or None if insufficient data
         """
         # Calculate date range
-        end_date = datetime.utcnow().date()
+        end_date = datetime.now(timezone.utc).date()
         start_date = end_date - timedelta(days=lookback_days)
 
         # Query transactions for category
@@ -297,7 +297,7 @@ class PredictionEngine:
             ]
 
             # Generate forecast dates
-            start_date = datetime.utcnow().date() + timedelta(days=1)
+            start_date = datetime.now(timezone.utc).date() + timedelta(days=1)
             forecast_dates = [start_date + timedelta(days=i) for i in range(periods)]
 
             # Calculate accuracy score (in-sample)
@@ -346,7 +346,7 @@ class PredictionEngine:
             Dictionary mapping category to ForecastResult
         """
         # Get all expense categories for user
-        end_date = datetime.utcnow().date()
+        end_date = datetime.now(timezone.utc).date()
         start_date = end_date - timedelta(days=lookback_days)
 
         stmt = (

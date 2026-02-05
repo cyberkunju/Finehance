@@ -1,7 +1,7 @@
 """Authentication service for user registration, login, and token management."""
 
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from uuid import UUID
 
@@ -40,9 +40,6 @@ class AuthService:
 
     # Password requirements
     MIN_PASSWORD_LENGTH = 12
-    PASSWORD_PATTERN = re.compile(
-        r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]"
-    )
 
     def __init__(self, db: AsyncSession):
         """Initialize authentication service.
@@ -81,9 +78,9 @@ class AuthService:
         if not re.search(r"\d", password):
             raise PasswordValidationError("Password must contain at least one number")
 
-        if not re.search(r"[@$!%*?&]", password):
+        if not re.search(r"[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>/?~`]", password):
             raise PasswordValidationError(
-                "Password must contain at least one special character (@$!%*?&)"
+                "Password must contain at least one special character"
             )
 
     def hash_password(self, password: str) -> str:
@@ -162,7 +159,7 @@ class AuthService:
         )
 
         self.db.add(user)
-        await self.db.commit()
+        await self.db.flush()
         await self.db.refresh(user)
 
         logger.info("User registered successfully", user_id=str(user.id), email=email)
@@ -217,7 +214,7 @@ class AuthService:
         if expires_delta is None:
             expires_delta = timedelta(minutes=30)
 
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
 
         to_encode = {"sub": str(user_id), "exp": expire, "type": "access"}
 
@@ -242,7 +239,7 @@ class AuthService:
         if expires_delta is None:
             expires_delta = timedelta(days=7)
 
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
 
         to_encode = {"sub": str(user_id), "exp": expire, "type": "refresh"}
 
@@ -386,8 +383,8 @@ class AuthService:
 
         # Hash and update password
         user.password_hash = self.hash_password(new_password)
-        user.updated_at = datetime.utcnow()
+        user.updated_at = datetime.now(timezone.utc)
 
-        await self.db.commit()
+        await self.db.flush()
 
         logger.info("Password changed successfully", user_id=str(user_id))

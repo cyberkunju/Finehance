@@ -1,6 +1,6 @@
 """API routes for financial reports."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4, UUID
 from typing import Optional
 
@@ -99,7 +99,7 @@ async def generate_report(
             )
             for change in report.spending_changes
         ],
-        generated_at=datetime.utcnow().isoformat(),
+        generated_at=datetime.now(timezone.utc).isoformat(),
     )
 
 
