@@ -66,6 +66,8 @@ class TransactionService:
 
         # Auto-categorize if no category provided and auto-categorization is enabled
         if not final_category and auto_categorize:
+            model_source = "NONE"
+            # Step 1: Try Fast Path (Local ML)
             try:
                 prediction = await self.categorization_engine.categorize(
                     description=transaction_data.description,
@@ -74,22 +76,63 @@ class TransactionService:
                 )
                 final_category = prediction.category
                 final_confidence = prediction.confidence
-
-                logger.info(
-                    "Transaction auto-categorized",
-                    description=transaction_data.description,
-                    category=final_category,
-                    confidence=final_confidence,
-                    model_type=prediction.model_type,
-                )
+                model_source = prediction.model_type
             except Exception as e:
-                logger.error(
-                    "Auto-categorization failed",
+                logger.warning(
+                    "Local categorization failed, attempting fallback",
                     description=transaction_data.description,
                     error=str(e),
                 )
-                # Fall back to requiring manual category
-                pass
+                final_confidence = 0.0
+
+            # Step 2: Try Smart Path (AI Brain) if confidence is low
+            # Use a high threshold for production quality
+            CONFIDENCE_THRESHOLD = 0.85
+
+            if final_confidence < CONFIDENCE_THRESHOLD:
+                try:
+                    # Lazy import to avoid circular dependencies
+                    from app.services.ai_brain_service import get_ai_brain_service
+
+                    logger.info(
+                        "Low confidence in local model, invoking AI Brain",
+                        local_confidence=final_confidence,
+                        description=transaction_data.description,
+                    )
+
+                    ai_brain = get_ai_brain_service()
+                    # Use parse_transaction which includes RAG
+                    ai_response = await ai_brain.parse_transaction(
+                        description=transaction_data.description,
+                        user_context={"user_id": str(user_id)},
+                    )
+
+                    if ai_response.parsed_data and ai_response.parsed_data.get("category"):
+                        final_category = ai_response.parsed_data["category"]
+                        final_confidence = ai_response.confidence
+                        model_source = "AI_BRAIN"
+
+                        logger.info(
+                            "Transaction categorized by AI Brain",
+                            category=final_category,
+                            confidence=final_confidence,
+                            rag_corrected=ai_response.parsed_data.get("rag_corrected", False),
+                        )
+                except Exception as e:
+                    logger.error(
+                        "AI Brain fallback failed",
+                        description=transaction_data.description,
+                        error=str(e),
+                    )
+
+            if final_category and model_source != "NONE" and model_source != "AI_BRAIN":
+                logger.info(
+                    "Transaction auto-categorized by local model",
+                    description=transaction_data.description,
+                    category=final_category,
+                    confidence=final_confidence,
+                    model_type=model_source,
+                )
 
         if not final_category:
             raise ValueError(
