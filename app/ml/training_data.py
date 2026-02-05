@@ -296,6 +296,6 @@ if __name__ == "__main__":
     descriptions, categories = prepare_training_data()
     print(f"Generated {len(descriptions)} training samples")
     print(f"Categories: {set(categories)}")
-    print(f"\nSample data:")
+    print("\nSample data:")
     for i in range(5):
         print(f"  {descriptions[i]} -> {categories[i]}")

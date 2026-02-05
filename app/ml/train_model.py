@@ -114,9 +114,9 @@ def train_model(
     
     # Check if accuracy meets target
     if accuracy >= 0.80:
-        print(f"✓ Model meets target accuracy (>80%)")
+        print("✓ Model meets target accuracy (>80%)")
     else:
-        print(f"✗ Model does not meet target accuracy (>80%)")
+        print("✗ Model does not meet target accuracy (>80%)")
         print(f"  Current: {accuracy*100:.2f}%, Target: 80.00%")
     
     return model, metrics

@@ -354,7 +354,7 @@ class FinancialFactChecker:
                     message=f"Return of {pct}% exceeds realistic expectations",
                     severity=ValidationSeverity.WARNING,
                     context=f"{pct}%",
-                    suggestion=f"Historical average market returns are 7-10% annually",
+                    suggestion="Historical average market returns are 7-10% annually",
                 ))
         
         return issues
