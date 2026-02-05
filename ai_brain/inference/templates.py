@@ -218,8 +218,7 @@ class ResponseFormatter:
         has_greeting = any(re.match(p, raw_response, re.IGNORECASE) for p in greeting_patterns)
 
         if not has_greeting:
-            # Add appropriate greeting
-            greetings = ResponseTemplates.CHAT_TEMPLATES["greeting"]
+            # Add appropriate greeting based on intent
             if intent == "budget":
                 sections["greeting"] = "I'd be happy to help with your budget."
             elif intent == "savings":

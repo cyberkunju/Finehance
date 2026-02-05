@@ -20,6 +20,27 @@ from app.logging_config import get_logger
 logger = get_logger(__name__)
 
 
+def _write_feedback_to_disk(
+    corrections_path: str,
+    aggregates_path: str,
+    corrections_data: Dict,
+    aggregates_data: Dict
+) -> None:
+    """Write feedback data to disk synchronously."""
+    # Ensure directory exists
+    Path(corrections_path).parent.mkdir(parents=True, exist_ok=True)
+
+    # Save corrections
+    with open(corrections_path, 'w') as f:
+        json.dump(corrections_data, f, indent=2)
+
+    # Save aggregates
+    Path(aggregates_path).parent.mkdir(parents=True, exist_ok=True)
+
+    with open(aggregates_path, 'w') as f:
+        json.dump(aggregates_data, f, indent=2)
+
+
 @dataclass
 class CategoryCorrection:
     """A single category correction record."""
@@ -197,44 +218,35 @@ class FeedbackCollector:
         """Persist corrections to disk."""
         async with self._lock:
             try:
-                # Ensure directory exists
-                corrections_dir = Path(self.corrections_path).parent
-                corrections_dir.mkdir(parents=True, exist_ok=True)
+                # Prepare data in memory (fast)
+                corrections_data = {
+                    "corrections": [c.to_dict() for c in self._corrections[-10000:]],  # Keep last 10k
+                    "stats": self._stats.copy(),
+                    "last_saved": datetime.utcnow().isoformat(),
+                }
 
-                # Save corrections
-                with open(self.corrections_path, "w") as f:
-                    json.dump(
-                        {
-                            "corrections": [
-                                c.to_dict() for c in self._corrections[-10000:]
-                            ],  # Keep last 10k
-                            "stats": self._stats,
-                            "last_saved": datetime.utcnow().isoformat(),
-                        },
-                        f,
-                        indent=2,
-                    )
+                aggregates_data = {
+                    "aggregates": {
+                        key: {
+                            "corrections": agg.corrections.copy(),
+                            "total_corrections": agg.total_corrections,
+                            "last_updated": agg.last_updated.isoformat(),
+                        }
+                        for key, agg in self._aggregates.items()
+                    },
+                    "last_saved": datetime.utcnow().isoformat(),
+                }
 
-                # Save aggregates
-                aggregates_dir = Path(self.aggregates_path).parent
-                aggregates_dir.mkdir(parents=True, exist_ok=True)
-
-                with open(self.aggregates_path, "w") as f:
-                    json.dump(
-                        {
-                            "aggregates": {
-                                key: {
-                                    "corrections": agg.corrections,
-                                    "total_corrections": agg.total_corrections,
-                                    "last_updated": agg.last_updated.isoformat(),
-                                }
-                                for key, agg in self._aggregates.items()
-                            },
-                            "last_saved": datetime.utcnow().isoformat(),
-                        },
-                        f,
-                        indent=2,
-                    )
+                # Run I/O in executor
+                loop = asyncio.get_running_loop()
+                await loop.run_in_executor(
+                    None,
+                    _write_feedback_to_disk,
+                    self.corrections_path,
+                    self.aggregates_path,
+                    corrections_data,
+                    aggregates_data,
+                )
 
             except Exception as e:
                 logger.error(f"Failed to save feedback data: {e}")

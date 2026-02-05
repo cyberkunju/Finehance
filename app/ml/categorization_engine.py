@@ -2,6 +2,7 @@
 
 import os
 import json
+import asyncio
 from typing import Optional, Tuple, List
 from decimal import Decimal
 from dataclasses import dataclass
@@ -70,7 +71,7 @@ class CategorizationEngine:
         except Exception as e:
             logger.error("Failed to load global categorization model", error=str(e))
 
-    def _load_user_model(self, user_id: str) -> Optional[Pipeline]:
+    async def _load_user_model(self, user_id: str) -> Optional[Pipeline]:
         """
         Load a user-specific categorization model.
 
@@ -91,7 +92,8 @@ class CategorizationEngine:
             return None
 
         try:
-            model = joblib.load(model_path)
+            loop = asyncio.get_running_loop()
+            model = await loop.run_in_executor(None, joblib.load, model_path)
             self.user_models[user_id] = model
             logger.info("User-specific categorization model loaded", user_id=user_id)
             return model
@@ -101,7 +103,7 @@ class CategorizationEngine:
             )
             return None
 
-    def should_use_global_model(self, user_id: Optional[str]) -> bool:
+    async def should_use_global_model(self, user_id: Optional[str]) -> bool:
         """
         Determine if global model should be used for this user.
 
@@ -120,14 +122,17 @@ class CategorizationEngine:
             return True
 
         # Check if user has a personalized model
-        user_model = self._load_user_model(user_id)
+        user_model = await self._load_user_model(user_id)
         if not user_model:
             return True
 
         return False
 
-    def categorize(
-        self, description: str, amount: Optional[Decimal] = None, user_id: Optional[str] = None
+    async def categorize(
+        self,
+        description: str,
+        amount: Optional[Decimal] = None,
+        user_id: Optional[str] = None,
     ) -> CategoryPrediction:
         """
         Predict category for a transaction description.
@@ -147,7 +152,7 @@ class CategorizationEngine:
         processed_desc = preprocess_text(description)
 
         # Determine which model to use
-        use_global = self.should_use_global_model(user_id)
+        use_global = await self.should_use_global_model(user_id)
 
         if use_global:
             if not self.global_model:
@@ -156,7 +161,7 @@ class CategorizationEngine:
             model = self.global_model
             model_type = "GLOBAL"
         else:
-            model = self._load_user_model(user_id)
+            model = await self._load_user_model(user_id)
             if not model:
                 # Fallback to global model
                 if not self.global_model:
@@ -190,6 +195,164 @@ class CategorizationEngine:
         except Exception as e:
             logger.error("Categorization failed", description=description, error=str(e))
             # Return "Uncategorized" as fallback
+            return CategoryPrediction(
+                category="Other Expenses", confidence=0.0, model_type=model_type
+            )
+
+    def categorize_batch(
+        self,
+        descriptions: List[str],
+        amounts: Optional[List[Optional[Decimal]]] = None,
+        user_id: Optional[str] = None,
+    ) -> List[CategoryPrediction]:
+        """
+        Predict categories for a batch of transaction descriptions.
+
+        Args:
+            descriptions: List of transaction description texts
+            amounts: List of transaction amounts (optional)
+            user_id: User ID (optional, for personalized models)
+
+        Returns:
+            List of CategoryPrediction objects
+
+        Raises:
+            ValueError: If global model is not loaded and no user model exists
+        """
+        if not descriptions:
+            return []
+
+        # Determine which model to use (once for the whole batch)
+        use_global = self._should_use_global_model_sync(user_id)
+
+        if use_global:
+            if not self.global_model:
+                raise ValueError("Global categorization model not loaded")
+
+            model = self.global_model
+            model_type = "GLOBAL"
+        else:
+            model = self._load_user_model_sync(user_id)
+            if not model:
+                # Fallback to global model
+                if not self.global_model:
+                    raise ValueError("No categorization model available")
+                model = self.global_model
+                model_type = "GLOBAL"
+            else:
+                model_type = "USER_SPECIFIC"
+
+        # Preprocess all descriptions
+        processed_descs = [preprocess_text(desc) for desc in descriptions]
+
+        try:
+            import numpy as np
+            # Vectorized prediction
+            categories = model.predict(processed_descs)
+
+            # Vectorized probabilities
+            # predict_proba returns array of shape (n_samples, n_classes)
+            # we want the max probability for each sample
+            all_probabilities = model.predict_proba(processed_descs)
+            confidences = np.max(all_probabilities, axis=1)
+
+            results = []
+            for i, (category, confidence) in enumerate(zip(categories, confidences)):
+                # Cast confidence to float (it might be numpy float)
+                results.append(
+                    CategoryPrediction(
+                        category=category,
+                        confidence=float(confidence),
+                        model_type=model_type,
+                    )
+                )
+
+            logger.info(
+                "Batch categorization completed",
+                batch_size=len(descriptions),
+                model_type=model_type,
+                user_id=user_id,
+            )
+
+            return results
+
+        except Exception as e:
+            logger.error(
+                "Batch categorization failed, falling back to sequential",
+                error=str(e),
+                batch_size=len(descriptions),
+            )
+            # Fallback to sequential processing for robustness
+            results = []
+            for i, desc in enumerate(descriptions):
+                amt = amounts[i] if amounts and i < len(amounts) else None
+                try:
+                    # Use sync categorize method in batch context
+                    results.append(self._categorize_sync(desc, amt, user_id))
+                except Exception:
+                    results.append(
+                        CategoryPrediction(
+                            category="Other Expenses",
+                            confidence=0.0,
+                            model_type=model_type,
+                        )
+                    )
+            return results
+
+    def _should_use_global_model_sync(self, user_id: Optional[str]) -> bool:
+        """Synchronous version of should_use_global_model for batch processing."""
+        if not user_id:
+            return True
+        model_path = os.path.join(self.model_dir, f"user_{user_id}_categorization_model.pkl")
+        return not os.path.exists(model_path)
+
+    def _load_user_model_sync(self, user_id: str) -> Optional[Pipeline]:
+        """Synchronous version of _load_user_model for batch processing."""
+        if user_id in self.user_models:
+            return self.user_models[user_id]
+        model_path = os.path.join(self.model_dir, f"user_{user_id}_categorization_model.pkl")
+        if not os.path.exists(model_path):
+            return None
+        try:
+            model = joblib.load(model_path)
+            self.user_models[user_id] = model
+            return model
+        except Exception:
+            return None
+
+    def _categorize_sync(
+        self,
+        description: str,
+        amount: Optional[Decimal] = None,
+        user_id: Optional[str] = None,
+    ) -> CategoryPrediction:
+        """Synchronous version of categorize for batch processing fallback."""
+        processed_desc = preprocess_text(description)
+        use_global = self._should_use_global_model_sync(user_id)
+
+        if use_global:
+            if not self.global_model:
+                raise ValueError("Global categorization model not loaded")
+            model = self.global_model
+            model_type = "GLOBAL"
+        else:
+            model = self._load_user_model_sync(user_id)
+            if not model:
+                if not self.global_model:
+                    raise ValueError("No categorization model available")
+                model = self.global_model
+                model_type = "GLOBAL"
+            else:
+                model_type = "USER_SPECIFIC"
+
+        try:
+            category = model.predict([processed_desc])[0]
+            probabilities = model.predict_proba([processed_desc])[0]
+            confidence = float(max(probabilities))
+            return CategoryPrediction(
+                category=category, confidence=confidence, model_type=model_type
+            )
+        except Exception:
             return CategoryPrediction(
                 category="Other Expenses", confidence=0.0, model_type=model_type
             )
@@ -384,7 +547,7 @@ class CategorizationEngine:
             logger.error("Failed to train user model", user_id=user_id, error=str(e))
             return False
 
-    def get_model_accuracy(self, user_id: str) -> float:
+    async def get_model_accuracy(self, user_id: str) -> float:
         """
         Get current accuracy for user's personalized model.
 
@@ -402,14 +565,19 @@ class CategorizationEngine:
             global_metrics_path = os.path.join(self.model_dir, "global_categorization_metrics.pkl")
             if os.path.exists(global_metrics_path):
                 try:
-                    metrics = joblib.load(global_metrics_path)
+                    loop = asyncio.get_running_loop()
+                    metrics = await loop.run_in_executor(None, joblib.load, global_metrics_path)
                     return metrics.get("accuracy", 0.0)
-                except Exception:
+                except Exception as e:
+                    logger.error("Failed to load global metrics", error=str(e))
                     return 0.0
+            else:
+                logger.warning("Global metrics file not found", path=global_metrics_path)
             return 0.0
 
         try:
-            metrics = joblib.load(metrics_path)
+            loop = asyncio.get_running_loop()
+            metrics = await loop.run_in_executor(None, joblib.load, metrics_path)
             return metrics.get("accuracy", 0.0)
         except Exception as e:
             logger.error("Failed to load model metrics", user_id=user_id, error=str(e))

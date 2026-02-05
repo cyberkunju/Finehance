@@ -149,7 +149,7 @@ async def get_user_model_status(
     """Get user-specific model status."""
     has_model = engine.has_user_model(str(user_id))
     correction_count = engine.get_correction_count(str(user_id))
-    accuracy = engine.get_model_accuracy(str(user_id)) if has_model else None
+    accuracy = await engine.get_model_accuracy(str(user_id)) if has_model else None
 
     return UserModelStatus(
         has_model=has_model,
@@ -174,7 +174,7 @@ async def categorize_transaction(
 
     try:
         # Get prediction from ML model
-        prediction = engine.categorize(
+        prediction = await engine.categorize(
             description=request.description,
             amount=Decimal(str(request.amount)) if request.amount else None,
             user_id=str(request.user_id) if request.user_id else None,
@@ -189,12 +189,8 @@ async def categorize_transaction(
 
                 ai_brain = get_ai_brain_service()
 
-                # Run in sync context
-                import asyncio
-
-                result = asyncio.get_event_loop().run_until_complete(
-                    ai_brain.parse_transaction(request.description)
-                )
+                # Use async await
+                result = await ai_brain.parse_transaction(request.description)
 
                 if result.parsed_data and result.confidence > prediction.confidence:
                     llm_category = result.parsed_data.get("category")
@@ -226,37 +222,71 @@ async def batch_categorize(
 ) -> dict:
     """Categorize multiple transactions at once."""
     from decimal import Decimal
+    from fastapi.concurrency import run_in_threadpool
 
     results = []
     errors = []
 
+    valid_indices = []
+    valid_descriptions = []
+    valid_amounts = []
+
+    # 1. Pre-validate and prepare data
     for i, txn in enumerate(request.transactions):
-        try:
-            description = txn.get("description", "")
-            amount = txn.get("amount")
+        description = txn.get("description", "")
+        if not description:
+            errors.append({"index": i, "error": "Missing description"})
+            continue
 
-            if not description:
-                errors.append({"index": i, "error": "Missing description"})
-                continue
+        valid_indices.append(i)
+        valid_descriptions.append(description)
 
-            prediction = engine.categorize(
-                description=description,
-                amount=Decimal(str(amount)) if amount else None,
-                user_id=str(request.user_id) if request.user_id else None,
-            )
+        # Parse amount
+        raw_amount = txn.get("amount")
+        amount = None
+        if raw_amount is not None:
+            try:
+                amount = Decimal(str(raw_amount))
+            except Exception:
+                pass
+        valid_amounts.append(amount)
 
-            results.append(
-                {
-                    "index": i,
-                    "description": description,
-                    "category": prediction.category,
-                    "confidence": prediction.confidence,
-                    "model_type": prediction.model_type,
-                }
-            )
+    if not valid_descriptions:
+        return {
+            "results": [],
+            "errors": errors,
+            "total": len(request.transactions),
+            "successful": 0,
+            "failed": len(errors),
+        }
 
-        except Exception as e:
-            errors.append({"index": i, "error": str(e)})
+    try:
+        # 2. Run batch categorization in thread pool
+        user_id_str = str(request.user_id) if request.user_id else None
+
+        predictions = await run_in_threadpool(
+            engine.categorize_batch,
+            descriptions=valid_descriptions,
+            amounts=valid_amounts,
+            user_id=user_id_str,
+        )
+
+        # 3. Map results back
+        for idx, description, prediction in zip(valid_indices, valid_descriptions, predictions):
+            results.append({
+                "index": idx,
+                "description": description,
+                "category": prediction.category,
+                "confidence": prediction.confidence,
+                "model_type": prediction.model_type,
+            })
+
+    except Exception as e:
+        # If batch fails completely
+        logger.error("Batch categorization failed", error=str(e))
+        # Add all to errors
+        for idx in valid_indices:
+            errors.append({"index": idx, "error": f"Batch processing failed: {str(e)}"})
 
     return {
         "results": results,
@@ -324,7 +354,7 @@ async def train_user_model(
         success = engine._train_user_model(str(user_id), corrections)
 
         if success:
-            accuracy = engine.get_model_accuracy(str(user_id))
+            accuracy = await engine.get_model_accuracy(str(user_id))
             return {
                 "success": True,
                 "accuracy": accuracy,
@@ -358,15 +388,22 @@ async def get_categories() -> dict:
         "Other Expenses",
     ]
 
-    if os.path.exists(categories_path):
-        try:
-            import json
+    try:
+        import json
+        import asyncio
 
-            with open(categories_path, "r") as f:
-                categories = json.load(f)
+        def load_categories():
+            try:
+                with open(categories_path, "r") as f:
+                    return json.load(f)
+            except (FileNotFoundError, OSError):
+                return None
+
+        categories = await asyncio.to_thread(load_categories)
+        if categories:
             return {"categories": categories, "source": "file"}
-        except Exception:
-            pass
+    except Exception:
+        pass
 
     return {"categories": default_categories, "source": "default"}
 

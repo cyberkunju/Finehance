@@ -545,12 +545,12 @@ async def _get_recent_transactions(db: AsyncSession, user_id: UUID, limit: int =
 async def _get_user_goals(db: AsyncSession, user_id: UUID) -> list:
     """Get user's financial goals."""
     from sqlalchemy import select, and_
-    from app.models.goal import Goal
+    from app.models.financial_goal import FinancialGoal
 
-    stmt = select(Goal).where(
+    stmt = select(FinancialGoal).where(
         and_(
-            Goal.user_id == user_id,
-            Goal.deleted_at.is_(None),
+            FinancialGoal.user_id == user_id,
+            FinancialGoal.status == "ACTIVE",
         )
     )
 
@@ -562,7 +562,7 @@ async def _get_user_goals(db: AsyncSession, user_id: UUID) -> list:
             "name": g.name,
             "target": float(g.target_amount),
             "current": float(g.current_amount),
-            "deadline": g.target_date.isoformat() if g.target_date else None,
+            "deadline": g.deadline.isoformat() if g.deadline else None,
         }
         for g in goals
     ]

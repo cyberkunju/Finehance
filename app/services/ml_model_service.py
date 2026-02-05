@@ -114,7 +114,7 @@ class MLModelService:
                 and_(
                     MLModel.model_type == model_type,
                     MLModel.user_id == user_id,
-                    MLModel.is_active == True,
+                    MLModel.is_active.is_(True),
                 )
             )
         )
@@ -222,7 +222,7 @@ class MLModelService:
                 and_(
                     MLModel.model_type == model.model_type,
                     MLModel.user_id == model.user_id,
-                    MLModel.is_active == True,
+                    MLModel.is_active.is_(True),
                     MLModel.id != model_id,
                 )
             )
@@ -378,7 +378,7 @@ class MLModelService:
             List of alert dictionaries for models below threshold
         """
         # Get all active models
-        query = select(MLModel).filter(MLModel.is_active == True)
+        query = select(MLModel).filter(MLModel.is_active.is_(True))
 
         if model_type:
             query = query.filter(MLModel.model_type == model_type)
