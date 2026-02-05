@@ -89,6 +89,10 @@ class Settings(BaseSettings):
         default="./ai_brain/models/financial-brain-qlora", alias="AI_BRAIN_MODEL_PATH"
     )
     ai_brain_enabled: bool = Field(default=True, alias="AI_BRAIN_ENABLED")
+    ai_brain_fallback_threshold: float = Field(
+        default=0.85, alias="AI_BRAIN_FALLBACK_THRESHOLD",
+        description="Confidence threshold below which AI Brain fallback is triggered"
+    )
 
     # Financial API (Optional)
     plaid_client_id: str | None = Field(default=None, alias="PLAID_CLIENT_ID")

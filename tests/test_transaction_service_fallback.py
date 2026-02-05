@@ -9,10 +9,11 @@ from app.schemas.transaction import TransactionCreate, TransactionType, Transact
 from app.ml.categorization_engine import CategoryPrediction
 from app.services.ai_brain_service import AIBrainResponse, AIBrainMode
 
+
 @pytest.mark.asyncio
 async def test_create_transaction_fallback_to_ai_brain():
+    """Test that AI Brain is called when local model has low confidence."""
     # Setup
-    # Use MagicMock for db session because 'add' is sync, but 'flush'/'refresh' are async
     mock_db = MagicMock()
     mock_db.flush = AsyncMock()
     mock_db.refresh = AsyncMock()
@@ -20,7 +21,7 @@ async def test_create_transaction_fallback_to_ai_brain():
 
     # Mock CategorizationEngine
     mock_categorization_engine = AsyncMock()
-    # Return low confidence
+    # Return low confidence (below 0.85 threshold)
     mock_categorization_engine.categorize.return_value = CategoryPrediction(
         category="Unsure",
         confidence=0.5,
@@ -50,7 +51,7 @@ async def test_create_transaction_fallback_to_ai_brain():
         connection_id=None
     )
 
-    # Patch get_ai_brain_service in the module where it is defined
+    # Patch where `get_ai_brain_service` is defined (lazy import inside function)
     with patch('app.services.ai_brain_service.get_ai_brain_service', return_value=mock_ai_brain):
         # Mock detect_duplicate to return None
         service.detect_duplicate = AsyncMock(return_value=None)
@@ -70,8 +71,62 @@ async def test_create_transaction_fallback_to_ai_brain():
         mock_categorization_engine.categorize.assert_awaited_once()
         mock_ai_brain.parse_transaction.assert_awaited_once()
 
+
+@pytest.mark.asyncio
+async def test_create_transaction_no_fallback_high_confidence():
+    """Test that AI Brain is NOT called when local model has high confidence."""
+    # Setup
+    mock_db = MagicMock()
+    mock_db.flush = AsyncMock()
+    mock_db.refresh = AsyncMock()
+    mock_db.execute = AsyncMock()
+
+    # Mock CategorizationEngine
+    mock_categorization_engine = AsyncMock()
+    # Return high confidence (above 0.85 threshold)
+    mock_categorization_engine.categorize.return_value = CategoryPrediction(
+        category="Groceries",
+        confidence=0.95,
+        model_type="GLOBAL"
+    )
+
+    service = TransactionService(mock_db, mock_categorization_engine)
+
+    # Mock AIBrainService (should NOT be called)
+    mock_ai_brain = AsyncMock()
+
+    user_id = uuid4()
+    transaction_data = TransactionCreate(
+        amount=Decimal("50.00"),
+        date=date.today(),
+        description="Whole Foods Market",
+        type=TransactionType.EXPENSE,
+        source=TransactionSource.MANUAL,
+        connection_id=None
+    )
+
+    with patch('app.services.ai_brain_service.get_ai_brain_service', return_value=mock_ai_brain):
+        service.detect_duplicate = AsyncMock(return_value=None)
+
+        # Act
+        transaction = await service.create_transaction(
+            user_id=user_id,
+            transaction_data=transaction_data,
+            auto_categorize=True
+        )
+
+        # Assert - local model result used
+        assert transaction.category == "Groceries"
+        assert transaction.confidence_score == 0.95
+
+        # Verify AI Brain was NOT called
+        mock_categorization_engine.categorize.assert_awaited_once()
+        mock_ai_brain.parse_transaction.assert_not_awaited()
+
+
 @pytest.mark.asyncio
 async def test_create_transaction_fallback_when_exception():
+    """Test that AI Brain is called when local model throws exception."""
     # Setup
     mock_db = MagicMock()
     mock_db.flush = AsyncMock()
@@ -120,3 +175,48 @@ async def test_create_transaction_fallback_when_exception():
         # Verify calls
         mock_categorization_engine.categorize.assert_awaited_once()
         mock_ai_brain.parse_transaction.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_create_transaction_both_fail_raises_error():
+    """Test that proper error is raised when both local model and AI Brain fail."""
+    # Setup
+    mock_db = MagicMock()
+    mock_db.flush = AsyncMock()
+    mock_db.refresh = AsyncMock()
+    mock_db.execute = AsyncMock()
+
+    # Mock CategorizationEngine to raise exception
+    mock_categorization_engine = AsyncMock()
+    mock_categorization_engine.categorize.side_effect = Exception("Model broken")
+
+    service = TransactionService(mock_db, mock_categorization_engine)
+
+    # Mock AIBrainService to also fail
+    mock_ai_brain = AsyncMock()
+    mock_ai_brain.parse_transaction.side_effect = Exception("AI Brain unavailable")
+
+    user_id = uuid4()
+    transaction_data = TransactionCreate(
+        amount=Decimal("10.00"),
+        date=date.today(),
+        description="Completely Ambiguous",
+        type=TransactionType.EXPENSE,
+        source=TransactionSource.MANUAL,
+        connection_id=None
+    )
+
+    with patch('app.services.ai_brain_service.get_ai_brain_service', return_value=mock_ai_brain):
+        service.detect_duplicate = AsyncMock(return_value=None)
+
+        # Act & Assert
+        with pytest.raises(ValueError) as exc_info:
+            await service.create_transaction(
+                user_id=user_id,
+                transaction_data=transaction_data,
+                auto_categorize=True
+            )
+
+        # Verify error message mentions both fallback options
+        assert "Auto-categorization failed" in str(exc_info.value)
+        assert "AI Brain fallback" in str(exc_info.value)
