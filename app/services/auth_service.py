@@ -388,3 +388,24 @@ class AuthService:
         await self.db.flush()
 
         logger.info("Password changed successfully", user_id=str(user_id))
+
+    async def blacklist_token(self, token: str, expires_in: int = None) -> None:
+        """Add a token to the blacklist. Token will be auto-removed from Redis when it naturally expires."""
+        from app.cache import cache_manager
+
+        if expires_in is None:
+            try:
+                payload = jwt.decode(token, settings.secret_key, algorithms=["HS256"])
+                exp = payload.get("exp", 0)
+                expires_in = max(0, exp - int(datetime.now(timezone.utc).timestamp()))
+            except JWTError:
+                expires_in = 30 * 60  # Default 30 minutes
+        
+        await cache_manager.set(f"blacklist:{token}", "1", expire=expires_in)
+
+    async def is_token_blacklisted(self, token: str) -> bool:
+        """Check if a token has been blacklisted."""
+        from app.cache import cache_manager
+
+        result = await cache_manager.get(f"blacklist:{token}")
+        return result is not None
