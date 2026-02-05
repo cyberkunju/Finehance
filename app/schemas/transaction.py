@@ -37,7 +37,9 @@ class TransactionCreate(BaseModel):
         default=TransactionSource.MANUAL, description="Transaction source"
     )
     category: Optional[str] = Field(
-        None, max_length=50, description="Transaction category (auto-assigned if not provided)"
+        None,
+        max_length=50,
+        description="Transaction category. Auto-assigned to 'Uncategorized' if not provided and auto-categorization fails."
     )
     connection_id: Optional[UUID] = Field(None, description="Connection ID if from Financial API")
 

@@ -302,9 +302,12 @@ class AdviceGenerator:
 
                     # Check if goal is at risk (less than 50% progress with less than 50% time remaining)
                     total_days = (goal.deadline - goal.created_at.date()).days
-                    time_elapsed_percent = (
-                        (today - goal.created_at.date()).days / total_days
-                    ) * 100
+                    if total_days > 0:
+                        time_elapsed_percent = (
+                            (today - goal.created_at.date()).days / total_days
+                        ) * 100
+                    else:
+                        time_elapsed_percent = 100.0  # Goal deadline is today or already passed
 
                     if time_elapsed_percent > 50 and progress_percent < 50:
                         advice = Advice(

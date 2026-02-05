@@ -11,10 +11,10 @@
 | FastAPI structure | Working | A |
 | Database/Cache | Working | A |
 | Auth system (built) | Working | B+ |
-| **Auth enforcement** | **NOT WIRED** | **F** |
+| **Auth enforcement** | **WIRED** | **A-** |
 | Transaction CRUD | Working | A- |
 | Budget CRUD + tracking | Working | B+ |
-| Goal CRUD + tracking | Working (div/0 bug) | B |
+| Goal CRUD + tracking | Working (div/0 fixed) | B+ |
 | Reports | Working (PDF broken) | B- |
 | File import/export | Working (needs limits) | B |
 | ML Categorization | Working (toy data) | B- |
@@ -25,7 +25,7 @@
 | Prometheus Metrics | Working | A- |
 | Test Suite (~212 tests) | Good, needs live DB | B |
 | Frontend | Skeleton | C+ |
-| Security | Auth bypass everywhere | D |
+| Security | Auth wired | B+ |
 
 ---
 
@@ -67,37 +67,37 @@ P4 (Testing) ───────────────┘
 ## Master Progress Tracker
 
 ### Phase 0 — Critical Security (MUST DO FIRST)
-- [ ] Create `app/dependencies.py` with `get_current_user`
-- [ ] Create `app/dependencies.py` with `get_current_user_id`
-- [ ] Wire auth into `transactions.py` — `create_transaction`
-- [ ] Wire auth into `transactions.py` — `list_transactions`
-- [ ] Wire auth into `transactions.py` — `get_transaction`
-- [ ] Wire auth into `transactions.py` — `update_transaction`
-- [ ] Wire auth into `transactions.py` — `delete_transaction`
-- [ ] Wire auth into `budgets.py` — all 8 endpoints
-- [ ] Wire auth into `goals.py` — all 8 endpoints + fix route ordering
-- [ ] Wire auth into `predictions.py` — all 3 endpoints
-- [ ] Wire auth into `advice.py` — all 3 endpoints
-- [ ] Wire auth into `reports.py` — all 3 endpoints + remove user_id from body
-- [ ] Wire auth into `file_import.py` — all 2 endpoints
-- [ ] Wire auth into `ml.py` — all 6 auth-needed endpoints
-- [ ] Wire auth into `ai.py` — all 5 auth-needed endpoints
-- [ ] Refactor `auth.py` `/me` to use shared dependency
-- [ ] Replace `str(e)` with generic messages — `transactions.py` (5 handlers)
-- [ ] Replace `str(e)` with generic messages — `budgets.py` (8 handlers)
-- [ ] Replace `str(e)` with generic messages — `goals.py` (8 handlers)
-- [ ] Replace `str(e)` with generic messages — `predictions.py` (3 handlers)
-- [ ] Replace `str(e)` with generic messages — `advice.py` (3 handlers)
-- [ ] Replace `str(e)` with generic messages — `reports.py` (3 handlers)
-- [ ] Replace `str(e)` with generic messages — `file_import.py` (2 handlers)
-- [ ] Replace `str(e)` with generic messages — `ml.py` (6 handlers)
-- [ ] Replace `str(e)` with generic messages — `ai.py` (5 handlers)
-- [ ] Fix division-by-zero in `advice_generator.py` line 231
-- [ ] Fix category NULL mismatch — add fallback in `transaction_service.py`
-- [ ] Fix category NULL mismatch — update schema description
-- [ ] Add `is_active` field to `User` model
-- [ ] Add `is_active` check in auth dependency
-- [ ] Create Alembic migration for `is_active`
+- [x] Create `app/dependencies.py` with `get_current_user`
+- [x] Create `app/dependencies.py` with `get_current_user_id`
+- [x] Wire auth into `transactions.py` — `create_transaction`
+- [x] Wire auth into `transactions.py` — `list_transactions`
+- [x] Wire auth into `transactions.py` — `get_transaction`
+- [x] Wire auth into `transactions.py` — `update_transaction`
+- [x] Wire auth into `transactions.py` — `delete_transaction`
+- [x] Wire auth into `budgets.py` — all 8 endpoints
+- [x] Wire auth into `goals.py` — all 8 endpoints + fix route ordering
+- [x] Wire auth into `predictions.py` — all 3 endpoints
+- [x] Wire auth into `advice.py` — all 3 endpoints
+- [x] Wire auth into `reports.py` — all 3 endpoints + remove user_id from body
+- [x] Wire auth into `file_import.py` — all 2 endpoints
+- [x] Wire auth into `ml.py` — all 6 auth-needed endpoints
+- [x] Wire auth into `ai.py` — all 5 auth-needed endpoints
+- [x] Refactor `auth.py` `/me` to use shared dependency
+- [x] Replace `str(e)` with generic messages — `transactions.py` (5 handlers)
+- [x] Replace `str(e)` with generic messages — `budgets.py` (8 handlers)
+- [x] Replace `str(e)` with generic messages — `goals.py` (8 handlers)
+- [x] Replace `str(e)` with generic messages — `predictions.py` (3 handlers)
+- [x] Replace `str(e)` with generic messages — `advice.py` (3 handlers)
+- [x] Replace `str(e)` with generic messages — `reports.py` (3 handlers)
+- [x] Replace `str(e)` with generic messages — `file_import.py` (2 handlers)
+- [x] Replace `str(e)` with generic messages — `ml.py` (6 handlers)
+- [x] Replace `str(e)` with generic messages — `ai.py` (5 handlers)
+- [x] Fix division-by-zero in `advice_generator.py` line 231
+- [x] Fix category NULL mismatch — add fallback in `transaction_service.py`
+- [x] Fix category NULL mismatch — update schema description
+- [x] Add `is_active` field to `User` model
+- [x] Add `is_active` check in auth dependency
+- [x] Create Alembic migration for `is_active`
 - [ ] Run ALL existing tests
 - [ ] Manual smoke test: register → login → CRUD with/without tokens
 
@@ -288,7 +288,7 @@ P4 (Testing) ───────────────┘
 
 ## Success Criteria (Definition of "Done")
 
-- [ ] **Zero auth bypass** — every endpoint validates JWT tokens
+- [x] **Zero auth bypass** — every endpoint validates JWT tokens
 - [ ] **Zero error leaks** — no internal exceptions exposed to clients
 - [ ] **Zero critical bugs** — no division-by-zero, no schema mismatches
 - [ ] **Working AI Brain** — at minimum via HTTP mode with documented setup

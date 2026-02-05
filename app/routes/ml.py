@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from pydantic import BaseModel, Field
 
 from app.config import settings
+from app.dependencies import get_current_user_id
 from app.ml.categorization_engine import CategorizationEngine
 from app.logging_config import get_logger
 
@@ -50,7 +51,6 @@ class CategorizeRequest(BaseModel):
 
     description: str = Field(..., min_length=1, max_length=500)
     amount: Optional[float] = None
-    user_id: Optional[UUID] = None
     use_llm_fallback: bool = Field(True, description="Use AI Brain for low-confidence predictions")
 
 
@@ -66,7 +66,6 @@ class CategorizeResponse(BaseModel):
 class CorrectionRequest(BaseModel):
     """Request to submit a categorization correction."""
 
-    user_id: UUID
     description: str = Field(..., min_length=1)
     correct_category: str = Field(..., min_length=1)
 
@@ -74,7 +73,6 @@ class CorrectionRequest(BaseModel):
 class TrainModelRequest(BaseModel):
     """Request to train a user model."""
 
-    user_id: UUID
     force: bool = Field(False, description="Force training even with insufficient data")
 
 
@@ -82,7 +80,6 @@ class BatchCategorizeRequest(BaseModel):
     """Request to categorize multiple transactions."""
 
     transactions: list[dict] = Field(..., description="List of {description, amount} dicts")
-    user_id: Optional[UUID] = None
 
 
 # Engine singleton
@@ -142,9 +139,10 @@ async def get_global_model_status(
     )
 
 
-@router.get("/models/user/{user_id}", response_model=UserModelStatus)
+@router.get("/models/user/me", response_model=UserModelStatus)
 async def get_user_model_status(
-    user_id: UUID, engine: CategorizationEngine = Depends(get_categorization_engine)
+    user_id: UUID = Depends(get_current_user_id),
+    engine: CategorizationEngine = Depends(get_categorization_engine),
 ) -> UserModelStatus:
     """Get user-specific model status."""
     has_model = engine.has_user_model(str(user_id))
@@ -162,7 +160,9 @@ async def get_user_model_status(
 
 @router.post("/categorize", response_model=CategorizeResponse)
 async def categorize_transaction(
-    request: CategorizeRequest, engine: CategorizationEngine = Depends(get_categorization_engine)
+    request: CategorizeRequest,
+    user_id: UUID = Depends(get_current_user_id),
+    engine: CategorizationEngine = Depends(get_categorization_engine),
 ) -> CategorizeResponse:
     """
     Categorize a single transaction.
@@ -177,7 +177,7 @@ async def categorize_transaction(
         prediction = await engine.categorize(
             description=request.description,
             amount=Decimal(str(request.amount)) if request.amount else None,
-            user_id=str(request.user_id) if request.user_id else None,
+            user_id=str(user_id),
         )
 
         llm_enhanced = False
@@ -199,7 +199,7 @@ async def categorize_transaction(
                         prediction.confidence = result.confidence
                         llm_enhanced = True
             except Exception as e:
-                logger.debug("LLM fallback failed", error=str(e))
+                logger.debug(f"LLM fallback failed: {e}")
 
         return CategorizeResponse(
             category=prediction.category,
@@ -211,13 +211,14 @@ async def categorize_transaction(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error("Categorization failed", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Categorization failed: {str(e)}")
+        logger.error(f"Categorization failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
 @router.post("/categorize/batch")
 async def batch_categorize(
     request: BatchCategorizeRequest,
+    user_id: UUID = Depends(get_current_user_id),
     engine: CategorizationEngine = Depends(get_categorization_engine),
 ) -> dict:
     """Categorize multiple transactions at once."""
@@ -262,7 +263,7 @@ async def batch_categorize(
 
     try:
         # 2. Run batch categorization in thread pool
-        user_id_str = str(request.user_id) if request.user_id else None
+        user_id_str = str(user_id)
 
         predictions = await run_in_threadpool(
             engine.categorize_batch,
@@ -283,10 +284,10 @@ async def batch_categorize(
 
     except Exception as e:
         # If batch fails completely
-        logger.error("Batch categorization failed", error=str(e))
+        logger.error(f"Batch categorization failed: {e}", exc_info=True)
         # Add all to errors
         for idx in valid_indices:
-            errors.append({"index": idx, "error": f"Batch processing failed: {str(e)}"})
+            errors.append({"index": idx, "error": "Batch processing failed"})
 
     return {
         "results": results,
@@ -301,6 +302,7 @@ async def batch_categorize(
 async def submit_correction(
     request: CorrectionRequest,
     background_tasks: BackgroundTasks,
+    user_id: UUID = Depends(get_current_user_id),
     engine: CategorizationEngine = Depends(get_categorization_engine),
 ) -> dict:
     """
@@ -311,12 +313,12 @@ async def submit_correction(
     """
     try:
         model_trained = engine.learn_from_correction(
-            user_id=str(request.user_id),
+            user_id=str(user_id),
             description=request.description,
             correct_category=request.correct_category,
         )
 
-        correction_count = engine.get_correction_count(str(request.user_id))
+        correction_count = engine.get_correction_count(str(user_id))
 
         return {
             "success": True,
@@ -326,14 +328,14 @@ async def submit_correction(
         }
 
     except Exception as e:
-        logger.error("Correction submission failed", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Failed to submit correction: {str(e)}")
+        logger.error(f"Correction submission failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
-@router.post("/models/user/{user_id}/train")
+@router.post("/models/user/me/train")
 async def train_user_model(
-    user_id: UUID,
     request: TrainModelRequest,
+    user_id: UUID = Depends(get_current_user_id),
     engine: CategorizationEngine = Depends(get_categorization_engine),
 ) -> dict:
     """
@@ -364,8 +366,8 @@ async def train_user_model(
             raise HTTPException(status_code=500, detail="Training failed")
 
     except Exception as e:
-        logger.error("User model training failed", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Training failed: {str(e)}")
+        logger.error(f"User model training failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
 @router.get("/categories")
@@ -408,9 +410,10 @@ async def get_categories() -> dict:
     return {"categories": default_categories, "source": "default"}
 
 
-@router.delete("/models/user/{user_id}")
+@router.delete("/models/user/me")
 async def delete_user_model(
-    user_id: UUID, engine: CategorizationEngine = Depends(get_categorization_engine)
+    user_id: UUID = Depends(get_current_user_id),
+    engine: CategorizationEngine = Depends(get_categorization_engine)
 ) -> dict:
     """Delete a user's personalized model and corrections."""
     import os

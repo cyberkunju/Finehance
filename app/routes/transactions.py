@@ -1,5 +1,6 @@
 """Transaction API endpoints."""
 
+import logging
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional
@@ -10,6 +11,7 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.dependencies import get_current_user_id
 from app.schemas.transaction import (
     TransactionCreate,
     TransactionUpdate as SchemaTransactionUpdate,
@@ -19,6 +21,7 @@ from app.schemas.transaction import (
 )
 from app.services.transaction_service import TransactionService
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -45,7 +48,7 @@ async def get_transaction_service(db: AsyncSession = Depends(get_db)) -> Transac
 @router.post("", response_model=SchemaTransactionResponse, status_code=201)
 async def create_transaction(
     transaction: TransactionCreate,
-    user_id: UUID = Query(..., description="User ID"),
+    user_id: UUID = Depends(get_current_user_id),
     service: TransactionService = Depends(get_transaction_service),
 ) -> SchemaTransactionResponse:
     """Create a new transaction.
@@ -72,12 +75,13 @@ async def create_transaction(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to create transaction: {str(e)}")
+        logger.error(f"Failed to create transaction: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
 @router.get("", response_model=TransactionListResponse)
 async def list_transactions(
-    user_id: UUID = Query(..., description="User ID"),
+    user_id: UUID = Depends(get_current_user_id),
     category: Optional[str] = Query(None, description="Filter by category"),
     type: Optional[TransactionType] = Query(None, description="Filter by type"),
     start_date: Optional[datetime] = Query(None, description="Filter by start date"),
@@ -138,13 +142,14 @@ async def list_transactions(
             total_pages=total_pages,
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to list transactions: {str(e)}")
+        logger.error(f"Failed to list transactions: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
 @router.get("/{transaction_id}", response_model=SchemaTransactionResponse)
 async def get_transaction(
     transaction_id: UUID,
-    user_id: UUID = Query(..., description="User ID"),
+    user_id: UUID = Depends(get_current_user_id),
     service: TransactionService = Depends(get_transaction_service),
 ) -> SchemaTransactionResponse:
     """Get a single transaction by ID.
@@ -168,14 +173,15 @@ async def get_transaction(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get transaction: {str(e)}")
+        logger.error(f"Failed to get transaction: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
 @router.put("/{transaction_id}", response_model=SchemaTransactionResponse)
 async def update_transaction(
     transaction_id: UUID,
     updates: SchemaTransactionUpdate,
-    user_id: UUID = Query(..., description="User ID"),
+    user_id: UUID = Depends(get_current_user_id),
     service: TransactionService = Depends(get_transaction_service),
 ) -> SchemaTransactionResponse:
     """Update a transaction.
@@ -210,13 +216,14 @@ async def update_transaction(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to update transaction: {str(e)}")
+        logger.error(f"Failed to update transaction: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
 @router.delete("/{transaction_id}", status_code=204)
 async def delete_transaction(
     transaction_id: UUID,
-    user_id: UUID = Query(..., description="User ID"),
+    user_id: UUID = Depends(get_current_user_id),
     service: TransactionService = Depends(get_transaction_service),
 ) -> None:
     """Delete a transaction.
@@ -236,4 +243,5 @@ async def delete_transaction(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to delete transaction: {str(e)}")
+        logger.error(f"Failed to delete transaction: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")

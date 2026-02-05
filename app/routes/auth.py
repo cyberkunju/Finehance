@@ -7,6 +7,8 @@ from slowapi.util import get_remote_address
 
 from app.database import get_db
 from app.config import settings
+from app.dependencies import get_current_user
+from app.models.user import User
 from app.services.auth_service import (
     AuthService,
     PasswordValidationError,
@@ -193,44 +195,22 @@ async def logout() -> MessageResponse:
     )
 
 
-from fastapi.security import OAuth2PasswordBearer
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
-
-
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_profile(
-    token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
+    current_user: User = Depends(get_current_user),
 ) -> UserResponse:
     """Get current authenticated user.
 
     Args:
-        token: JWT access token
-        db: Database session
+        current_user: Current user (from auth dependency)
 
     Returns:
         User profile
-
-    Raises:
-        HTTPException: If token is invalid or user not found
     """
-    auth_service = AuthService(db)
-
-    try:
-        user = await auth_service.get_current_user(token)
-
-        return UserResponse(
-            id=user.id,
-            email=user.email,
-            first_name=user.first_name,
-            last_name=user.last_name,
-            created_at=user.created_at.isoformat(),
-        )
-
-    except (AuthenticationError, TokenError) as e:
-        logger.warning("Get user me failed", error=str(e))
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e),
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    return UserResponse(
+        id=current_user.id,
+        email=current_user.email,
+        first_name=current_user.first_name,
+        last_name=current_user.last_name,
+        created_at=current_user.created_at.isoformat(),
+    )
