@@ -216,6 +216,101 @@ class CategorizationEngine:
                 model_type=model_type
             )
     
+    def categorize_batch(
+        self,
+        descriptions: List[str],
+        amounts: Optional[List[Optional[Decimal]]] = None,
+        user_id: Optional[str] = None
+    ) -> List[CategoryPrediction]:
+        """
+        Predict categories for a batch of transaction descriptions.
+
+        Args:
+            descriptions: List of transaction description texts
+            amounts: List of transaction amounts (optional)
+            user_id: User ID (optional, for personalized models)
+
+        Returns:
+            List of CategoryPrediction objects
+
+        Raises:
+            ValueError: If global model is not loaded and no user model exists
+        """
+        if not descriptions:
+            return []
+
+        # Determine which model to use (once for the whole batch)
+        use_global = self.should_use_global_model(user_id)
+
+        if use_global:
+            if not self.global_model:
+                raise ValueError("Global categorization model not loaded")
+
+            model = self.global_model
+            model_type = "GLOBAL"
+        else:
+            model = self._load_user_model(user_id)
+            if not model:
+                # Fallback to global model
+                if not self.global_model:
+                    raise ValueError("No categorization model available")
+                model = self.global_model
+                model_type = "GLOBAL"
+            else:
+                model_type = "USER_SPECIFIC"
+
+        # Preprocess all descriptions
+        processed_descs = [preprocess_text(desc) for desc in descriptions]
+
+        try:
+            # Vectorized prediction
+            categories = model.predict(processed_descs)
+
+            # Vectorized probabilities
+            # predict_proba returns array of shape (n_samples, n_classes)
+            # we want the max probability for each sample
+            all_probabilities = model.predict_proba(processed_descs)
+            confidences = np.max(all_probabilities, axis=1)
+
+            results = []
+            for i, (category, confidence) in enumerate(zip(categories, confidences)):
+                # Cast confidence to float (it might be numpy float)
+                results.append(CategoryPrediction(
+                    category=category,
+                    confidence=float(confidence),
+                    model_type=model_type
+                ))
+
+            logger.info(
+                "Batch categorization completed",
+                batch_size=len(descriptions),
+                model_type=model_type,
+                user_id=user_id
+            )
+
+            return results
+
+        except Exception as e:
+            logger.error(
+                "Batch categorization failed, falling back to sequential",
+                error=str(e),
+                batch_size=len(descriptions)
+            )
+            # Fallback to sequential processing for robustness
+            results = []
+            for i, desc in enumerate(descriptions):
+                amt = amounts[i] if amounts and i < len(amounts) else None
+                try:
+                    # Reuse categorize method
+                    results.append(self.categorize(desc, amt, user_id))
+                except Exception:
+                    results.append(CategoryPrediction(
+                        category="Other Expenses",
+                        confidence=0.0,
+                        model_type=model_type
+                    ))
+            return results
+
     def learn_from_correction(
         self,
         user_id: str,

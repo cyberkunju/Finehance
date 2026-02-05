@@ -474,3 +474,23 @@ class TestCategorizationEngine:
         
         # Should still have corrections
         assert new_engine.get_correction_count(user_id) == 10
+
+    def test_categorize_batch(self, categorization_engine):
+        """Test batch categorization."""
+        descriptions = [
+            "Whole Foods Market",
+            "Starbucks Coffee",
+            "Shell Gas Station",
+            "Netflix Subscription"
+        ]
+
+        results = categorization_engine.categorize_batch(descriptions)
+
+        assert len(results) == 4
+        assert results[0].category == "Groceries"
+        assert results[1].category == "Dining"
+        assert results[2].category == "Transportation"
+        assert results[3].category == "Entertainment"
+
+        # Check empty batch
+        assert categorization_engine.categorize_batch([]) == []
