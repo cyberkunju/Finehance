@@ -349,14 +349,22 @@ async def get_categories() -> dict:
         "Other Expenses",
     ]
     
-    if os.path.exists(categories_path):
-        try:
-            import json
-            with open(categories_path, 'r') as f:
-                categories = json.load(f)
+    try:
+        import json
+        import asyncio
+
+        def load_categories():
+            try:
+                with open(categories_path, 'r') as f:
+                    return json.load(f)
+            except (FileNotFoundError, OSError):
+                return None
+
+        categories = await asyncio.to_thread(load_categories)
+        if categories:
             return {"categories": categories, "source": "file"}
-        except Exception:
-            pass
+    except Exception:
+        pass
     
     return {"categories": default_categories, "source": "default"}
 
