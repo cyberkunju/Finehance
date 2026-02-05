@@ -186,11 +186,8 @@ async def categorize_transaction(
                 from app.services.ai_brain_service import get_ai_brain_service
                 ai_brain = get_ai_brain_service()
                 
-                # Run in sync context
-                import asyncio
-                result = asyncio.get_event_loop().run_until_complete(
-                    ai_brain.parse_transaction(request.description)
-                )
+                # Use async await
+                result = await ai_brain.parse_transaction(request.description)
                 
                 if result.parsed_data and result.confidence > prediction.confidence:
                     llm_category = result.parsed_data.get("category")
