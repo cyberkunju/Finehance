@@ -146,7 +146,7 @@ async def get_user_model_status(
     """Get user-specific model status."""
     has_model = engine.has_user_model(str(user_id))
     correction_count = engine.get_correction_count(str(user_id))
-    accuracy = engine.get_model_accuracy(str(user_id)) if has_model else None
+    accuracy = await engine.get_model_accuracy(str(user_id)) if has_model else None
     
     return UserModelStatus(
         has_model=has_model,
@@ -172,7 +172,7 @@ async def categorize_transaction(
     
     try:
         # Get prediction from ML model
-        prediction = engine.categorize(
+        prediction = await engine.categorize(
             description=request.description,
             amount=Decimal(str(request.amount)) if request.amount else None,
             user_id=str(request.user_id) if request.user_id else None,
@@ -186,11 +186,8 @@ async def categorize_transaction(
                 from app.services.ai_brain_service import get_ai_brain_service
                 ai_brain = get_ai_brain_service()
                 
-                # Run in sync context
-                import asyncio
-                result = asyncio.get_event_loop().run_until_complete(
-                    ai_brain.parse_transaction(request.description)
-                )
+                # Use async await
+                result = await ai_brain.parse_transaction(request.description)
                 
                 if result.parsed_data and result.confidence > prediction.confidence:
                     llm_category = result.parsed_data.get("category")
@@ -221,6 +218,7 @@ async def batch_categorize(
     engine: CategorizationEngine = Depends(get_categorization_engine)
 ) -> dict:
     """Categorize multiple transactions at once."""
+    from decimal import Decimal
     from fastapi.concurrency import run_in_threadpool
     
     results = []
@@ -353,7 +351,7 @@ async def train_user_model(
         success = engine._train_user_model(str(user_id), corrections)
         
         if success:
-            accuracy = engine.get_model_accuracy(str(user_id))
+            accuracy = await engine.get_model_accuracy(str(user_id))
             return {
                 "success": True,
                 "accuracy": accuracy,
@@ -387,14 +385,22 @@ async def get_categories() -> dict:
         "Other Expenses",
     ]
     
-    if os.path.exists(categories_path):
-        try:
-            import json
-            with open(categories_path, 'r') as f:
-                categories = json.load(f)
+    try:
+        import json
+        import asyncio
+
+        def load_categories():
+            try:
+                with open(categories_path, 'r') as f:
+                    return json.load(f)
+            except (FileNotFoundError, OSError):
+                return None
+
+        categories = await asyncio.to_thread(load_categories)
+        if categories:
             return {"categories": categories, "source": "file"}
-        except Exception:
-            pass
+    except Exception:
+        pass
     
     return {"categories": default_categories, "source": "default"}
 

@@ -6,7 +6,7 @@ from decimal import Decimal
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import select, func, and_, or_, desc
+from sqlalchemy import select, func, and_, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.transaction import Transaction
@@ -15,8 +15,6 @@ from app.schemas.transaction import (
     TransactionUpdate,
     TransactionFilters,
     Pagination,
-    TransactionType,
-    TransactionSource,
 )
 from app.ml.categorization_engine import CategorizationEngine
 from app.logging_config import get_logger
@@ -67,7 +65,7 @@ class TransactionService:
         # Auto-categorize if no category provided and auto-categorization is enabled
         if not final_category and auto_categorize:
             try:
-                prediction = self.categorization_engine.categorize(
+                prediction = await self.categorization_engine.categorize(
                     description=transaction_data.description,
                     amount=transaction_data.amount,
                     user_id=str(user_id)
@@ -292,7 +290,8 @@ class TransactionService:
                 stmt = stmt.where(Transaction.description.ilike(search_pattern))
 
         # Get total count before pagination
-        count_stmt = select(func.count()).select_from(stmt.subquery())
+        # Optimize count query by avoiding subquery: SELECT count(*) FROM table WHERE ...
+        count_stmt = stmt.with_only_columns(func.count()).order_by(None)
         total_result = await self.db.execute(count_stmt)
         total = total_result.scalar_one()
 

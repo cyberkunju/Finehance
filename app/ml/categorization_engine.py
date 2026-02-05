@@ -2,6 +2,7 @@
 
 import os
 import json
+import asyncio
 from typing import Optional, Tuple, List
 from decimal import Decimal
 from dataclasses import dataclass
@@ -74,7 +75,7 @@ class CategorizationEngine:
                 error=str(e)
             )
     
-    def _load_user_model(self, user_id: str) -> Optional[Pipeline]:
+    async def _load_user_model(self, user_id: str) -> Optional[Pipeline]:
         """
         Load a user-specific categorization model.
         
@@ -95,7 +96,8 @@ class CategorizationEngine:
             return None
         
         try:
-            model = joblib.load(model_path)
+            loop = asyncio.get_running_loop()
+            model = await loop.run_in_executor(None, joblib.load, model_path)
             self.user_models[user_id] = model
             logger.info(
                 "User-specific categorization model loaded",
@@ -110,7 +112,7 @@ class CategorizationEngine:
             )
             return None
     
-    def should_use_global_model(self, user_id: Optional[str]) -> bool:
+    async def should_use_global_model(self, user_id: Optional[str]) -> bool:
         """
         Determine if global model should be used for this user.
         
@@ -129,13 +131,13 @@ class CategorizationEngine:
             return True
         
         # Check if user has a personalized model
-        user_model = self._load_user_model(user_id)
+        user_model = await self._load_user_model(user_id)
         if not user_model:
             return True
         
         return False
     
-    def categorize(
+    async def categorize(
         self,
         description: str,
         amount: Optional[Decimal] = None,
@@ -159,7 +161,7 @@ class CategorizationEngine:
         processed_desc = preprocess_text(description)
         
         # Determine which model to use
-        use_global = self.should_use_global_model(user_id)
+        use_global = await self.should_use_global_model(user_id)
         
         if use_global:
             if not self.global_model:
@@ -168,7 +170,7 @@ class CategorizationEngine:
             model = self.global_model
             model_type = "GLOBAL"
         else:
-            model = self._load_user_model(user_id)
+            model = await self._load_user_model(user_id)
             if not model:
                 # Fallback to global model
                 if not self.global_model:
@@ -525,7 +527,7 @@ class CategorizationEngine:
             )
             return False
     
-    def get_model_accuracy(self, user_id: str) -> float:
+    async def get_model_accuracy(self, user_id: str) -> float:
         """
         Get current accuracy for user's personalized model.
         
@@ -543,14 +545,19 @@ class CategorizationEngine:
             global_metrics_path = os.path.join(self.model_dir, "global_categorization_metrics.pkl")
             if os.path.exists(global_metrics_path):
                 try:
-                    metrics = joblib.load(global_metrics_path)
+                    loop = asyncio.get_running_loop()
+                    metrics = await loop.run_in_executor(None, joblib.load, global_metrics_path)
                     return metrics.get("accuracy", 0.0)
-                except Exception:
+                except Exception as e:
+                    logger.error("Failed to load global metrics", error=str(e))
                     return 0.0
+            else:
+                logger.warning("Global metrics file not found", path=global_metrics_path)
             return 0.0
         
         try:
-            metrics = joblib.load(metrics_path)
+            loop = asyncio.get_running_loop()
+            metrics = await loop.run_in_executor(None, joblib.load, metrics_path)
             return metrics.get("accuracy", 0.0)
         except Exception as e:
             logger.error(
