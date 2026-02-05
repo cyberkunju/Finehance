@@ -148,9 +148,6 @@ class CategorizationEngine:
         Raises:
             ValueError: If global model is not loaded and no user model exists
         """
-        # Preprocess description
-        processed_desc = preprocess_text(description)
-
         # Determine which model to use
         use_global = await self.should_use_global_model(user_id)
 
@@ -170,6 +167,24 @@ class CategorizationEngine:
                 model_type = "GLOBAL"
             else:
                 model_type = "USER_SPECIFIC"
+
+        # Offload prediction to thread pool to avoid blocking the event loop
+        return await asyncio.to_thread(
+            self._predict_single_sync, model, description, model_type, user_id
+        )
+
+    def _predict_single_sync(
+        self,
+        model: Pipeline,
+        description: str,
+        model_type: str,
+        user_id: Optional[str],
+    ) -> CategoryPrediction:
+        """
+        Synchronous prediction logic to be run in a thread pool.
+        """
+        # Preprocess description
+        processed_desc = preprocess_text(description)
 
         # Make prediction
         try:
