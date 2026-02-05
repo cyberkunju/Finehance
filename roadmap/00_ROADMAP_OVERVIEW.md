@@ -108,7 +108,7 @@ P4 (Testing) ───────────────┘
 - [x] Add `is_token_blacklisted` method to `AuthService`
 - [x] Add blacklist check in `get_current_user` dependency
 - [x] Update logout route to blacklist token
-- [ ] Blacklist old token on refresh
+- [x] Blacklist old token on refresh
 - [x] Fix PDF export — add `reportlab` to dependencies or return 501
 - [x] Replace `datetime.utcnow()` in all models
 - [x] Replace `datetime.utcnow()` in all services

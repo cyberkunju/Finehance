@@ -320,6 +320,9 @@ class AuthService:
         new_access_token = self.create_access_token(user_id)
         new_refresh_token = self.create_refresh_token(user_id)
 
+        # Blacklist the old refresh token to prevent reuse
+        await self.blacklist_token(refresh_token, expires_in=7 * 24 * 60 * 60)
+
         logger.info("Tokens refreshed successfully", user_id=str(user_id))
 
         return new_access_token, new_refresh_token

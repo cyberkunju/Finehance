@@ -623,7 +623,7 @@ Alternatively, switch to a simple dict-based cache within the class (no `lru_cac
 - [x] If blacklisted → raise HTTPException 401 "Token has been revoked"
 - [x] Open `app/routes/auth.py`
 - [x] Update `/logout` endpoint to call `auth_service.blacklist_token(token)`
-- [ ] Update `/refresh` endpoint to blacklist old access token after issuing new one
+- [x] Update `/refresh` endpoint to blacklist old access token after issuing new one
 
 ### Verification
 - [ ] Test: login → get token → call `/me` (200)
