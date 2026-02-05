@@ -15,7 +15,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.cache import cache_manager
 from app.config import settings
-from app.database import close_db, init_db, async_engine
+from app.database import close_db, init_db
 from app.logging_config import configure_logging, get_logger, bind_contextvars, clear_contextvars
 
 # Configure logging
@@ -34,7 +34,7 @@ try:
     from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
     from sentry_sdk.integrations.redis import RedisIntegration
     from sentry_sdk.integrations.logging import LoggingIntegration
-    
+
     if settings.sentry_dsn:
         sentry_sdk.init(
             dsn=settings.sentry_dsn,
@@ -68,9 +68,9 @@ except ImportError:
 try:
     from prometheus_fastapi_instrumentator import Instrumentator, metrics
     from prometheus_fastapi_instrumentator.metrics import Info
-    
+
     PROMETHEUS_AVAILABLE = True
-    
+
     # Create instrumentator with custom metrics
     instrumentator = Instrumentator(
         should_group_status_codes=False,
@@ -82,7 +82,7 @@ try:
         inprogress_name="http_requests_inprogress",
         inprogress_labels=True,
     )
-    
+
     logger.info("Prometheus metrics initialized")
 except ImportError:
     PROMETHEUS_AVAILABLE = False
@@ -92,49 +92,51 @@ except ImportError:
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan manager.
-    
+
     Handles startup and shutdown events.
     """
     # Startup
     logger.info("Starting application", app_name=settings.app_name, version=settings.app_version)
-    
+
     try:
         # Initialize database
         await init_db()
-        
+
         # Connect to Redis
         await cache_manager.connect()
-        
+
         # Initialize GPU metrics collection (if available)
         try:
             from app.metrics.gpu_metrics import gpu_metrics
+
             if settings.enable_gpu_metrics:
                 gpu_metrics.start_collection()
                 logger.info("GPU metrics collection started")
         except Exception as e:
             logger.warning("GPU metrics not available", error=str(e))
-        
+
         logger.info("Application started successfully")
-        
+
         yield
-        
+
     finally:
         # Shutdown
         logger.info("Shutting down application")
-        
+
         # Stop GPU metrics collection
         try:
             from app.metrics.gpu_metrics import gpu_metrics
+
             gpu_metrics.stop_collection()
         except Exception:
             pass
-        
+
         # Close database connections
         await close_db()
-        
+
         # Disconnect from Redis
         await cache_manager.disconnect()
-        
+
         logger.info("Application shutdown complete")
 
 
@@ -167,7 +169,7 @@ if PROMETHEUS_AVAILABLE and settings.enable_metrics:
             metric_subsystem="http",
         )
     )
-    
+
     # Add request size metric
     instrumentator.add(
         metrics.request_size(
@@ -175,7 +177,7 @@ if PROMETHEUS_AVAILABLE and settings.enable_metrics:
             metric_subsystem="http",
         )
     )
-    
+
     # Add response size metric
     instrumentator.add(
         metrics.response_size(
@@ -183,7 +185,7 @@ if PROMETHEUS_AVAILABLE and settings.enable_metrics:
             metric_subsystem="http",
         )
     )
-    
+
     # Add latency histogram
     instrumentator.add(
         metrics.latency(
@@ -192,7 +194,7 @@ if PROMETHEUS_AVAILABLE and settings.enable_metrics:
             buckets=[0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0, 30.0, 60.0],
         )
     )
-    
+
     # Instrument the app and expose /metrics endpoint
     instrumentator.instrument(app).expose(
         app,
@@ -217,49 +219,49 @@ async def add_request_metadata(request: Request, call_next) -> Response:
     """Add request ID and timing to all requests."""
     request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
     start_time = time.perf_counter()
-    
+
     # Add request_id to request state for logging
     request.state.request_id = request_id
-    
+
     # Bind request context for all logs in this request
     clear_contextvars()
     bind_contextvars(request_id=request_id, path=request.url.path, method=request.method)
-    
+
     response = await call_next(request)
-    
+
     # Add timing and request ID headers
     process_time = time.perf_counter() - start_time
     response.headers["X-Request-ID"] = request_id
     response.headers["X-Process-Time"] = f"{process_time:.4f}"
-    
+
     # Log request
     logger.info(
         "Request completed",
         status_code=response.status_code,
         process_time_ms=round(process_time * 1000, 2),
     )
-    
+
     return response
 
 
 @app.get("/")
 async def root() -> dict[str, str]:
     """Root endpoint.
-    
+
     Returns:
         Welcome message
     """
     return {
         "message": f"Welcome to {settings.app_name}",
         "version": settings.app_version,
-        "status": "running"
+        "status": "running",
     }
 
 
 @app.get("/health")
 async def health_check() -> dict[str, str]:
     """Basic health check endpoint.
-    
+
     Returns:
         Health status
     """
@@ -269,19 +271,16 @@ async def health_check() -> dict[str, str]:
 @app.get("/health/ready")
 async def readiness_check() -> dict:
     """Readiness check - verifies all dependencies are available.
-    
+
     Returns:
         Detailed health status of all components
     """
     from sqlalchemy import text
     from app.database import AsyncSessionLocal
-    
-    checks = {
-        "status": "healthy",
-        "checks": {}
-    }
+
+    checks = {"status": "healthy", "checks": {}}
     all_healthy = True
-    
+
     # Check database
     try:
         async with AsyncSessionLocal() as session:
@@ -290,7 +289,7 @@ async def readiness_check() -> dict:
     except Exception as e:
         checks["checks"]["database"] = {"status": "unhealthy", "error": str(e)}
         all_healthy = False
-    
+
     # Check Redis
     try:
         if cache_manager.redis:
@@ -303,18 +302,18 @@ async def readiness_check() -> dict:
     except Exception as e:
         checks["checks"]["redis"] = {"status": "unhealthy", "error": str(e)}
         all_healthy = False
-    
+
     if not all_healthy:
         checks["status"] = "unhealthy"
         return JSONResponse(status_code=503, content=checks)
-    
+
     return checks
 
 
 @app.get("/health/live")
 async def liveness_check() -> dict[str, str]:
     """Liveness check - basic check that the service is running.
-    
+
     Returns:
         Simple alive status
     """
@@ -324,7 +323,7 @@ async def liveness_check() -> dict[str, str]:
 @app.get("/metrics/cache")
 async def cache_stats() -> dict:
     """Get cache statistics.
-    
+
     Returns:
         Cache hit/miss stats
     """
@@ -334,12 +333,13 @@ async def cache_stats() -> dict:
 @app.get("/metrics/gpu")
 async def gpu_stats() -> dict:
     """Get GPU metrics summary.
-    
+
     Returns:
         GPU utilization, memory, temperature stats
     """
     try:
         from app.metrics.gpu_metrics import gpu_metrics
+
         return gpu_metrics.get_summary()
     except ImportError:
         return {
@@ -360,12 +360,13 @@ async def gpu_stats() -> dict:
 @app.get("/metrics/ai")
 async def ai_brain_stats() -> dict:
     """Get AI Brain metrics summary.
-    
+
     Returns:
         AI Brain queue, circuit breaker, performance stats
     """
     try:
         from app.services.ai_brain_service import get_ai_brain_service
+
         service = get_ai_brain_service()
         return service.get_resilience_stats()
     except ImportError:
@@ -375,13 +376,13 @@ async def ai_brain_stats() -> dict:
 
 
 @app.exception_handler(Exception)
-async def global_exception_handler(request: any, exc: Exception) -> JSONResponse:
+async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Global exception handler.
-    
+
     Args:
         request: Request object
         exc: Exception
-        
+
     Returns:
         JSON error response
     """
@@ -390,20 +391,31 @@ async def global_exception_handler(request: any, exc: Exception) -> JSONResponse
         path=request.url.path,
         method=request.method,
         error=str(exc),
-        exc_info=True
+        exc_info=True,
     )
-    
+
     return JSONResponse(
         status_code=500,
         content={
             "error": "Internal server error",
-            "message": str(exc) if settings.debug else "An unexpected error occurred"
-        }
+            "message": str(exc) if settings.debug else "An unexpected error occurred",
+        },
     )
 
 
 # Import and include routers
-from app.routes import transactions, budgets, goals, predictions, advice, reports, file_import, auth, ai, ml
+from app.routes import (
+    transactions,
+    budgets,
+    goals,
+    predictions,
+    advice,
+    reports,
+    file_import,
+    auth,
+    ai,
+    ml,
+)
 
 app.include_router(transactions.router, prefix="/api/transactions", tags=["transactions"])
 app.include_router(budgets.router, prefix="/api/budgets", tags=["budgets"])

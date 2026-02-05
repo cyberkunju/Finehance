@@ -1,6 +1,5 @@
 """Prediction API endpoints."""
 
-from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -25,26 +24,24 @@ async def get_expense_forecasts(
     user_id: UUID = Query(..., description="User ID"),
     periods: int = Query(30, ge=1, le=90, description="Number of days to forecast"),
     lookback_days: int = Query(90, ge=30, le=365, description="Historical days to use"),
-    engine: PredictionEngine = Depends(get_prediction_engine)
+    engine: PredictionEngine = Depends(get_prediction_engine),
 ) -> AllForecastsResponse:
     """Get expense forecasts for all categories.
-    
+
     Args:
         user_id: User ID
         periods: Number of days to forecast (1-90)
         lookback_days: Historical days to use (30-365)
         engine: Prediction engine
-        
+
     Returns:
         Forecasts for all categories with sufficient data
     """
     try:
         forecasts_dict = await engine.forecast_all_categories(
-            user_id=user_id,
-            periods=periods,
-            lookback_days=lookback_days
+            user_id=user_id, periods=periods, lookback_days=lookback_days
         )
-        
+
         # Convert to response format
         forecasts_response = {
             category: ForecastResponse(
@@ -53,14 +50,13 @@ async def get_expense_forecasts(
                 confidence_intervals=forecast.confidence_intervals,
                 forecast_dates=forecast.forecast_dates,
                 model_params=forecast.model_params,
-                accuracy_score=forecast.accuracy_score
+                accuracy_score=forecast.accuracy_score,
             )
             for category, forecast in forecasts_dict.items()
         }
-        
+
         return AllForecastsResponse(
-            forecasts=forecasts_response,
-            total_categories=len(forecasts_response)
+            forecasts=forecasts_response, total_categories=len(forecasts_response)
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate forecasts: {str(e)}")
@@ -72,44 +68,41 @@ async def get_category_forecast(
     user_id: UUID = Query(..., description="User ID"),
     periods: int = Query(30, ge=1, le=90, description="Number of days to forecast"),
     lookback_days: int = Query(90, ge=30, le=365, description="Historical days to use"),
-    engine: PredictionEngine = Depends(get_prediction_engine)
+    engine: PredictionEngine = Depends(get_prediction_engine),
 ) -> ForecastResponse:
     """Get expense forecast for a specific category.
-    
+
     Args:
         category: Expense category
         user_id: User ID
         periods: Number of days to forecast (1-90)
         lookback_days: Historical days to use (30-365)
         engine: Prediction engine
-        
+
     Returns:
         Forecast for the specified category
-        
+
     Raises:
         HTTPException: If insufficient data or forecast fails
     """
     try:
         forecast = await engine.forecast_expenses(
-            user_id=user_id,
-            category=category,
-            periods=periods,
-            lookback_days=lookback_days
+            user_id=user_id, category=category, periods=periods, lookback_days=lookback_days
         )
-        
+
         if not forecast:
             raise HTTPException(
                 status_code=404,
-                detail=f"Insufficient data to forecast {category}. Need at least 30 days of transactions."
+                detail=f"Insufficient data to forecast {category}. Need at least 30 days of transactions.",
             )
-        
+
         return ForecastResponse(
             category=forecast.category,
             predictions=forecast.predictions,
             confidence_intervals=forecast.confidence_intervals,
             forecast_dates=forecast.forecast_dates,
             model_params=forecast.model_params,
-            accuracy_score=forecast.accuracy_score
+            accuracy_score=forecast.accuracy_score,
         )
     except HTTPException:
         raise
@@ -123,17 +116,17 @@ async def get_spending_anomalies(
     user_id: UUID = Query(..., description="User ID"),
     lookback_days: int = Query(90, ge=30, le=365, description="Days to analyze"),
     threshold_percent: float = Query(50.0, ge=10, le=200, description="Deviation threshold"),
-    engine: PredictionEngine = Depends(get_prediction_engine)
+    engine: PredictionEngine = Depends(get_prediction_engine),
 ) -> list[AnomalyResponse]:
     """Detect unusual spending patterns in a category.
-    
+
     Args:
         category: Expense category
         user_id: User ID
         lookback_days: Days to analyze (30-365)
         threshold_percent: Deviation threshold (10-200%)
         engine: Prediction engine
-        
+
     Returns:
         List of detected anomalies
     """
@@ -142,9 +135,9 @@ async def get_spending_anomalies(
             user_id=user_id,
             category=category,
             lookback_days=lookback_days,
-            threshold_percent=threshold_percent
+            threshold_percent=threshold_percent,
         )
-        
+
         return [
             AnomalyResponse(
                 date=anomaly.date,
@@ -152,7 +145,7 @@ async def get_spending_anomalies(
                 amount=anomaly.amount,
                 expected_amount=anomaly.expected_amount,
                 deviation_percent=anomaly.deviation_percent,
-                severity=anomaly.severity
+                severity=anomaly.severity,
             )
             for anomaly in anomalies
         ]

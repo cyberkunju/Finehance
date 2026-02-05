@@ -8,7 +8,15 @@ from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import (
-    String, DateTime, Date, Numeric, Float, ForeignKey, Index, CheckConstraint, Text
+    String,
+    DateTime,
+    Date,
+    Numeric,
+    Float,
+    ForeignKey,
+    Index,
+    CheckConstraint,
+    Text,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -26,21 +34,12 @@ class Transaction(Base):
     __tablename__ = "transactions"
 
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid.uuid4,
-        index=True
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True
     )
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("users.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    amount: Mapped[Decimal] = mapped_column(
-        Numeric(12, 2),
-        nullable=False
-    )
+    amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     category: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
@@ -48,46 +47,30 @@ class Transaction(Base):
     source: Mapped[str] = mapped_column(String(20), nullable=False)
     confidence_score: Mapped[Optional[float]] = mapped_column(Float)
     connection_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("connections.id", ondelete="SET NULL")
+        UUID(as_uuid=True), ForeignKey("connections.id", ondelete="SET NULL")
     )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=datetime.utcnow,
-        nullable=False
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
-        nullable=False
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
     )
     deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
 
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="transactions")
     connection: Mapped[Optional["Connection"]] = relationship(
-        "Connection",
-        back_populates="transactions"
+        "Connection", back_populates="transactions"
     )
 
     # Table constraints
     __table_args__ = (
+        CheckConstraint("type IN ('INCOME', 'EXPENSE')", name="check_transaction_type"),
         CheckConstraint(
-            "type IN ('INCOME', 'EXPENSE')",
-            name="check_transaction_type"
+            "source IN ('MANUAL', 'API', 'FILE_IMPORT')", name="check_transaction_source"
         ),
-        CheckConstraint(
-            "source IN ('MANUAL', 'API', 'FILE_IMPORT')",
-            name="check_transaction_source"
-        ),
-        CheckConstraint(
-            "amount >= 0",
-            name="check_amount_positive"
-        ),
+        CheckConstraint("amount >= 0", name="check_amount_positive"),
         CheckConstraint(
             "confidence_score IS NULL OR (confidence_score >= 0 AND confidence_score <= 1)",
-            name="check_confidence_score_range"
+            name="check_confidence_score_range",
         ),
         # Composite indexes for common queries
         Index("idx_transactions_user_date", "user_id", "date"),

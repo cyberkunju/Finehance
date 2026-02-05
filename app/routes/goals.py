@@ -13,7 +13,7 @@ from app.schemas.goal import (
     GoalProgressUpdate,
     GoalResponse,
     GoalProgressResponse,
-    GoalRiskAlertResponse
+    GoalRiskAlertResponse,
 )
 from app.services.goal_service import GoalService
 
@@ -31,18 +31,18 @@ async def get_goal_service(db: AsyncSession = Depends(get_db)) -> GoalService:
 async def create_goal(
     goal: GoalCreate,
     user_id: UUID = Query(..., description="User ID"),
-    service: GoalService = Depends(get_goal_service)
+    service: GoalService = Depends(get_goal_service),
 ) -> GoalResponse:
     """Create a new financial goal.
-    
+
     Args:
         goal: Goal data
         user_id: User ID
         service: Goal service
-        
+
     Returns:
         Created goal
-        
+
     Raises:
         HTTPException: If creation fails
     """
@@ -53,7 +53,7 @@ async def create_goal(
             target_amount=goal.target_amount,
             deadline=goal.deadline,
             category=goal.category,
-            initial_amount=goal.initial_amount
+            initial_amount=goal.initial_amount,
         )
         return GoalResponse.model_validate(created)
     except ValueError as e:
@@ -65,16 +65,18 @@ async def create_goal(
 @router.get("", response_model=list[GoalResponse])
 async def list_goals(
     user_id: UUID = Query(..., description="User ID"),
-    status: Optional[str] = Query(None, description="Filter by status (ACTIVE, ACHIEVED, ARCHIVED)"),
-    service: GoalService = Depends(get_goal_service)
+    status: Optional[str] = Query(
+        None, description="Filter by status (ACTIVE, ACHIEVED, ARCHIVED)"
+    ),
+    service: GoalService = Depends(get_goal_service),
 ) -> list[GoalResponse]:
     """List all goals for a user.
-    
+
     Args:
         user_id: User ID
         status: Optional status filter
         service: Goal service
-        
+
     Returns:
         List of goals
     """
@@ -89,18 +91,18 @@ async def list_goals(
 async def get_goal(
     goal_id: UUID,
     user_id: UUID = Query(..., description="User ID"),
-    service: GoalService = Depends(get_goal_service)
+    service: GoalService = Depends(get_goal_service),
 ) -> GoalResponse:
     """Get a single goal by ID.
-    
+
     Args:
         goal_id: Goal ID
         user_id: User ID
         service: Goal service
-        
+
     Returns:
         Goal details
-        
+
     Raises:
         HTTPException: If goal not found
     """
@@ -119,18 +121,18 @@ async def get_goal(
 async def get_goal_progress(
     goal_id: UUID,
     user_id: UUID = Query(..., description="User ID"),
-    service: GoalService = Depends(get_goal_service)
+    service: GoalService = Depends(get_goal_service),
 ) -> GoalProgressResponse:
     """Get detailed progress information for a goal.
-    
+
     Args:
         goal_id: Goal ID
         user_id: User ID
         service: Goal service
-        
+
     Returns:
         Goal progress details
-        
+
     Raises:
         HTTPException: If goal not found
     """
@@ -138,7 +140,7 @@ async def get_goal_progress(
         progress = await service.get_goal_progress(user_id, goal_id)
         if not progress:
             raise HTTPException(status_code=404, detail=f"Goal {goal_id} not found")
-        
+
         return GoalProgressResponse(
             goal_id=progress.goal_id,
             name=progress.name,
@@ -149,7 +151,7 @@ async def get_goal_progress(
             days_remaining=progress.days_remaining,
             estimated_completion_date=progress.estimated_completion_date,
             is_at_risk=progress.is_at_risk,
-            risk_reason=progress.risk_reason
+            risk_reason=progress.risk_reason,
         )
     except HTTPException:
         raise
@@ -162,32 +164,30 @@ async def update_goal_progress(
     goal_id: UUID,
     progress_update: GoalProgressUpdate,
     user_id: UUID = Query(..., description="User ID"),
-    service: GoalService = Depends(get_goal_service)
+    service: GoalService = Depends(get_goal_service),
 ) -> GoalResponse:
     """Update goal progress by adding an amount.
-    
+
     Args:
         goal_id: Goal ID
         progress_update: Progress update data
         user_id: User ID
         service: Goal service
-        
+
     Returns:
         Updated goal
-        
+
     Raises:
         HTTPException: If goal not found
     """
     try:
         updated = await service.update_goal_progress(
-            goal_id=goal_id,
-            user_id=user_id,
-            amount=progress_update.amount
+            goal_id=goal_id, user_id=user_id, amount=progress_update.amount
         )
-        
+
         if not updated:
             raise HTTPException(status_code=404, detail=f"Goal {goal_id} not found")
-        
+
         return GoalResponse.model_validate(updated)
     except HTTPException:
         raise
@@ -200,27 +200,27 @@ async def update_goal_progress(
 @router.get("/risks/alerts", response_model=list[GoalRiskAlertResponse])
 async def get_goal_risk_alerts(
     user_id: UUID = Query(..., description="User ID"),
-    service: GoalService = Depends(get_goal_service)
+    service: GoalService = Depends(get_goal_service),
 ) -> list[GoalRiskAlertResponse]:
     """Get risk alerts for all active goals.
-    
+
     Args:
         user_id: User ID
         service: Goal service
-        
+
     Returns:
         List of risk alerts
     """
     try:
         alerts = await service.check_goal_risks(user_id)
-        
+
         return [
             GoalRiskAlertResponse(
                 goal_id=alert.goal_id,
                 name=alert.name,
                 severity=alert.severity,
                 message=alert.message,
-                recommended_action=alert.recommended_action
+                recommended_action=alert.recommended_action,
             )
             for alert in alerts
         ]
@@ -233,29 +233,29 @@ async def update_goal(
     goal_id: UUID,
     updates: GoalUpdate,
     user_id: UUID = Query(..., description="User ID"),
-    service: GoalService = Depends(get_goal_service)
+    service: GoalService = Depends(get_goal_service),
 ) -> GoalResponse:
     """Update a goal.
-    
+
     Args:
         goal_id: Goal ID
         updates: Goal updates
         user_id: User ID
         service: Goal service
-        
+
     Returns:
         Updated goal
-        
+
     Raises:
         HTTPException: If goal not found or update fails
     """
     try:
         # Check if any updates provided
         update_dict = updates.model_dump(exclude_unset=True)
-        
+
         if not update_dict:
             raise HTTPException(status_code=400, detail="No updates provided")
-        
+
         updated = await service.update_goal(
             goal_id=goal_id,
             user_id=user_id,
@@ -263,12 +263,12 @@ async def update_goal(
             target_amount=updates.target_amount,
             deadline=updates.deadline,
             category=updates.category,
-            status=updates.status
+            status=updates.status,
         )
-        
+
         if not updated:
             raise HTTPException(status_code=404, detail=f"Goal {goal_id} not found")
-        
+
         return GoalResponse.model_validate(updated)
     except HTTPException:
         raise
@@ -282,15 +282,15 @@ async def update_goal(
 async def delete_goal(
     goal_id: UUID,
     user_id: UUID = Query(..., description="User ID"),
-    service: GoalService = Depends(get_goal_service)
+    service: GoalService = Depends(get_goal_service),
 ) -> None:
     """Delete a goal.
-    
+
     Args:
         goal_id: Goal ID
         user_id: User ID
         service: Goal service
-        
+
     Raises:
         HTTPException: If goal not found or deletion fails
     """

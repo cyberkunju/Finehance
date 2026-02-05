@@ -10,23 +10,21 @@ from pydantic import BaseModel, Field
 
 class ReportGenerateRequest(BaseModel):
     """Request schema for generating a financial report."""
-    
+
     user_id: UUID = Field(..., description="User ID")
     start_date: date = Field(..., description="Report start date")
     end_date: date = Field(..., description="Report end date")
     include_budget_analysis: bool = Field(
-        default=True,
-        description="Include budget adherence analysis"
+        default=True, description="Include budget adherence analysis"
     )
     budget_id: Optional[UUID] = Field(
-        default=None,
-        description="Specific budget ID for analysis (optional)"
+        default=None, description="Specific budget ID for analysis (optional)"
     )
 
 
 class IncomeSummaryResponse(BaseModel):
     """Income summary response."""
-    
+
     total_income: Decimal
     income_by_category: Dict[str, Decimal]
     transaction_count: int
@@ -34,7 +32,7 @@ class IncomeSummaryResponse(BaseModel):
 
 class ExpenseSummaryResponse(BaseModel):
     """Expense summary response."""
-    
+
     total_expenses: Decimal
     expenses_by_category: Dict[str, Decimal]
     transaction_count: int
@@ -43,7 +41,7 @@ class ExpenseSummaryResponse(BaseModel):
 
 class BudgetAdherenceResponse(BaseModel):
     """Budget adherence analysis response."""
-    
+
     budget_id: Optional[UUID]
     budget_name: Optional[str]
     categories: Dict[str, Dict[str, Any]]
@@ -52,7 +50,7 @@ class BudgetAdherenceResponse(BaseModel):
 
 class SpendingChangeResponse(BaseModel):
     """Spending pattern change response."""
-    
+
     category: str
     previous_period_avg: Decimal
     current_period_avg: Decimal
@@ -62,7 +60,7 @@ class SpendingChangeResponse(BaseModel):
 
 class FinancialReportResponse(BaseModel):
     """Complete financial report response."""
-    
+
     report_id: UUID
     user_id: UUID
     start_date: date
@@ -78,9 +76,5 @@ class FinancialReportResponse(BaseModel):
 
 class ReportExportRequest(BaseModel):
     """Request schema for exporting a report."""
-    
-    format: str = Field(
-        ...,
-        description="Export format: 'csv' or 'pdf'",
-        pattern="^(csv|pdf)$"
-    )
+
+    format: str = Field(..., description="Export format: 'csv' or 'pdf'", pattern="^(csv|pdf)$")

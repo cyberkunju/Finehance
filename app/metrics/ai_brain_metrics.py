@@ -8,7 +8,7 @@ import time
 from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import wraps
-from typing import Callable, Any, Optional
+from typing import Callable, Any
 
 from prometheus_client import (
     Counter,
@@ -28,21 +28,22 @@ logger = get_logger(__name__)
 # AI Brain Metrics
 # =============================================================================
 
+
 class AIBrainMetrics:
     """Custom Prometheus metrics for AI Brain service.
-    
+
     Tracks request performance, queue status, confidence scores,
     circuit breaker state, and error rates.
     """
-    
+
     def __init__(self, registry: CollectorRegistry = REGISTRY):
         """Initialize AI Brain metrics.
-        
+
         Args:
             registry: Prometheus registry to use
         """
         self.registry = registry
-        
+
         # -------------------------------------------------------------------------
         # Request Duration Metrics
         # -------------------------------------------------------------------------
@@ -53,14 +54,14 @@ class AIBrainMetrics:
             buckets=[0.1, 0.5, 1.0, 2.5, 5.0, 10.0, 25.0, 50.0, 75.0, 100.0],
             registry=registry,
         )
-        
+
         self.request_total = Counter(
             "ai_brain_requests_total",
             "Total number of AI Brain requests",
             labelnames=["mode", "status", "fallback"],
             registry=registry,
         )
-        
+
         # -------------------------------------------------------------------------
         # Queue Metrics
         # -------------------------------------------------------------------------
@@ -69,19 +70,19 @@ class AIBrainMetrics:
             "Number of requests waiting for GPU",
             registry=registry,
         )
-        
+
         self.queue_active = Gauge(
             "ai_brain_queue_active",
             "Number of requests currently being processed",
             registry=registry,
         )
-        
+
         self.queue_timeout_total = Counter(
             "ai_brain_queue_timeout_total",
             "Total number of queue timeout errors",
             registry=registry,
         )
-        
+
         # -------------------------------------------------------------------------
         # Circuit Breaker Metrics
         # -------------------------------------------------------------------------
@@ -90,19 +91,19 @@ class AIBrainMetrics:
             "Circuit breaker state (0=CLOSED, 1=OPEN, 2=HALF_OPEN)",
             registry=registry,
         )
-        
+
         self.circuit_failures = Counter(
             "ai_brain_circuit_failures_total",
             "Total circuit breaker failures",
             registry=registry,
         )
-        
+
         self.circuit_opens = Counter(
             "ai_brain_circuit_opens_total",
             "Number of times circuit breaker opened",
             registry=registry,
         )
-        
+
         # -------------------------------------------------------------------------
         # Confidence Score Metrics
         # -------------------------------------------------------------------------
@@ -113,7 +114,7 @@ class AIBrainMetrics:
             buckets=[0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95, 0.99, 1.0],
             registry=registry,
         )
-        
+
         # -------------------------------------------------------------------------
         # Token Metrics
         # -------------------------------------------------------------------------
@@ -124,7 +125,7 @@ class AIBrainMetrics:
             buckets=[50, 100, 250, 500, 1000, 2000, 4000],
             registry=registry,
         )
-        
+
         self.output_tokens = Histogram(
             "ai_brain_output_tokens",
             "Number of output tokens per response",
@@ -132,7 +133,7 @@ class AIBrainMetrics:
             buckets=[50, 100, 250, 500, 1000, 2000],
             registry=registry,
         )
-        
+
         # -------------------------------------------------------------------------
         # Cache Metrics
         # -------------------------------------------------------------------------
@@ -142,14 +143,14 @@ class AIBrainMetrics:
             labelnames=["mode"],
             registry=registry,
         )
-        
+
         self.cache_misses = Counter(
             "ai_brain_cache_misses_total",
             "Total cache misses for AI responses",
             labelnames=["mode"],
             registry=registry,
         )
-        
+
         # -------------------------------------------------------------------------
         # Error Metrics
         # -------------------------------------------------------------------------
@@ -159,7 +160,7 @@ class AIBrainMetrics:
             labelnames=["error_type", "mode"],
             registry=registry,
         )
-        
+
         # -------------------------------------------------------------------------
         # Model Info
         # -------------------------------------------------------------------------
@@ -168,7 +169,7 @@ class AIBrainMetrics:
             "AI Brain model information",
             registry=registry,
         )
-        
+
         # -------------------------------------------------------------------------
         # Retry Metrics
         # -------------------------------------------------------------------------
@@ -178,7 +179,7 @@ class AIBrainMetrics:
             labelnames=["mode"],
             registry=registry,
         )
-        
+
         # -------------------------------------------------------------------------
         # InputGuard / OutputGuard Metrics
         # -------------------------------------------------------------------------
@@ -188,21 +189,21 @@ class AIBrainMetrics:
             labelnames=["attack_type"],
             registry=registry,
         )
-        
+
         self.output_filtered = Counter(
             "ai_brain_output_filtered_total",
             "Responses filtered by OutputGuard",
             labelnames=["filter_type"],
             registry=registry,
         )
-        
+
         self.pii_masked = Counter(
             "ai_brain_pii_masked_total",
             "PII instances masked in responses",
             labelnames=["pii_type"],
             registry=registry,
         )
-    
+
     def set_model_info(
         self,
         model_name: str,
@@ -211,20 +212,22 @@ class AIBrainMetrics:
         quantization: str = "4-bit",
     ) -> None:
         """Set AI model information.
-        
+
         Args:
             model_name: Base model name
             model_version: Model version
             adapter_name: LoRA adapter name (if any)
             quantization: Quantization method
         """
-        self.model_info.info({
-            "model_name": model_name,
-            "model_version": model_version,
-            "adapter_name": adapter_name,
-            "quantization": quantization,
-        })
-    
+        self.model_info.info(
+            {
+                "model_name": model_name,
+                "model_version": model_version,
+                "adapter_name": adapter_name,
+                "quantization": quantization,
+            }
+        )
+
     @contextmanager
     def track_request(
         self,
@@ -232,14 +235,14 @@ class AIBrainMetrics:
         fallback: bool = False,
     ):
         """Context manager to track AI Brain request metrics.
-        
+
         Args:
             mode: Request mode (chat, analyze, parse)
             fallback: Whether using fallback response
-            
+
         Yields:
             None
-            
+
         Example:
             with ai_metrics.track_request("chat", fallback=False):
                 response = await ai_service.chat(message)
@@ -247,7 +250,7 @@ class AIBrainMetrics:
         start_time = time.perf_counter()
         status = "success"
         fallback_label = "true" if fallback else "false"
-        
+
         try:
             yield
         except Exception as e:
@@ -269,16 +272,16 @@ class AIBrainMetrics:
                 status=status,
                 fallback=fallback_label,
             ).inc()
-    
+
     def record_confidence(self, mode: str, score: float) -> None:
         """Record confidence score for a response.
-        
+
         Args:
             mode: Request mode
             score: Confidence score (0.0 to 1.0)
         """
         self.confidence_score.labels(mode=mode).observe(score)
-    
+
     def record_tokens(
         self,
         mode: str,
@@ -286,7 +289,7 @@ class AIBrainMetrics:
         output_count: int,
     ) -> None:
         """Record token counts for a request.
-        
+
         Args:
             mode: Request mode
             input_count: Number of input tokens
@@ -294,77 +297,77 @@ class AIBrainMetrics:
         """
         self.input_tokens.labels(mode=mode).observe(input_count)
         self.output_tokens.labels(mode=mode).observe(output_count)
-    
+
     def update_queue_stats(
         self,
         active: int,
         waiting: int,
     ) -> None:
         """Update queue statistics.
-        
+
         Args:
             active: Number of active requests
             waiting: Number of waiting requests
         """
         self.queue_active.set(active)
         self.queue_depth.set(waiting)
-    
+
     def update_circuit_state(self, state: int) -> None:
         """Update circuit breaker state.
-        
+
         Args:
             state: Circuit state (0=CLOSED, 1=OPEN, 2=HALF_OPEN)
         """
         self.circuit_state.set(state)
-    
+
     def record_circuit_failure(self) -> None:
         """Record a circuit breaker failure."""
         self.circuit_failures.inc()
-    
+
     def record_circuit_open(self) -> None:
         """Record circuit breaker opening."""
         self.circuit_opens.inc()
-    
+
     def record_cache_hit(self, mode: str) -> None:
         """Record a cache hit.
-        
+
         Args:
             mode: Request mode
         """
         self.cache_hits.labels(mode=mode).inc()
-    
+
     def record_cache_miss(self, mode: str) -> None:
         """Record a cache miss.
-        
+
         Args:
             mode: Request mode
         """
         self.cache_misses.labels(mode=mode).inc()
-    
+
     def record_input_blocked(self, attack_type: str) -> None:
         """Record an input blocked by InputGuard.
-        
+
         Args:
             attack_type: Type of attack detected
         """
         self.input_blocked.labels(attack_type=attack_type).inc()
-    
+
     def record_output_filtered(self, filter_type: str) -> None:
         """Record a response filtered by OutputGuard.
-        
+
         Args:
             filter_type: Type of filter applied
         """
         self.output_filtered.labels(filter_type=filter_type).inc()
-    
+
     def record_pii_masked(self, pii_type: str) -> None:
         """Record PII masking.
-        
+
         Args:
             pii_type: Type of PII masked (ssn, credit_card, email, etc.)
         """
         self.pii_masked.labels(pii_type=pii_type).inc()
-    
+
     def record_queue_timeout(self) -> None:
         """Record a queue timeout."""
         self.queue_timeout_total.inc()
@@ -378,26 +381,30 @@ ai_metrics = AIBrainMetrics()
 # Decorator for tracking AI requests
 # =============================================================================
 
+
 def track_ai_request(mode: str):
     """Decorator to track AI request metrics.
-    
+
     Args:
         mode: Request mode (chat, analyze, parse)
-        
+
     Returns:
         Decorator function
-        
+
     Example:
         @track_ai_request("chat")
         async def chat_with_ai(message: str):
             ...
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs) -> Any:
             with ai_metrics.track_request(mode):
                 return await func(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
@@ -405,10 +412,11 @@ def track_ai_request(mode: str):
 # Metrics Data Classes
 # =============================================================================
 
+
 @dataclass
 class AIBrainMetricsSummary:
     """Summary of AI Brain metrics for reporting."""
-    
+
     total_requests: int
     successful_requests: int
     failed_requests: int
@@ -420,7 +428,7 @@ class AIBrainMetricsSummary:
     active_requests: int
     circuit_state: str
     cache_hit_rate: float
-    
+
     def to_dict(self) -> dict:
         """Convert to dictionary."""
         return {

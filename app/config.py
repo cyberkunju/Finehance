@@ -9,10 +9,7 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=False,
-        extra="ignore"
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
     )
 
     # Application
@@ -26,25 +23,27 @@ class Settings(BaseSettings):
     sentry_dsn: str | None = Field(default=None, alias="SENTRY_DSN")
     sentry_traces_sample_rate: float = Field(default=0.1, alias="SENTRY_TRACES_SAMPLE_RATE")
     sentry_profiles_sample_rate: float = Field(default=0.1, alias="SENTRY_PROFILES_SAMPLE_RATE")
-    
+
     # Prometheus Metrics
     enable_metrics: bool = Field(default=True, alias="ENABLE_METRICS")
     enable_gpu_metrics: bool = Field(default=True, alias="ENABLE_GPU_METRICS")
     gpu_metrics_interval: float = Field(default=15.0, alias="GPU_METRICS_INTERVAL")
-    
+
     # Rate Limiting
     rate_limit_per_minute: int = Field(default=60, alias="RATE_LIMIT_PER_MINUTE")
     auth_rate_limit_per_minute: int = Field(default=10, alias="AUTH_RATE_LIMIT_PER_MINUTE")
-    
+
     # AI Rate Limiting (stricter - GPU is expensive)
     ai_rate_limit_per_minute: int = Field(default=5, alias="AI_RATE_LIMIT_PER_MINUTE")
     ai_rate_limit_per_hour: int = Field(default=100, alias="AI_RATE_LIMIT_PER_HOUR")
-    ai_rate_limit_parse_per_minute: int = Field(default=30, alias="AI_RATE_LIMIT_PARSE_PER_MINUTE")  # Higher for transaction parsing
+    ai_rate_limit_parse_per_minute: int = Field(
+        default=30, alias="AI_RATE_LIMIT_PARSE_PER_MINUTE"
+    )  # Higher for transaction parsing
 
     # Database
     database_url: str = Field(
         default="postgresql://postgres:postgres@localhost:5432/ai_finance_platform",
-        alias="DATABASE_URL"
+        alias="DATABASE_URL",
     )
     database_pool_size: int = Field(default=20, alias="DATABASE_POOL_SIZE")
     database_max_overflow: int = Field(default=10, alias="DATABASE_MAX_OVERFLOW")
@@ -62,8 +61,7 @@ class Settings(BaseSettings):
 
     # CORS
     allowed_origins: List[str] = Field(
-        default=["http://localhost:3000", "http://localhost:8000"],
-        alias="ALLOWED_ORIGINS"
+        default=["http://localhost:3000", "http://localhost:8000"], alias="ALLOWED_ORIGINS"
     )
 
     @field_validator("allowed_origins", mode="before")
@@ -77,24 +75,18 @@ class Settings(BaseSettings):
     # ML Models
     model_storage_path: str = Field(default="./models", alias="MODEL_STORAGE_PATH")
     global_model_path: str = Field(
-        default="./models/global_categorization_model.pkl",
-        alias="GLOBAL_MODEL_PATH"
+        default="./models/global_categorization_model.pkl", alias="GLOBAL_MODEL_PATH"
     )
     min_transactions_for_user_model: int = Field(
-        default=50,
-        alias="MIN_TRANSACTIONS_FOR_USER_MODEL"
+        default=50, alias="MIN_TRANSACTIONS_FOR_USER_MODEL"
     )
-    min_corrections_for_user_model: int = Field(
-        default=10,
-        alias="MIN_CORRECTIONS_FOR_USER_MODEL"
-    )
+    min_corrections_for_user_model: int = Field(default=10, alias="MIN_CORRECTIONS_FOR_USER_MODEL")
 
     # AI Brain (LLM Service)
     ai_brain_mode: str = Field(default="http", alias="AI_BRAIN_MODE")  # "http" or "direct"
     ai_brain_url: str = Field(default="http://localhost:8080", alias="AI_BRAIN_URL")
     ai_brain_model_path: str = Field(
-        default="./ai_brain/models/financial-brain-qlora",
-        alias="AI_BRAIN_MODEL_PATH"
+        default="./ai_brain/models/financial-brain-qlora", alias="AI_BRAIN_MODEL_PATH"
     )
     ai_brain_enabled: bool = Field(default=True, alias="AI_BRAIN_ENABLED")
 

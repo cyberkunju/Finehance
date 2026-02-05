@@ -8,7 +8,6 @@ from uuid import uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.transaction import Transaction
 from app.models.user import User
 from app.services.transaction_service import TransactionService
 from app.ml.categorization_engine import CategorizationEngine
@@ -407,7 +406,7 @@ class TestListTransactions:
             date_type.today(),
             date_type.today() - timedelta(days=1),
         ]
-        
+
         for i, trans_date in enumerate(dates):
             transaction_data = TransactionCreate(
                 amount=Decimal("100.00"),
@@ -491,7 +490,7 @@ class TestListTransactions:
             date_type.today() - timedelta(days=5),
             date_type.today(),
         ]
-        
+
         for trans_date in dates:
             transaction_data = TransactionCreate(
                 amount=Decimal("100.00"),
@@ -532,7 +531,7 @@ class TestListTransactions:
             ("Dining", Decimal("150.00")),
             ("Groceries", Decimal("200.00")),
         ]
-        
+
         for category, amount in test_data:
             transaction_data = TransactionCreate(
                 amount=amount,
@@ -571,7 +570,7 @@ class TestListTransactions:
             (TransactionType.EXPENSE, Decimal("150.00")),
             (TransactionType.INCOME, Decimal("200.00")),
         ]
-        
+
         for trans_type, amount in test_data:
             transaction_data = TransactionCreate(
                 amount=amount,
@@ -606,7 +605,7 @@ class TestListTransactions:
         """Test filtering transactions by amount range."""
         # Create transactions with different amounts
         amounts = [Decimal("50.00"), Decimal("100.00"), Decimal("150.00")]
-        
+
         for amount in amounts:
             transaction_data = TransactionCreate(
                 amount=amount,
@@ -644,7 +643,7 @@ class TestListTransactions:
         """Test searching transactions by description."""
         # Create transactions with different descriptions
         descriptions = ["Walmart Groceries", "Target Shopping", "Whole Foods"]
-        
+
         for desc in descriptions:
             transaction_data = TransactionCreate(
                 amount=Decimal("100.00"),
@@ -953,8 +952,6 @@ class TestCountTransactions:
         assert count == 2
 
 
-
-
 class TestAutoCategorization:
     """Tests for automatic transaction categorization."""
 
@@ -1099,7 +1096,9 @@ class TestAutoCategorization:
                 amount=Decimal("100.00"),
                 date=date_type.today(),
                 description=description,
-                type=TransactionType.EXPENSE if expected_category != "Salary" else TransactionType.INCOME,
+                type=TransactionType.EXPENSE
+                if expected_category != "Salary"
+                else TransactionType.INCOME,
                 source=TransactionSource.MANUAL,
             )
 
@@ -1109,6 +1108,7 @@ class TestAutoCategorization:
             )
             await db_session.commit()
 
-            assert transaction.category == expected_category, \
+            assert transaction.category == expected_category, (
                 f"Expected {expected_category} for '{description}', got {transaction.category}"
+            )
             assert transaction.confidence_score is not None

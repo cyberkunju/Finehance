@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 class AdviceResponse(BaseModel):
     """Schema for financial advice response."""
+
     title: str
     message: str
     explanation: str

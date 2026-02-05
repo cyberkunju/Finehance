@@ -14,13 +14,12 @@ logger = get_logger(__name__)
 
 class Base(DeclarativeBase):
     """Base class for all database models."""
+
     pass
 
 
 # Convert postgresql:// to postgresql+asyncpg:// for async support
-async_database_url = settings.database_url.replace(
-    "postgresql://", "postgresql+asyncpg://"
-)
+async_database_url = settings.database_url.replace("postgresql://", "postgresql+asyncpg://")
 
 # Create async engine
 async_engine = create_async_engine(
@@ -61,7 +60,7 @@ SessionLocal = sessionmaker(
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Dependency for getting async database sessions.
-    
+
     Yields:
         AsyncSession: Database session
     """
@@ -79,7 +78,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 def get_sync_db() -> Session:
     """Get a synchronous database session.
-    
+
     Returns:
         Session: Synchronous database session
     """

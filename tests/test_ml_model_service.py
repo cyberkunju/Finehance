@@ -6,7 +6,6 @@ from uuid import uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.ml_model import MLModel
 from app.models.user import User
 from app.services.ml_model_service import MLModelService
 
@@ -166,7 +165,7 @@ class TestGetActiveModel:
             model_path="/models/v1.pkl",
             is_active=False,
         )
-        
+
         # Create active model
         active = await ml_model_service.create_model_version(
             model_type="CATEGORIZATION",
@@ -265,9 +264,7 @@ class TestListModelVersions:
         )
         await db_session.commit()
 
-        models = await ml_model_service.list_model_versions(
-            model_type="CATEGORIZATION"
-        )
+        models = await ml_model_service.list_model_versions(model_type="CATEGORIZATION")
         assert len(models) == 1
         assert models[0].model_type == "CATEGORIZATION"
 
@@ -331,14 +328,14 @@ class TestListModelVersions:
             model_path="/models/v1.pkl",
         )
         model1.trained_at = datetime.utcnow() - timedelta(days=2)
-        
+
         model2 = await ml_model_service.create_model_version(
             model_type="CATEGORIZATION",
             version="2.0.0",
             model_path="/models/v2.pkl",
         )
         model2.trained_at = datetime.utcnow()
-        
+
         await db_session.commit()
 
         models = await ml_model_service.list_model_versions()
@@ -613,7 +610,7 @@ class TestGetModelHistory:
             version="1.0.0",
             model_path="/models/global.pkl",
         )
-        
+
         # Create user models
         for i in range(3):
             await ml_model_service.create_model_version(
@@ -631,7 +628,6 @@ class TestGetModelHistory:
 
         assert len(history) == 3
         assert all(m.user_id == test_user.id for m in history)
-
 
 
 class TestCheckModelPerformance:
@@ -784,9 +780,7 @@ class TestGetPerformanceAlerts:
         )
         await db_session.commit()
 
-        alerts = await ml_model_service.get_performance_alerts(
-            accuracy_threshold=0.80
-        )
+        alerts = await ml_model_service.get_performance_alerts(accuracy_threshold=0.80)
 
         assert len(alerts) == 1
         assert alerts[0]["model_id"] == model.id
@@ -809,9 +803,7 @@ class TestGetPerformanceAlerts:
         )
         await db_session.commit()
 
-        alerts = await ml_model_service.get_performance_alerts(
-            accuracy_threshold=0.80
-        )
+        alerts = await ml_model_service.get_performance_alerts(accuracy_threshold=0.80)
 
         assert len(alerts) == 0
 
@@ -850,7 +842,7 @@ class TestGetPerformanceAlerts:
             accuracy=0.85,
             is_active=True,
         )
-        
+
         # Bad model
         bad_model = await ml_model_service.create_model_version(
             model_type="PREDICTION",
@@ -859,7 +851,7 @@ class TestGetPerformanceAlerts:
             accuracy=0.70,
             is_active=True,
         )
-        
+
         # Model without metrics
         no_metrics = await ml_model_service.create_model_version(
             model_type="CATEGORIZATION",
@@ -867,12 +859,10 @@ class TestGetPerformanceAlerts:
             model_path="/models/cat_v2.pkl",
             is_active=True,
         )
-        
+
         await db_session.commit()
 
-        alerts = await ml_model_service.get_performance_alerts(
-            accuracy_threshold=0.80
-        )
+        alerts = await ml_model_service.get_performance_alerts(accuracy_threshold=0.80)
 
         assert len(alerts) == 2
         alert_ids = {alert["model_id"] for alert in alerts}
@@ -892,7 +882,7 @@ class TestGetPerformanceAlerts:
             accuracy=0.75,
             is_active=True,
         )
-        
+
         await ml_model_service.create_model_version(
             model_type="PREDICTION",
             version="1.0.0",
@@ -900,12 +890,10 @@ class TestGetPerformanceAlerts:
             accuracy=0.70,
             is_active=True,
         )
-        
+
         await db_session.commit()
 
-        alerts = await ml_model_service.get_performance_alerts(
-            model_type="CATEGORIZATION"
-        )
+        alerts = await ml_model_service.get_performance_alerts(model_type="CATEGORIZATION")
 
         assert len(alerts) == 1
         assert alerts[0]["model_id"] == cat_model.id
@@ -927,14 +915,10 @@ class TestGetPerformanceAlerts:
         await db_session.commit()
 
         # No alerts with 0.80 threshold
-        alerts1 = await ml_model_service.get_performance_alerts(
-            accuracy_threshold=0.80
-        )
+        alerts1 = await ml_model_service.get_performance_alerts(accuracy_threshold=0.80)
         assert len(alerts1) == 0
 
         # Alert with 0.90 threshold
-        alerts2 = await ml_model_service.get_performance_alerts(
-            accuracy_threshold=0.90
-        )
+        alerts2 = await ml_model_service.get_performance_alerts(accuracy_threshold=0.90)
         assert len(alerts2) == 1
         assert alerts2[0]["model_id"] == model.id

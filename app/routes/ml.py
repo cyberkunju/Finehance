@@ -3,13 +3,10 @@
 import os
 from typing import Optional
 from uuid import UUID
-from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from pydantic import BaseModel, Field
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
 from app.config import settings
 from app.ml.categorization_engine import CategorizationEngine
 from app.logging_config import get_logger
@@ -21,6 +18,7 @@ router = APIRouter()
 # Request/Response Models
 class ModelInfoResponse(BaseModel):
     """Information about a trained model."""
+
     model_type: str
     exists: bool
     accuracy: Optional[float] = None
@@ -31,6 +29,7 @@ class ModelInfoResponse(BaseModel):
 
 class GlobalModelStatus(BaseModel):
     """Status of the global categorization model."""
+
     loaded: bool
     path: str
     accuracy: Optional[float] = None
@@ -38,6 +37,7 @@ class GlobalModelStatus(BaseModel):
 
 class UserModelStatus(BaseModel):
     """Status of a user-specific model."""
+
     has_model: bool
     correction_count: int
     corrections_needed: int
@@ -47,6 +47,7 @@ class UserModelStatus(BaseModel):
 
 class CategorizeRequest(BaseModel):
     """Request to categorize a transaction."""
+
     description: str = Field(..., min_length=1, max_length=500)
     amount: Optional[float] = None
     user_id: Optional[UUID] = None
@@ -55,6 +56,7 @@ class CategorizeRequest(BaseModel):
 
 class CategorizeResponse(BaseModel):
     """Categorization result."""
+
     category: str
     confidence: float
     model_type: str
@@ -63,6 +65,7 @@ class CategorizeResponse(BaseModel):
 
 class CorrectionRequest(BaseModel):
     """Request to submit a categorization correction."""
+
     user_id: UUID
     description: str = Field(..., min_length=1)
     correct_category: str = Field(..., min_length=1)
@@ -70,12 +73,14 @@ class CorrectionRequest(BaseModel):
 
 class TrainModelRequest(BaseModel):
     """Request to train a user model."""
+
     user_id: UUID
     force: bool = Field(False, description="Force training even with insufficient data")
 
 
 class BatchCategorizeRequest(BaseModel):
     """Request to categorize multiple transactions."""
+
     transactions: list[dict] = Field(..., description="List of {description, amount} dicts")
     user_id: Optional[UUID] = None
 
@@ -94,14 +99,12 @@ def get_categorization_engine() -> CategorizationEngine:
 
 # Endpoints
 @router.get("/status")
-async def get_ml_status(
-    engine: CategorizationEngine = Depends(get_categorization_engine)
-) -> dict:
+async def get_ml_status(engine: CategorizationEngine = Depends(get_categorization_engine)) -> dict:
     """Get overall ML system status."""
     global_loaded = engine.global_model is not None
     global_path = os.path.join(engine.model_dir, "global_categorization_model.pkl")
     global_exists = os.path.exists(global_path)
-    
+
     return {
         "global_model": {
             "loaded": global_loaded,
@@ -116,21 +119,22 @@ async def get_ml_status(
 
 @router.get("/models/global", response_model=GlobalModelStatus)
 async def get_global_model_status(
-    engine: CategorizationEngine = Depends(get_categorization_engine)
+    engine: CategorizationEngine = Depends(get_categorization_engine),
 ) -> GlobalModelStatus:
     """Get global categorization model status."""
     model_path = os.path.join(engine.model_dir, "global_categorization_model.pkl")
     metrics_path = os.path.join(engine.model_dir, "global_categorization_metrics.pkl")
-    
+
     accuracy = None
     if os.path.exists(metrics_path):
         import joblib
+
         try:
             metrics = joblib.load(metrics_path)
             accuracy = metrics.get("accuracy")
         except Exception:
             pass
-    
+
     return GlobalModelStatus(
         loaded=engine.global_model is not None,
         path=model_path,
@@ -140,14 +144,13 @@ async def get_global_model_status(
 
 @router.get("/models/user/{user_id}", response_model=UserModelStatus)
 async def get_user_model_status(
-    user_id: UUID,
-    engine: CategorizationEngine = Depends(get_categorization_engine)
+    user_id: UUID, engine: CategorizationEngine = Depends(get_categorization_engine)
 ) -> UserModelStatus:
     """Get user-specific model status."""
     has_model = engine.has_user_model(str(user_id))
     correction_count = engine.get_correction_count(str(user_id))
     accuracy = await engine.get_model_accuracy(str(user_id)) if has_model else None
-    
+
     return UserModelStatus(
         has_model=has_model,
         correction_count=correction_count,
@@ -159,17 +162,16 @@ async def get_user_model_status(
 
 @router.post("/categorize", response_model=CategorizeResponse)
 async def categorize_transaction(
-    request: CategorizeRequest,
-    engine: CategorizationEngine = Depends(get_categorization_engine)
+    request: CategorizeRequest, engine: CategorizationEngine = Depends(get_categorization_engine)
 ) -> CategorizeResponse:
     """
     Categorize a single transaction.
-    
+
     Uses the global model or user-specific model if available.
     Optionally falls back to AI Brain for low-confidence predictions.
     """
     from decimal import Decimal
-    
+
     try:
         # Get prediction from ML model
         prediction = await engine.categorize(
@@ -177,18 +179,19 @@ async def categorize_transaction(
             amount=Decimal(str(request.amount)) if request.amount else None,
             user_id=str(request.user_id) if request.user_id else None,
         )
-        
+
         llm_enhanced = False
-        
+
         # If confidence is low and LLM fallback is enabled, try AI Brain
         if request.use_llm_fallback and prediction.confidence < 0.7:
             try:
                 from app.services.ai_brain_service import get_ai_brain_service
+
                 ai_brain = get_ai_brain_service()
-                
+
                 # Use async await
                 result = await ai_brain.parse_transaction(request.description)
-                
+
                 if result.parsed_data and result.confidence > prediction.confidence:
                     llm_category = result.parsed_data.get("category")
                     if llm_category:
@@ -197,14 +200,14 @@ async def categorize_transaction(
                         llm_enhanced = True
             except Exception as e:
                 logger.debug("LLM fallback failed", error=str(e))
-        
+
         return CategorizeResponse(
             category=prediction.category,
             confidence=prediction.confidence,
             model_type=prediction.model_type,
             llm_enhanced=llm_enhanced,
         )
-        
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -215,15 +218,15 @@ async def categorize_transaction(
 @router.post("/categorize/batch")
 async def batch_categorize(
     request: BatchCategorizeRequest,
-    engine: CategorizationEngine = Depends(get_categorization_engine)
+    engine: CategorizationEngine = Depends(get_categorization_engine),
 ) -> dict:
     """Categorize multiple transactions at once."""
     from decimal import Decimal
     from fastapi.concurrency import run_in_threadpool
-    
+
     results = []
     errors = []
-    
+
     valid_indices = []
     valid_descriptions = []
     valid_amounts = []
@@ -265,7 +268,7 @@ async def batch_categorize(
             engine.categorize_batch,
             descriptions=valid_descriptions,
             amounts=valid_amounts,
-            user_id=user_id_str
+            user_id=user_id_str,
         )
 
         # 3. Map results back
@@ -277,14 +280,14 @@ async def batch_categorize(
                 "confidence": prediction.confidence,
                 "model_type": prediction.model_type,
             })
-            
+
     except Exception as e:
         # If batch fails completely
         logger.error("Batch categorization failed", error=str(e))
         # Add all to errors
         for idx in valid_indices:
-             errors.append({"index": idx, "error": f"Batch processing failed: {str(e)}"})
-    
+            errors.append({"index": idx, "error": f"Batch processing failed: {str(e)}"})
+
     return {
         "results": results,
         "errors": errors,
@@ -298,11 +301,11 @@ async def batch_categorize(
 async def submit_correction(
     request: CorrectionRequest,
     background_tasks: BackgroundTasks,
-    engine: CategorizationEngine = Depends(get_categorization_engine)
+    engine: CategorizationEngine = Depends(get_categorization_engine),
 ) -> dict:
     """
     Submit a categorization correction.
-    
+
     The system learns from corrections and will train a user-specific
     model once enough corrections are collected.
     """
@@ -312,16 +315,16 @@ async def submit_correction(
             description=request.description,
             correct_category=request.correct_category,
         )
-        
+
         correction_count = engine.get_correction_count(str(request.user_id))
-        
+
         return {
             "success": True,
             "model_trained": model_trained,
             "correction_count": correction_count,
             "corrections_needed": max(0, engine.min_corrections_for_training - correction_count),
         }
-        
+
     except Exception as e:
         logger.error("Correction submission failed", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to submit correction: {str(e)}")
@@ -331,25 +334,25 @@ async def submit_correction(
 async def train_user_model(
     user_id: UUID,
     request: TrainModelRequest,
-    engine: CategorizationEngine = Depends(get_categorization_engine)
+    engine: CategorizationEngine = Depends(get_categorization_engine),
 ) -> dict:
     """
     Manually trigger user model training.
-    
+
     Requires sufficient corrections unless force=True.
     """
     correction_count = engine.get_correction_count(str(user_id))
-    
+
     if not request.force and correction_count < engine.min_corrections_for_training:
         raise HTTPException(
             status_code=400,
-            detail=f"Insufficient corrections: {correction_count}/{engine.min_corrections_for_training}"
+            detail=f"Insufficient corrections: {correction_count}/{engine.min_corrections_for_training}",
         )
-    
+
     try:
         corrections = engine._load_user_corrections(str(user_id))
         success = engine._train_user_model(str(user_id), corrections)
-        
+
         if success:
             accuracy = await engine.get_model_accuracy(str(user_id))
             return {
@@ -359,7 +362,7 @@ async def train_user_model(
             }
         else:
             raise HTTPException(status_code=500, detail="Training failed")
-            
+
     except Exception as e:
         logger.error("User model training failed", error=str(e))
         raise HTTPException(status_code=500, detail=f"Training failed: {str(e)}")
@@ -369,7 +372,7 @@ async def train_user_model(
 async def get_categories() -> dict:
     """Get list of available categories."""
     categories_path = os.path.join(settings.model_storage_path, "categories.json")
-    
+
     # Default categories
     default_categories = [
         "Food & Dining",
@@ -384,14 +387,14 @@ async def get_categories() -> dict:
         "Transfer",
         "Other Expenses",
     ]
-    
+
     try:
         import json
         import asyncio
 
         def load_categories():
             try:
-                with open(categories_path, 'r') as f:
+                with open(categories_path, "r") as f:
                     return json.load(f)
             except (FileNotFoundError, OSError):
                 return None
@@ -401,33 +404,36 @@ async def get_categories() -> dict:
             return {"categories": categories, "source": "file"}
     except Exception:
         pass
-    
+
     return {"categories": default_categories, "source": "default"}
 
 
 @router.delete("/models/user/{user_id}")
 async def delete_user_model(
-    user_id: UUID,
-    engine: CategorizationEngine = Depends(get_categorization_engine)
+    user_id: UUID, engine: CategorizationEngine = Depends(get_categorization_engine)
 ) -> dict:
     """Delete a user's personalized model and corrections."""
     import os
-    
+
     model_path = os.path.join(engine.model_dir, f"user_{user_id}_categorization_model.pkl")
     metrics_path = os.path.join(engine.model_dir, f"user_{user_id}_categorization_metrics.pkl")
     corrections_path = os.path.join(engine.model_dir, f"user_{user_id}_corrections.json")
-    
+
     deleted = []
-    
-    for path, name in [(model_path, "model"), (metrics_path, "metrics"), (corrections_path, "corrections")]:
+
+    for path, name in [
+        (model_path, "model"),
+        (metrics_path, "metrics"),
+        (corrections_path, "corrections"),
+    ]:
         if os.path.exists(path):
             os.remove(path)
             deleted.append(name)
-    
+
     # Clear from cache
     if str(user_id) in engine.user_models:
         del engine.user_models[str(user_id)]
-    
+
     return {
         "success": True,
         "deleted": deleted,
