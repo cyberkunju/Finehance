@@ -22,14 +22,13 @@ from app.schemas.auth import (
     UserResponse,
     MessageResponse,
 )
-from fastapi.security import OAuth2PasswordBearer
+from app.dependencies import oauth2_scheme
 from app.logging_config import get_logger
 
 logger = get_logger(__name__)
 
 router = APIRouter(tags=["auth"])
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 # Rate limiter for auth endpoints (stricter limits)
 limiter = Limiter(key_func=get_remote_address)

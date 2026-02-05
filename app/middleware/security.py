@@ -41,8 +41,8 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                             status_code=400,
                             content={"detail": "Input rejected due to security concerns."},
                         )
-            except Exception:
-                pass  # Don't crash the request on guard errors
+            except Exception as e:
+                logger.debug("Input guard error: %s", e)  # Don't crash the request on guard errors
 
         response = await call_next(request)
 

@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
 from app.config import settings
+from app.cache import cache_manager
 from app.logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -40,6 +41,9 @@ class AuthService:
 
     # Password requirements
     MIN_PASSWORD_LENGTH = 12
+
+    # Default blacklist TTL in seconds (30 minutes)
+    DEFAULT_BLACKLIST_TTL = 30 * 60
 
     def __init__(self, db: AsyncSession):
         """Initialize authentication service.
@@ -391,21 +395,17 @@ class AuthService:
 
     async def blacklist_token(self, token: str, expires_in: int = None) -> None:
         """Add a token to the blacklist. Token will be auto-removed from Redis when it naturally expires."""
-        from app.cache import cache_manager
-
         if expires_in is None:
             try:
                 payload = jwt.decode(token, settings.secret_key, algorithms=["HS256"])
                 exp = payload.get("exp", 0)
                 expires_in = max(0, exp - int(datetime.now(timezone.utc).timestamp()))
             except JWTError:
-                expires_in = 30 * 60  # Default 30 minutes
+                expires_in = self.DEFAULT_BLACKLIST_TTL
         
         await cache_manager.set(f"blacklist:{token}", "1", expire=expires_in)
 
     async def is_token_blacklisted(self, token: str) -> bool:
         """Check if a token has been blacklisted."""
-        from app.cache import cache_manager
-
         result = await cache_manager.get(f"blacklist:{token}")
         return result is not None
