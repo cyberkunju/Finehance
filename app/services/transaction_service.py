@@ -67,7 +67,7 @@ class TransactionService:
         # Auto-categorize if no category provided and auto-categorization is enabled
         if not final_category and auto_categorize:
             try:
-                prediction = self.categorization_engine.categorize(
+                prediction = await self.categorization_engine.categorize(
                     description=transaction_data.description,
                     amount=transaction_data.amount,
                     user_id=str(user_id)
