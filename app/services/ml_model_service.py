@@ -70,7 +70,7 @@ class MLModelService:
             accuracy=accuracy,
             precision=precision,
             recall=recall,
-            trained_at=datetime.now(timezone.utc),
+            trained_at=datetime.utcnow(),
             model_path=model_path,
             is_active=is_active,
         )

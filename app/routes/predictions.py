@@ -123,14 +123,15 @@ async def get_category_forecast(
         if not forecast:
             # Return zeroed-out forecast instead of 404 for insufficient data
             from datetime import datetime, timedelta, timezone
+            from decimal import Decimal
             today = datetime.now(timezone.utc).date()
-            forecast_dates = [(today + timedelta(days=i)).isoformat() for i in range(1, periods + 1)]
+            forecast_dates = [(today + timedelta(days=i)) for i in range(1, periods + 1)]
             return ForecastResponse(
                 category=category,
-                predictions=[0.0] * periods,
-                confidence_intervals=[{"lower": 0.0, "upper": 0.0}] * periods,
+                predictions=[Decimal("0.00")] * periods,
+                confidence_intervals=[(Decimal("0.00"), Decimal("0.00"))] * periods,
                 forecast_dates=forecast_dates,
-                model_params={"method": "insufficient_data", "note": "Not enough transaction history"},
+                model_params={"p": 0, "d": 0, "q": 0},
                 accuracy_score=0.0,
             )
 

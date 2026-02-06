@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, date, timezone
+from datetime import datetime, date
 from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
 
@@ -49,9 +49,9 @@ class Transaction(Base):
     connection_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("connections.id", ondelete="SET NULL")
     )
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
     )
     deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
 

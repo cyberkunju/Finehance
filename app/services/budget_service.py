@@ -292,7 +292,7 @@ class BudgetService:
                 category: float(amount) for category, amount in allocations.items()
             }
 
-        budget.updated_at = datetime.now(timezone.utc)
+        budget.updated_at = datetime.utcnow()
         await self.db.flush()
         await self.db.refresh(budget)
 

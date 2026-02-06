@@ -235,14 +235,14 @@ def test_ml_global_model():
     return f"accuracy={d.get('accuracy', '?')}, loaded={d.get('loaded', '?')}"
 
 def test_ml_user_model():
-    r = requests.get(f"{BASE}/api/ml/models/user/{USER_ID}", headers=headers, timeout=10)
+    r = requests.get(f"{BASE}/api/ml/models/user/me", headers=headers, timeout=10)
     r.raise_for_status()
     d = r.json()
     return f"has_model={d.get('has_model')}, corrections={d.get('correction_count', 0)}"
 
 def test_ml_train_user():
-    r = requests.post(f"{BASE}/api/ml/models/user/{USER_ID}/train", json={
-        "user_id": USER_ID,
+    r = requests.post(f"{BASE}/api/ml/models/user/me/train", json={
+        "force": True,
         "min_samples": 5
     }, headers=headers, timeout=30)
     d = r.json()
@@ -274,7 +274,10 @@ def test_forecast_all():
     return f"Forecast: {str(d)[:120]}"
 
 def test_forecast_category():
-    r = requests.get(f"{BASE}/api/predictions/forecast/food_dining?user_id={USER_ID}&periods=7",
+    from urllib.parse import quote
+    category = "Food & Dining"
+    r = requests.get(f"{BASE}/api/predictions/forecast/{quote(category, safe='')}",
+                     params={"periods": 7},
                      headers=headers, timeout=15)
     r.raise_for_status()
     d = r.json()
@@ -284,7 +287,10 @@ def test_forecast_category():
     return f"category={cat}, predictions={len(preds)}, accuracy={acc}"
 
 def test_anomalies():
-    r = requests.get(f"{BASE}/api/predictions/anomalies/food_dining?user_id={USER_ID}",
+    from urllib.parse import quote
+    category = "Food & Dining"
+    r = requests.get(f"{BASE}/api/predictions/anomalies/{quote(category, safe='')}",
+                     params={"lookback_days": 90, "threshold_percent": 50},
                      headers=headers, timeout=15)
     r.raise_for_status()
     d = r.json()

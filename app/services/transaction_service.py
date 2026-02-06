@@ -245,7 +245,7 @@ class TransactionService:
             else:
                 setattr(transaction, field, value)
 
-        transaction.updated_at = datetime.now(timezone.utc)
+        transaction.updated_at = datetime.utcnow()
         await self.db.flush()
         await self.db.refresh(transaction)
 
@@ -282,7 +282,7 @@ class TransactionService:
             return False
 
         # Soft delete
-        transaction.deleted_at = datetime.now(timezone.utc)
+        transaction.deleted_at = datetime.utcnow()
         await self.db.flush()
 
         logger.info(

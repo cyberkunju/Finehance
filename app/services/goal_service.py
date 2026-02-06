@@ -232,7 +232,7 @@ class GoalService:
 
         # Update current amount
         goal.current_amount += amount
-        goal.updated_at = datetime.now(timezone.utc)
+        goal.updated_at = datetime.utcnow()
 
         # Check if goal is achieved
         if goal.current_amount >= goal.target_amount and goal.status == "ACTIVE":
@@ -393,7 +393,7 @@ class GoalService:
                 raise ValueError("Invalid status")
             goal.status = status
 
-        goal.updated_at = datetime.now(timezone.utc)
+        goal.updated_at = datetime.utcnow()
         await self.db.flush()
         await self.db.refresh(goal)
 

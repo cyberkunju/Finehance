@@ -300,7 +300,7 @@ class BudgetOptimizer:
             new_allocations[suggestion.category] = float(suggestion.suggested_allocation)
 
         budget.allocations = new_allocations
-        budget.updated_at = datetime.now(timezone.utc)
+        budget.updated_at = datetime.utcnow()
 
         await self.db.flush()
         await self.db.refresh(budget)

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, date, timezone
+from datetime import datetime, date
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import String, DateTime, Date, ForeignKey, Index
@@ -33,9 +33,9 @@ class Budget(Base):
     allocations: Mapped[dict[str, Any]] = mapped_column(
         JSONB, nullable=False, comment="JSON object mapping category names to budget amounts"
     )
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
     )
 
     # Relationships

@@ -390,7 +390,7 @@ class AuthService:
 
         # Hash and update password
         user.password_hash = self.hash_password(new_password)
-        user.updated_at = datetime.now(timezone.utc)
+        user.updated_at = datetime.utcnow()
 
         await self.db.flush()
 

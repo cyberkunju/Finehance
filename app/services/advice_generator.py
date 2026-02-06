@@ -360,7 +360,7 @@ class AdviceGenerator:
         advice_list = []
 
         # Check for recently achieved goals (within last 7 days)
-        seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
+        seven_days_ago = datetime.utcnow() - timedelta(days=7)
 
         stmt = select(FinancialGoal).where(
             and_(
