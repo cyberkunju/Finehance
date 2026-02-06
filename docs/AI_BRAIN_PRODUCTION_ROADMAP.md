@@ -987,6 +987,7 @@ Endpoints Added:
 | Financial fact-checking | MEDIUM | 8h | ✅ | Rules engine for financial advice |
 | Category mapping fix | LOW | 2h | ✅ | Correct Whole Foods → Grocery |
 | Response templating | LOW | 3h | ✅ | Structured responses for consistency |
+| Transaction Fallback | HIGH | 4h | ✅ | Fallback to AI Brain when local model confidence < 0.85 |
 
 **🎉 PHASE 4 COMPLETE** - All quality improvement tasks done!
 

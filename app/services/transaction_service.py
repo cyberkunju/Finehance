@@ -18,7 +18,6 @@ from app.schemas.transaction import (
 )
 from app.ml.categorization_engine import CategorizationEngine
 from app.logging_config import get_logger
-from app.config import settings
 
 logger = get_logger(__name__)
 
@@ -87,10 +86,10 @@ class TransactionService:
                 final_confidence = 0.0
 
             # Step 2: Try Smart Path (AI Brain) if confidence is low
-            # Use configurable threshold from settings
-            confidence_threshold = settings.ai_brain_fallback_threshold
+            # Use a high threshold for production quality
+            CONFIDENCE_THRESHOLD = 0.85
 
-            if final_confidence < confidence_threshold:
+            if final_confidence < CONFIDENCE_THRESHOLD:
                 try:
                     # Lazy import to avoid circular dependencies
                     from app.services.ai_brain_service import get_ai_brain_service
@@ -137,9 +136,7 @@ class TransactionService:
 
         if not final_category:
             raise ValueError(
-                "Category could not be determined. Auto-categorization failed: "
-                "local ML model returned low confidence and AI Brain fallback was unsuccessful or unavailable. "
-                "Please provide the category manually."
+                "Category must be provided either in transaction_data, as parameter, or through auto-categorization"
             )
 
         # Check for duplicates
