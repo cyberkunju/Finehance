@@ -274,7 +274,7 @@ class ReportService:
         )
 
         result = await self.db.execute(stmt)
-        budget = result.scalar_one_or_none()
+        budget = result.scalars().first()
 
         if not budget:
             return None

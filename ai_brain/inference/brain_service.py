@@ -525,6 +525,35 @@ def create_api_server():
     async def health():
         return {"status": "healthy", "model_loaded": brain.model is not None}
 
+    @app.get("/metrics")
+    async def metrics():
+        """Prometheus-compatible metrics endpoint."""
+        from fastapi.responses import PlainTextResponse
+        model_loaded = 1 if brain.model is not None else 0
+        gpu_mem_used = 0
+        gpu_mem_total = 0
+        if torch.cuda.is_available():
+            gpu_mem_used = torch.cuda.memory_allocated()
+            gpu_mem_total = torch.cuda.get_device_properties(0).total_mem
+        lines = [
+            "# HELP ai_brain_up Whether the AI Brain service is up.",
+            "# TYPE ai_brain_up gauge",
+            f"ai_brain_up 1",
+            "# HELP ai_brain_model_loaded Whether the model is loaded.",
+            "# TYPE ai_brain_model_loaded gauge",
+            f"ai_brain_model_loaded {model_loaded}",
+            "# HELP ai_brain_gpu_memory_used_bytes GPU memory used in bytes.",
+            "# TYPE ai_brain_gpu_memory_used_bytes gauge",
+            f"ai_brain_gpu_memory_used_bytes {gpu_mem_used}",
+            "# HELP ai_brain_gpu_memory_total_bytes GPU memory total in bytes.",
+            "# TYPE ai_brain_gpu_memory_total_bytes gauge",
+            f"ai_brain_gpu_memory_total_bytes {gpu_mem_total}",
+            f'# HELP ai_brain_info AI Brain metadata.',
+            f'# TYPE ai_brain_info gauge',
+            f'ai_brain_info{{model="qwen2.5-3b",version="1.0.0"}} 1',
+        ]
+        return PlainTextResponse("\n".join(lines) + "\n", media_type="text/plain; version=0.0.4; charset=utf-8")
+
     @app.post("/query", response_model=QueryResponse)
     async def query(request: QueryRequest):
         """Query the Financial Brain."""

@@ -224,10 +224,23 @@ async def get_ai_status(
     """
     is_available = await ai_brain._check_availability()
 
+    # Query AI Brain health endpoint for actual model_loaded state
+    model_loaded = False
+    if is_available:
+        try:
+            import httpx
+            async with httpx.AsyncClient(timeout=3.0) as client:
+                health_resp = await client.get(f"{settings.ai_brain_url}/health")
+                if health_resp.status_code == 200:
+                    model_loaded = health_resp.json().get("model_loaded", False)
+        except Exception:
+            pass  # If health check fails, model_loaded stays False
+
     response = AIStatusResponse(
         enabled=settings.ai_brain_enabled,
         mode=settings.ai_brain_mode,
         available=is_available,
+        model_loaded=model_loaded,
         fallback_active=not is_available and settings.ai_brain_enabled,
     )
 
