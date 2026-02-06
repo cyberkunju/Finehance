@@ -18,6 +18,7 @@ import {
   PanelLeftOpen,
 } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
+import OmniBar from './OmniBar';
 import './Layout.css';
 
 function Layout() {
@@ -90,6 +91,9 @@ function Layout() {
       </nav>
 
       <main className="main-content">
+        <div className="main-top-bar">
+          <OmniBar />
+        </div>
         <Outlet />
       </main>
     </div>

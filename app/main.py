@@ -420,6 +420,7 @@ from app.routes import (
     auth,
     ai,
     ml,
+    omnibar,
 )
 
 app.include_router(transactions.router, prefix="/api/transactions", tags=["transactions"])
@@ -432,3 +433,4 @@ app.include_router(file_import.router, prefix="/api", tags=["import-export"])
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(ai.router, prefix="/api/ai", tags=["ai-brain"])
 app.include_router(ml.router, prefix="/api/ml", tags=["ml-models"])
+app.include_router(omnibar.router, prefix="/api/omnibar", tags=["omnibar"])

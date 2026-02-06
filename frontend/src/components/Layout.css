@@ -243,7 +243,20 @@
   overflow-y: auto;
   background: var(--color-bg-primary);
   padding: var(--space-8);
+  padding-top: var(--space-4);
   transition: background-color 0.2s ease;
+}
+
+/* ---- Top Bar (OmniBar container) ---- */
+.main-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-6);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  padding: var(--space-2) 0;
 }
 
 /* ============================================
