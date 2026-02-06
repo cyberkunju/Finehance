@@ -1,5 +1,6 @@
 """Budget API endpoints."""
 
+import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -7,6 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.dependencies import get_current_user_id
 from app.schemas.budget import (
     BudgetCreate,
     BudgetUpdate,
@@ -19,6 +21,7 @@ from app.schemas.budget import (
 from app.services.budget_service import BudgetService
 from app.services.budget_optimizer import BudgetOptimizer, BudgetSuggestion
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -51,7 +54,7 @@ async def get_budget_optimizer(db: AsyncSession = Depends(get_db)) -> BudgetOpti
 @router.post("", response_model=BudgetResponse, status_code=201)
 async def create_budget(
     budget: BudgetCreate,
-    user_id: UUID = Query(..., description="User ID"),
+    user_id: UUID = Depends(get_current_user_id),
     service: BudgetService = Depends(get_budget_service),
 ) -> BudgetResponse:
     """Create a new budget.
@@ -79,12 +82,13 @@ async def create_budget(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to create budget: {str(e)}")
+        logger.error(f"Failed to create budget: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
 @router.get("", response_model=list[BudgetResponse])
 async def list_budgets(
-    user_id: UUID = Query(..., description="User ID"),
+    user_id: UUID = Depends(get_current_user_id),
     active_only: bool = Query(False, description="Only return active budgets"),
     service: BudgetService = Depends(get_budget_service),
 ) -> list[BudgetResponse]:
@@ -102,13 +106,14 @@ async def list_budgets(
         budgets = await service.list_budgets(user_id, active_only)
         return [BudgetResponse.model_validate(b) for b in budgets]
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to list budgets: {str(e)}")
+        logger.error(f"Failed to list budgets: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
 @router.get("/{budget_id}", response_model=BudgetResponse)
 async def get_budget(
     budget_id: UUID,
-    user_id: UUID = Query(..., description="User ID"),
+    user_id: UUID = Depends(get_current_user_id),
     service: BudgetService = Depends(get_budget_service),
 ) -> BudgetResponse:
     """Get a single budget by ID.
@@ -132,13 +137,14 @@ async def get_budget(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get budget: {str(e)}")
+        logger.error(f"Failed to get budget: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
 @router.get("/{budget_id}/progress", response_model=BudgetProgressListResponse)
 async def get_budget_progress(
     budget_id: UUID,
-    user_id: UUID = Query(..., description="User ID"),
+    user_id: UUID = Depends(get_current_user_id),
     service: BudgetService = Depends(get_budget_service),
 ) -> BudgetProgressListResponse:
     """Get budget progress for all categories.
@@ -192,13 +198,14 @@ async def get_budget_progress(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get budget progress: {str(e)}")
+        logger.error(f"Failed to get budget progress: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
 @router.post("/{budget_id}/optimize", response_model=BudgetOptimizationResponse)
 async def get_optimization_suggestions(
     budget_id: UUID,
-    user_id: UUID = Query(..., description="User ID"),
+    user_id: UUID = Depends(get_current_user_id),
     historical_months: int = Query(3, ge=1, le=12, description="Months of history to analyze"),
     budget_service: BudgetService = Depends(get_budget_service),
     optimizer: BudgetOptimizer = Depends(get_budget_optimizer),
@@ -247,16 +254,15 @@ async def get_optimization_suggestions(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get optimization suggestions: {str(e)}"
-        )
+        logger.error(f"Failed to get optimization suggestions: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
 @router.put("/{budget_id}/apply-optimization", response_model=BudgetResponse)
 async def apply_optimization(
     budget_id: UUID,
     request: ApplyOptimizationRequest,
-    user_id: UUID = Query(..., description="User ID"),
+    user_id: UUID = Depends(get_current_user_id),
     budget_service: BudgetService = Depends(get_budget_service),
     optimizer: BudgetOptimizer = Depends(get_budget_optimizer),
 ) -> BudgetResponse:
@@ -307,14 +313,15 @@ async def apply_optimization(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to apply optimization: {str(e)}")
+        logger.error(f"Failed to apply optimization: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
 @router.put("/{budget_id}", response_model=BudgetResponse)
 async def update_budget(
     budget_id: UUID,
     updates: BudgetUpdate,
-    user_id: UUID = Query(..., description="User ID"),
+    user_id: UUID = Depends(get_current_user_id),
     service: BudgetService = Depends(get_budget_service),
 ) -> BudgetResponse:
     """Update a budget.
@@ -351,13 +358,14 @@ async def update_budget(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to update budget: {str(e)}")
+        logger.error(f"Failed to update budget: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
 @router.delete("/{budget_id}", status_code=204)
 async def delete_budget(
     budget_id: UUID,
-    user_id: UUID = Query(..., description="User ID"),
+    user_id: UUID = Depends(get_current_user_id),
     service: BudgetService = Depends(get_budget_service),
 ) -> None:
     """Delete a budget.
@@ -377,4 +385,5 @@ async def delete_budget(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to delete budget: {str(e)}")
+        logger.error(f"Failed to delete budget: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")

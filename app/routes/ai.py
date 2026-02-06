@@ -10,6 +10,7 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 
 from app.database import get_db
+from app.dependencies import get_current_user_id
 from app.services.ai_brain_service import (
     AIBrainService,
     get_ai_brain,
@@ -147,7 +148,6 @@ class ChatRequest(BaseModel):
     """Request for chat endpoint."""
 
     message: str = Field(..., description="User message", min_length=1, max_length=2000)
-    user_id: Optional[UUID] = Field(None, description="User ID for personalization")
     history: Optional[List[ChatMessage]] = Field(None, description="Conversation history")
     context: Optional[dict] = Field(None, description="Financial context")
 
@@ -166,7 +166,6 @@ class AnalysisRequest(BaseModel):
     """Request for financial analysis."""
 
     request: str = Field(..., description="Analysis request", min_length=1, max_length=2000)
-    user_id: Optional[UUID] = Field(None, description="User ID")
     context: dict = Field(..., description="Financial context with spending, income, goals")
 
 
@@ -193,7 +192,6 @@ class TransactionParseResponse(BaseModel):
 class SmartAdviceRequest(BaseModel):
     """Request for smart financial advice."""
 
-    user_id: UUID = Field(..., description="User ID")
     include_transactions: bool = Field(True, description="Include recent transaction context")
     include_goals: bool = Field(True, description="Include goals context")
     max_recommendations: int = Field(5, ge=1, le=10, description="Max recommendations")
@@ -245,6 +243,7 @@ async def get_ai_status(
 async def chat_with_ai(
     request: Request,
     chat_request: ChatRequest,
+    user_id: UUID = Depends(get_current_user_id),
     ai_brain: AIBrainService = Depends(get_ai_brain),
     db: AsyncSession = Depends(get_db),
 ) -> ChatResponse:
@@ -273,8 +272,8 @@ async def chat_with_ai(
     try:
         # Build context if user_id provided
         context = chat_request.context
-        if chat_request.user_id and not context:
-            context = await _build_user_context(db, chat_request.user_id)
+        if user_id and not context:
+            context = await _build_user_context(db, user_id)
 
         # Convert history to expected format
         history = None
@@ -302,8 +301,8 @@ async def chat_with_ai(
         )
 
     except Exception as e:
-        logger.error("Chat failed", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Chat failed: {str(e)}")
+        logger.error(f"Chat failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
 @router.post("/analyze", response_model=ChatResponse)
@@ -312,6 +311,7 @@ async def chat_with_ai(
 async def analyze_finances(
     request: Request,
     analysis_request: AnalysisRequest,
+    user_id: UUID = Depends(get_current_user_id),
     ai_brain: AIBrainService = Depends(get_ai_brain),
 ) -> ChatResponse:
     """
@@ -351,8 +351,8 @@ async def analyze_finances(
         )
 
     except Exception as e:
-        logger.error("Analysis failed", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+        logger.error(f"Analysis failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
 @router.post("/parse-transaction", response_model=TransactionParseResponse)
@@ -360,6 +360,7 @@ async def analyze_finances(
 async def parse_transaction(
     request: Request,
     parse_request: TransactionParseRequest,
+    user_id: UUID = Depends(get_current_user_id),
     ai_brain: AIBrainService = Depends(get_ai_brain),
 ) -> TransactionParseResponse:
     """
@@ -392,8 +393,8 @@ async def parse_transaction(
         )
 
     except Exception as e:
-        logger.error("Transaction parsing failed", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Parsing failed: {str(e)}")
+        logger.error(f"Transaction parsing failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
 @router.post("/smart-advice")
@@ -402,6 +403,7 @@ async def parse_transaction(
 async def get_smart_advice(
     request: Request,
     advice_request: SmartAdviceRequest,
+    user_id: UUID = Depends(get_current_user_id),
     ai_brain: AIBrainService = Depends(get_ai_brain),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -418,15 +420,15 @@ async def get_smart_advice(
 
     try:
         # Build comprehensive context
-        context = await _build_user_context(db, advice_request.user_id)
+        context = await _build_user_context(db, user_id)
         transactions = []
         goals = []
 
         if advice_request.include_transactions:
-            transactions = await _get_recent_transactions(db, advice_request.user_id)
+            transactions = await _get_recent_transactions(db, user_id)
 
         if advice_request.include_goals:
-            goals = await _get_user_goals(db, advice_request.user_id)
+            goals = await _get_user_goals(db, user_id)
 
         advice = await ai_brain.get_smart_advice(
             user_context=context,
@@ -461,8 +463,8 @@ async def get_smart_advice(
         }
 
     except Exception as e:
-        logger.error("Smart advice failed", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Smart advice failed: {str(e)}")
+        logger.error(f"Smart advice failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
 # Helper functions
@@ -576,7 +578,6 @@ async def _get_user_goals(db: AsyncSession, user_id: UUID) -> list:
 class CategoryCorrectionRequest(BaseModel):
     """Request to submit a category correction."""
 
-    user_id: UUID = Field(..., description="User ID")
     transaction_id: UUID = Field(..., description="Transaction ID")
     merchant_raw: str = Field(
         ..., description="Raw merchant description", min_length=1, max_length=500
@@ -603,6 +604,7 @@ class CategoryCorrectionResponse(BaseModel):
 async def submit_category_correction(
     request: Request,
     correction_request: CategoryCorrectionRequest,
+    user_id: UUID = Depends(get_current_user_id),
 ) -> CategoryCorrectionResponse:
     """
     Submit a category correction for a transaction.
@@ -618,7 +620,7 @@ async def submit_category_correction(
 
     try:
         result = await record_category_correction(
-            user_id=str(correction_request.user_id),
+            user_id=str(user_id),
             transaction_id=str(correction_request.transaction_id),
             merchant_raw=correction_request.merchant_raw,
             original_category=correction_request.original_category,
@@ -643,8 +645,8 @@ async def submit_category_correction(
         )
 
     except Exception as e:
-        logger.error("Failed to record category correction", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Failed to record correction: {str(e)}")
+        logger.error(f"Failed to record category correction: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
 class FeedbackStatsResponse(BaseModel):
@@ -660,7 +662,10 @@ class FeedbackStatsResponse(BaseModel):
 
 @router.get("/feedback/stats", response_model=FeedbackStatsResponse)
 @limiter.limit("10/minute")
-async def get_feedback_stats(request: Request) -> FeedbackStatsResponse:
+async def get_feedback_stats(
+    request: Request,
+    user_id: UUID = Depends(get_current_user_id),
+) -> FeedbackStatsResponse:
     """
     Get feedback collection statistics.
 
@@ -675,5 +680,5 @@ async def get_feedback_stats(request: Request) -> FeedbackStatsResponse:
         return FeedbackStatsResponse(**stats)
 
     except Exception as e:
-        logger.error("Failed to get feedback stats", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Failed to get stats: {str(e)}")
+        logger.error(f"Failed to get feedback stats: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")

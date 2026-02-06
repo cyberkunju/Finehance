@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 class ReportGenerateRequest(BaseModel):
     """Request schema for generating a financial report."""
 
-    user_id: UUID = Field(..., description="User ID")
+    # user_id removed - injected via auth dependency
     start_date: date = Field(..., description="Report start date")
     end_date: date = Field(..., description="Report end date")
     include_budget_analysis: bool = Field(

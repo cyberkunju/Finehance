@@ -8,6 +8,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.dependencies import get_current_user_id
 from app.services.file_import_service import FileImportService
 from app.logging_config import get_logger
 
@@ -18,7 +19,7 @@ router = APIRouter(tags=["import-export"])
 
 @router.post("/import/transactions")
 async def import_transactions(
-    user_id: UUID = Query(..., description="User ID"),
+    user_id: UUID = Depends(get_current_user_id),
     file: UploadFile = File(..., description="CSV or XLSX file to import"),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -138,12 +139,12 @@ async def import_transactions(
             error=str(e),
             exc_info=True,
         )
-        raise HTTPException(status_code=500, detail=f"Import failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
 @router.get("/export/transactions")
 async def export_transactions(
-    user_id: UUID = Query(..., description="User ID"),
+    user_id: UUID = Depends(get_current_user_id),
     start_date: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
     end_date: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
     category: Optional[str] = Query(None, description="Filter by category"),
@@ -231,7 +232,7 @@ async def export_transactions(
 
     except Exception as e:
         logger.error("Export failed", user_id=str(user_id), error=str(e), exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
 @router.get("/import/template")
@@ -277,4 +278,4 @@ async def download_template(
 
     except Exception as e:
         logger.error("Template generation failed", format=format, error=str(e), exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Template generation failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")

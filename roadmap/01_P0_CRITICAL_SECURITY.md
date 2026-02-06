@@ -499,219 +499,219 @@ alembic upgrade head
 
 ## Granular Checklist — Task 0.1
 
-- [ ] Create `app/dependencies.py` file
-- [ ] Add `OAuth2PasswordBearer` import with `tokenUrl="/api/auth/login"`
-- [ ] Implement `get_current_user()` dependency — returns full `User` ORM object
-- [ ] Add `HTTPException 401` for invalid/expired tokens
-- [ ] Add `WWW-Authenticate: Bearer` header to 401 responses
-- [ ] Implement `get_current_user_id()` dependency — returns just `UUID`
-- [ ] Test: import dependency in a route file and verify it loads
-- [ ] Test: call endpoint without Bearer token → expect 401
-- [ ] Test: call endpoint with valid token → expect user injected
+- [x] Create `app/dependencies.py` file
+- [x] Add `OAuth2PasswordBearer` import with `tokenUrl="/api/auth/login"`
+- [x] Implement `get_current_user()` dependency — returns full `User` ORM object
+- [x] Add `HTTPException 401` for invalid/expired tokens
+- [x] Add `WWW-Authenticate: Bearer` header to 401 responses
+- [x] Implement `get_current_user_id()` dependency — returns just `UUID`
+- [x] Test: import dependency in a route file and verify it loads
+- [x] Test: call endpoint without Bearer token → expect 401
+- [x] Test: call endpoint with valid token → expect user injected
 
 ---
 
 ## Granular Checklist — Task 0.2 (Auth Wiring)
 
 ### `app/routes/transactions.py`
-- [ ] Add `from app.dependencies import get_current_user_id` import
-- [ ] Change `create_transaction` — replace `user_id: UUID = Query(...)` with `user_id: UUID = Depends(get_current_user_id)`
-- [ ] Change `list_transactions` — replace `user_id: UUID = Query(...)` with `Depends(get_current_user_id)`
-- [ ] Change `get_transaction` — replace `user_id: UUID = Query(...)` with `Depends(get_current_user_id)`
-- [ ] Change `update_transaction` — replace `user_id: UUID = Query(...)` with `Depends(get_current_user_id)`
-- [ ] Change `delete_transaction` — replace `user_id: UUID = Query(...)` with `Depends(get_current_user_id)`
-- [ ] Remove `Query` import if no longer used by any param (check `page`, `page_size`, `category` params still need it)
-- [ ] Verify: call any endpoint without token → 401
+- [x] Add `from app.dependencies import get_current_user_id` import
+- [x] Change `create_transaction` — replace `user_id: UUID = Query(...)` with `user_id: UUID = Depends(get_current_user_id)`
+- [x] Change `list_transactions` — replace `user_id: UUID = Query(...)` with `Depends(get_current_user_id)`
+- [x] Change `get_transaction` — replace `user_id: UUID = Query(...)` with `Depends(get_current_user_id)`
+- [x] Change `update_transaction` — replace `user_id: UUID = Query(...)` with `Depends(get_current_user_id)`
+- [x] Change `delete_transaction` — replace `user_id: UUID = Query(...)` with `Depends(get_current_user_id)`
+- [x] Remove `Query` import if no longer used by any param (check `page`, `page_size`, `category` params still need it)
+- [x] Verify: call any endpoint without token → 401
 
 ### `app/routes/budgets.py`
-- [ ] Add `from app.dependencies import get_current_user_id` import
-- [ ] Change `create_budget` — `Depends(get_current_user_id)`
-- [ ] Change `list_budgets` — `Depends(get_current_user_id)`
-- [ ] Change `get_budget` — `Depends(get_current_user_id)`
-- [ ] Change `get_budget_progress` — `Depends(get_current_user_id)`
-- [ ] Change `get_optimization_suggestions` — `Depends(get_current_user_id)`
-- [ ] Change `apply_optimization` — `Depends(get_current_user_id)`
-- [ ] Change `update_budget` — `Depends(get_current_user_id)`
-- [ ] Change `delete_budget` — `Depends(get_current_user_id)`
-- [ ] Verify: call any endpoint without token → 401
+- [x] Add `from app.dependencies import get_current_user_id` import
+- [x] Change `create_budget` — `Depends(get_current_user_id)`
+- [x] Change `list_budgets` — `Depends(get_current_user_id)`
+- [x] Change `get_budget` — `Depends(get_current_user_id)`
+- [x] Change `get_budget_progress` — `Depends(get_current_user_id)`
+- [x] Change `get_optimization_suggestions` — `Depends(get_current_user_id)`
+- [x] Change `apply_optimization` — `Depends(get_current_user_id)`
+- [x] Change `update_budget` — `Depends(get_current_user_id)`
+- [x] Change `delete_budget` — `Depends(get_current_user_id)`
+- [x] Verify: call any endpoint without token → 401
 
 ### `app/routes/goals.py`
-- [ ] Add `from app.dependencies import get_current_user_id` import
-- [ ] Change `create_goal` — `Depends(get_current_user_id)`
-- [ ] Change `list_goals` — `Depends(get_current_user_id)`
-- [ ] Change `get_goal` — `Depends(get_current_user_id)`
-- [ ] Change `get_goal_progress` — `Depends(get_current_user_id)`
-- [ ] Change `update_goal_progress` — `Depends(get_current_user_id)`
-- [ ] Change `get_goal_risk_alerts` — `Depends(get_current_user_id)`
-- [ ] Change `update_goal` — `Depends(get_current_user_id)`
-- [ ] Change `delete_goal` — `Depends(get_current_user_id)`
-- [ ] Move `get_goal_risk_alerts` BEFORE `{goal_id}` routes to fix route ordering bug
-- [ ] Verify: call any endpoint without token → 401
+- [x] Add `from app.dependencies import get_current_user_id` import
+- [x] Change `create_goal` — `Depends(get_current_user_id)`
+- [x] Change `list_goals` — `Depends(get_current_user_id)`
+- [x] Change `get_goal` — `Depends(get_current_user_id)`
+- [x] Change `get_goal_progress` — `Depends(get_current_user_id)`
+- [x] Change `update_goal_progress` — `Depends(get_current_user_id)`
+- [x] Change `get_goal_risk_alerts` — `Depends(get_current_user_id)`
+- [x] Change `update_goal` — `Depends(get_current_user_id)`
+- [x] Change `delete_goal` — `Depends(get_current_user_id)`
+- [x] Move `get_goal_risk_alerts` BEFORE `{goal_id}` routes to fix route ordering bug
+- [x] Verify: call any endpoint without token → 401
 
 ### `app/routes/predictions.py`
-- [ ] Add `from app.dependencies import get_current_user_id` import
-- [ ] Change `get_expense_forecasts` — `Depends(get_current_user_id)`
-- [ ] Change `get_category_forecast` — `Depends(get_current_user_id)`
-- [ ] Change `get_spending_anomalies` — `Depends(get_current_user_id)`
-- [ ] Add category validation — check `category` param against `VALID_CATEGORIES`
-- [ ] Verify: call any endpoint without token → 401
+- [x] Add `from app.dependencies import get_current_user_id` import
+- [x] Change `get_expense_forecasts` — `Depends(get_current_user_id)`
+- [x] Change `get_category_forecast` — `Depends(get_current_user_id)`
+- [x] Change `get_spending_anomalies` — `Depends(get_current_user_id)`
+- [x] Add category validation — check `category` param against `VALID_CATEGORIES`
+- [x] Verify: call any endpoint without token → 401
 
 ### `app/routes/advice.py`
-- [ ] Add `from app.dependencies import get_current_user_id` import
-- [ ] Change `get_personalized_advice` — `Depends(get_current_user_id)`
-- [ ] Change `get_spending_alerts` — `Depends(get_current_user_id)`
-- [ ] Change `get_savings_opportunities` — `Depends(get_current_user_id)`
-- [ ] Verify: call any endpoint without token → 401
+- [x] Add `from app.dependencies import get_current_user_id` import
+- [x] Change `get_personalized_advice` — `Depends(get_current_user_id)`
+- [x] Change `get_spending_alerts` — `Depends(get_current_user_id)`
+- [x] Change `get_savings_opportunities` — `Depends(get_current_user_id)`
+- [x] Verify: call any endpoint without token → 401
 
 ### `app/routes/reports.py`
-- [ ] Add `from app.dependencies import get_current_user_id` import
-- [ ] Change `generate_report` — add `user_id: UUID = Depends(get_current_user_id)` as function param
-- [ ] Remove `user_id` field from `ReportGenerateRequest` schema
-- [ ] Pass `user_id` from auth dependency instead of `request.user_id`
-- [ ] Change `export_report_csv` — `Depends(get_current_user_id)`
-- [ ] Change `export_report_pdf` — `Depends(get_current_user_id)`
-- [ ] Verify: call any endpoint without token → 401
+- [x] Add `from app.dependencies import get_current_user_id` import
+- [x] Change `generate_report` — add `user_id: UUID = Depends(get_current_user_id)` as function param
+- [x] Remove `user_id` field from `ReportGenerateRequest` schema
+- [x] Pass `user_id` from auth dependency instead of `request.user_id`
+- [x] Change `export_report_csv` — `Depends(get_current_user_id)`
+- [x] Change `export_report_pdf` — `Depends(get_current_user_id)`
+- [x] Verify: call any endpoint without token → 401
 
 ### `app/routes/file_import.py`
-- [ ] Add `from app.dependencies import get_current_user_id` import
-- [ ] Change `import_transactions` — `Depends(get_current_user_id)`
-- [ ] Change `export_transactions` — `Depends(get_current_user_id)`
-- [ ] Keep `download_template` with no auth (templates are public)
-- [ ] Verify: call import/export without token → 401
+- [x] Add `from app.dependencies import get_current_user_id` import
+- [x] Change `import_transactions` — `Depends(get_current_user_id)`
+- [x] Change `export_transactions` — `Depends(get_current_user_id)`
+- [x] Keep `download_template` with no auth (templates are public)
+- [x] Verify: call import/export without token → 401
 
 ### `app/routes/ml.py`
-- [ ] Add `from app.dependencies import get_current_user_id` import
-- [ ] Keep `get_ml_status` — no auth needed (system status)
-- [ ] Keep `get_global_model_status` — no auth needed (public info)
-- [ ] Change `get_user_model_status` — remove `{user_id}` path param, use `Depends(get_current_user_id)`
-- [ ] Change `categorize_transaction` — use `Depends(get_current_user_id)`, remove `user_id` from `CategorizeRequest`
-- [ ] Change `batch_categorize` — use `Depends(get_current_user_id)`, remove `user_id` from `BatchCategorizeRequest`
-- [ ] Change `submit_correction` — use `Depends(get_current_user_id)`, remove `user_id` from `CorrectionRequest`
-- [ ] Change `train_user_model` — remove `{user_id}` path param, use `Depends(get_current_user_id)`
-- [ ] Keep `get_categories` — no auth needed (public info)
-- [ ] Change `delete_user_model` — remove `{user_id}` path param, use `Depends(get_current_user_id)`
-- [ ] Update all affected schema classes to remove `user_id` field
-- [ ] Verify: call protected endpoints without token → 401
+- [x] Add `from app.dependencies import get_current_user_id` import
+- [x] Keep `get_ml_status` — no auth needed (system status)
+- [x] Keep `get_global_model_status` — no auth needed (public info)
+- [x] Change `get_user_model_status` — remove `{user_id}` path param, use `Depends(get_current_user_id)`
+- [x] Change `categorize_transaction` — use `Depends(get_current_user_id)`, remove `user_id` from `CategorizeRequest`
+- [x] Change `batch_categorize` — use `Depends(get_current_user_id)`, remove `user_id` from `BatchCategorizeRequest`
+- [x] Change `submit_correction` — use `Depends(get_current_user_id)`, remove `user_id` from `CorrectionRequest`
+- [x] Change `train_user_model` — remove `{user_id}` path param, use `Depends(get_current_user_id)`
+- [x] Keep `get_categories` — no auth needed (public info)
+- [x] Change `delete_user_model` — remove `{user_id}` path param, use `Depends(get_current_user_id)`
+- [x] Update all affected schema classes to remove `user_id` field
+- [x] Verify: call protected endpoints without token → 401
 
 ### `app/routes/ai.py`
-- [ ] Add `from app.dependencies import get_current_user_id` import
-- [ ] Keep `get_ai_status` — no auth needed (system status)
-- [ ] Change `chat` — add `Depends(get_current_user_id)`, remove `user_id` from `ChatRequest`
-- [ ] Change `analyze` — add `Depends(get_current_user_id)`
-- [ ] Change `parse_transaction` — add `Depends(get_current_user_id)`
-- [ ] Change `smart_advice` — add `Depends(get_current_user_id)`
-- [ ] Change `submit_correction` — add `Depends(get_current_user_id)`
-- [ ] Change `get_feedback_stats` — add auth (user-scoped or admin-only)
-- [ ] Update affected schema classes to remove `user_id` field
-- [ ] Verify: call protected endpoints without token → 401
+- [x] Add `from app.dependencies import get_current_user_id` import
+- [x] Keep `get_ai_status` — no auth needed (system status)
+- [x] Change `chat` — add `Depends(get_current_user_id)`, remove `user_id` from `ChatRequest`
+- [x] Change `analyze` — add `Depends(get_current_user_id)`
+- [x] Change `parse_transaction` — add `Depends(get_current_user_id)`
+- [x] Change `smart_advice` — add `Depends(get_current_user_id)`
+- [x] Change `submit_correction` — add `Depends(get_current_user_id)`
+- [x] Change `get_feedback_stats` — add auth (user-scoped or admin-only)
+- [x] Update affected schema classes to remove `user_id` field
+- [x] Verify: call protected endpoints without token → 401
 
 ### `app/routes/auth.py`
-- [ ] Add `from app.dependencies import get_current_user` import
-- [ ] Refactor `/me` endpoint to use `current_user: User = Depends(get_current_user)`
-- [ ] Remove manual token parsing from `/me` handler
-- [ ] Remove local `OAuth2PasswordBearer` declaration (now lives in `dependencies.py`)
-- [ ] Verify: call `/me` with valid token → 200
-- [ ] Verify: call `/me` without token → 401
+- [x] Add `from app.dependencies import get_current_user` import
+- [x] Refactor `/me` endpoint to use `current_user: User = Depends(get_current_user)`
+- [x] Remove manual token parsing from `/me` handler
+- [x] Remove local `OAuth2PasswordBearer` declaration (now lives in `dependencies.py`)
+- [x] Verify: call `/me` with valid token → 200
+- [x] Verify: call `/me` without token → 401
 
 ---
 
 ## Granular Checklist — Task 0.3 (Stop Leaking Exceptions)
 
 ### Setup
-- [ ] Add `import logging` to every route file that doesn't have it
-- [ ] Add `logger = logging.getLogger(__name__)` to every route file
+- [x] Add `import logging` to every route file that doesn't have it
+- [x] Add `logger = logging.getLogger(__name__)` to every route file
 
 ### `app/routes/transactions.py`
-- [ ] Change `create_transaction` `except Exception` — log error, return generic message
-- [ ] Change `list_transactions` `except Exception` — log error, return generic message
-- [ ] Change `get_transaction` `except Exception` — log error, return generic message
-- [ ] Change `update_transaction` `except Exception` — log error, return generic message
-- [ ] Change `delete_transaction` `except Exception` — log error, return generic message
+- [x] Change `create_transaction` `except Exception` — log error, return generic message
+- [x] Change `list_transactions` `except Exception` — log error, return generic message
+- [x] Change `get_transaction` `except Exception` — log error, return generic message
+- [x] Change `update_transaction` `except Exception` — log error, return generic message
+- [x] Change `delete_transaction` `except Exception` — log error, return generic message
 
 ### `app/routes/budgets.py`
-- [ ] Change `create_budget` `except Exception` — log + generic message
-- [ ] Change `list_budgets` `except Exception` — log + generic message
-- [ ] Change `get_budget` `except Exception` — log + generic message
-- [ ] Change `get_budget_progress` `except Exception` — log + generic message
-- [ ] Change `get_optimization_suggestions` `except Exception` — log + generic message
-- [ ] Change `apply_optimization` `except Exception` — log + generic message
-- [ ] Change `update_budget` `except Exception` — log + generic message
-- [ ] Change `delete_budget` `except Exception` — log + generic message
+- [x] Change `create_budget` `except Exception` — log + generic message
+- [x] Change `list_budgets` `except Exception` — log + generic message
+- [x] Change `get_budget` `except Exception` — log + generic message
+- [x] Change `get_budget_progress` `except Exception` — log + generic message
+- [x] Change `get_optimization_suggestions` `except Exception` — log + generic message
+- [x] Change `apply_optimization` `except Exception` — log + generic message
+- [x] Change `update_budget` `except Exception` — log + generic message
+- [x] Change `delete_budget` `except Exception` — log + generic message
 
 ### `app/routes/goals.py`
-- [ ] Change `create_goal` `except Exception` — log + generic message
-- [ ] Change `list_goals` `except Exception` — log + generic message
-- [ ] Change `get_goal` `except Exception` — log + generic message
-- [ ] Change `get_goal_progress` `except Exception` — log + generic message
-- [ ] Change `update_goal_progress` `except Exception` — log + generic message
-- [ ] Change `get_goal_risk_alerts` `except Exception` — log + generic message
-- [ ] Change `update_goal` `except Exception` — log + generic message
-- [ ] Change `delete_goal` `except Exception` — log + generic message
+- [x] Change `create_goal` `except Exception` — log + generic message
+- [x] Change `list_goals` `except Exception` — log + generic message
+- [x] Change `get_goal` `except Exception` — log + generic message
+- [x] Change `get_goal_progress` `except Exception` — log + generic message
+- [x] Change `update_goal_progress` `except Exception` — log + generic message
+- [x] Change `get_goal_risk_alerts` `except Exception` — log + generic message
+- [x] Change `update_goal` `except Exception` — log + generic message
+- [x] Change `delete_goal` `except Exception` — log + generic message
 
 ### `app/routes/predictions.py`
-- [ ] Change `get_expense_forecasts` `except Exception` — log + generic message
-- [ ] Change `get_category_forecast` `except Exception` — log + generic message
-- [ ] Change `get_spending_anomalies` `except Exception` — log + generic message
+- [x] Change `get_expense_forecasts` `except Exception` — log + generic message
+- [x] Change `get_category_forecast` `except Exception` — log + generic message
+- [x] Change `get_spending_anomalies` `except Exception` — log + generic message
 
 ### `app/routes/advice.py`
-- [ ] Change `get_personalized_advice` `except Exception` — log + generic message
-- [ ] Change `get_spending_alerts` `except Exception` — log + generic message
-- [ ] Change `get_savings_opportunities` `except Exception` — log + generic message
+- [x] Change `get_personalized_advice` `except Exception` — log + generic message
+- [x] Change `get_spending_alerts` `except Exception` — log + generic message
+- [x] Change `get_savings_opportunities` `except Exception` — log + generic message
 
 ### `app/routes/reports.py`
-- [ ] Change `generate_report` `except Exception` — log + generic message
-- [ ] Change `export_report_csv` `except Exception` — log + generic message
-- [ ] Change `export_report_pdf` `except Exception` — log + generic message
+- [x] Change `generate_report` `except Exception` — log + generic message
+- [x] Change `export_report_csv` `except Exception` — log + generic message
+- [x] Change `export_report_pdf` `except Exception` — log + generic message
 
 ### `app/routes/file_import.py`
-- [ ] Change `import_transactions` `except Exception` — log + generic message
-- [ ] Change `export_transactions` `except Exception` — log + generic message
+- [x] Change `import_transactions` `except Exception` — log + generic message
+- [x] Change `export_transactions` `except Exception` — log + generic message
 
 ### `app/routes/ml.py`
-- [ ] Change all 6 relevant handlers `except Exception` — log + generic message
+- [x] Change all 6 relevant handlers `except Exception` — log + generic message
 
 ### `app/routes/ai.py`
-- [ ] Change all 5 relevant handlers `except Exception` — log + generic message
+- [x] Change all 5 relevant handlers `except Exception` — log + generic message
 
 ### Validation
-- [ ] Keep specific `ValueError`/`400` handlers as-is (user-facing validation errors)
-- [ ] Verify: trigger an internal error → response shows generic message, NOT stack trace
-- [ ] Verify: server log shows the real error with `exc_info=True`
+- [x] Keep specific `ValueError`/`400` handlers as-is (user-facing validation errors)
+- [x] Verify: trigger an internal error → response shows generic message, NOT stack trace
+- [x] Verify: server log shows the real error with `exc_info=True`
 
 ---
 
 ## Granular Checklist — Task 0.4 (Division-by-Zero Fix)
 
-- [ ] Open `app/services/advice_generator.py` line 231
-- [ ] Add `if total_days > 0:` guard before division
-- [ ] Add `else: time_elapsed_percent = 100.0` fallback
-- [ ] Verify: create a goal with `deadline = today`
-- [ ] Verify: call advice endpoint → no crash
-- [ ] Verify: returns advice indicating goal deadline has arrived
+- [x] Open `app/services/advice_generator.py` line 231
+- [x] Add `if total_days > 0:` guard before division
+- [x] Add `else: time_elapsed_percent = 100.0` fallback
+- [x] Verify: create a goal with `deadline = today`
+- [x] Verify: call advice endpoint → no crash
+- [x] Verify: returns advice indicating goal deadline has arrived
 
 ---
 
 ## Granular Checklist — Task 0.5 (Category NULL Mismatch)
 
-- [ ] Open `app/services/transaction_service.py` → `create_transaction` method
-- [ ] Add `if not transaction.category: transaction.category = "Uncategorized"` after auto-categorization
-- [ ] Open `app/schemas/transaction.py`
-- [ ] Update `category` field description to document fallback behavior
-- [ ] Verify: create transaction with `category=None` and gibberish description
-- [ ] Verify: transaction created with `category="Uncategorized"` instead of crashing
+- [x] Open `app/services/transaction_service.py` → `create_transaction` method
+- [x] Add `if not transaction.category: transaction.category = "Uncategorized"` after auto-categorization
+- [x] Open `app/schemas/transaction.py`
+- [x] Update `category` field description to document fallback behavior
+- [x] Verify: create transaction with `category=None` and gibberish description
+- [x] Verify: transaction created with `category="Uncategorized"` instead of crashing
 
 ---
 
 ## Granular Checklist — Task 0.6 (is_active Flag)
 
-- [ ] Open `app/models/user.py`
-- [ ] Add `is_active: Mapped[bool] = mapped_column(default=True, server_default="true")`
-- [ ] Open `app/dependencies.py`
-- [ ] Add `if not user.is_active: raise HTTPException(403, "Account is deactivated")`
-- [ ] Create Alembic migration: `alembic revision --autogenerate -m "add_is_active_to_users"`
-- [ ] Run migration: `alembic upgrade head`
-- [ ] Verify: active user can access endpoints normally
-- [ ] Verify: deactivated user gets 403
+- [x] Open `app/models/user.py`
+- [x] Add `is_active: Mapped[bool] = mapped_column(default=True, server_default="true")`
+- [x] Open `app/dependencies.py`
+- [x] Add `if not user.is_active: raise HTTPException(403, "Account is deactivated")`
+- [x] Create Alembic migration: `alembic revision --autogenerate -m "add_is_active_to_users"`
+- [x] Run migration: `alembic upgrade head`
+- [x] Verify: active user can access endpoints normally
+- [x] Verify: deactivated user gets 403
 
 ---
 

@@ -136,11 +136,8 @@ class TransactionService:
                 )
 
         if not final_category:
-            raise ValueError(
-                "Category could not be determined. Auto-categorization failed: "
-                "local ML model returned low confidence and AI Brain fallback was unsuccessful or unavailable. "
-                "Please provide the category manually."
-            )
+            # Fallback to "Uncategorized" if auto-categorization fails
+            final_category = "Uncategorized"
 
         # Check for duplicates
         duplicate = await self.detect_duplicate(

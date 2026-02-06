@@ -1,5 +1,6 @@
 """Advice API endpoints."""
 
+import logging
 from typing import Optional
 from uuid import UUID
 
@@ -8,9 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.cache import cache_manager
 from app.database import get_db
+from app.dependencies import get_current_user_id
 from app.schemas.advice import AdviceResponse
 from app.services.advice_generator import AdviceGenerator
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # Cache TTL for advice (5 minutes - advice doesn't change frequently)
@@ -26,7 +29,7 @@ async def get_advice_generator(db: AsyncSession = Depends(get_db)) -> AdviceGene
 # Endpoints
 @router.get("", response_model=list[AdviceResponse])
 async def get_personalized_advice(
-    user_id: UUID = Query(..., description="User ID"),
+    user_id: UUID = Depends(get_current_user_id),
     max_recommendations: int = Query(3, ge=1, le=10, description="Maximum recommendations"),
     generator: AdviceGenerator = Depends(get_advice_generator),
 ) -> list[AdviceResponse]:
@@ -69,12 +72,13 @@ async def get_personalized_advice(
 
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to generate advice: {str(e)}")
+        logger.error(f"Failed to generate advice: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
 @router.get("/spending-alerts", response_model=list[AdviceResponse])
 async def get_spending_alerts(
-    user_id: UUID = Query(..., description="User ID"),
+    user_id: UUID = Depends(get_current_user_id),
     budget_id: Optional[UUID] = Query(None, description="Optional specific budget ID"),
     generator: AdviceGenerator = Depends(get_advice_generator),
 ) -> list[AdviceResponse]:
@@ -104,12 +108,13 @@ async def get_spending_alerts(
             for advice in alerts
         ]
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to check spending alerts: {str(e)}")
+        logger.error(f"Failed to check spending alerts: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
 @router.get("/savings-opportunities", response_model=list[AdviceResponse])
 async def get_savings_opportunities(
-    user_id: UUID = Query(..., description="User ID"),
+    user_id: UUID = Depends(get_current_user_id),
     lookback_months: int = Query(3, ge=1, le=12, description="Months to analyze"),
     generator: AdviceGenerator = Depends(get_advice_generator),
 ) -> list[AdviceResponse]:
@@ -141,6 +146,5 @@ async def get_savings_opportunities(
             for advice in opportunities
         ]
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to suggest savings opportunities: {str(e)}"
-        )
+        logger.error(f"Failed to suggest savings opportunities: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")

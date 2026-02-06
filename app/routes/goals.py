@@ -1,5 +1,6 @@
 """Goal API endpoints."""
 
+import logging
 from typing import Optional
 from uuid import UUID
 
@@ -7,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.dependencies import get_current_user_id
 from app.schemas.goal import (
     GoalCreate,
     GoalUpdate,
@@ -17,6 +19,7 @@ from app.schemas.goal import (
 )
 from app.services.goal_service import GoalService
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -30,7 +33,7 @@ async def get_goal_service(db: AsyncSession = Depends(get_db)) -> GoalService:
 @router.post("", response_model=GoalResponse, status_code=201)
 async def create_goal(
     goal: GoalCreate,
-    user_id: UUID = Query(..., description="User ID"),
+    user_id: UUID = Depends(get_current_user_id),
     service: GoalService = Depends(get_goal_service),
 ) -> GoalResponse:
     """Create a new financial goal.
@@ -59,12 +62,13 @@ async def create_goal(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to create goal: {str(e)}")
+        logger.error(f"Failed to create goal: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
 @router.get("", response_model=list[GoalResponse])
 async def list_goals(
-    user_id: UUID = Query(..., description="User ID"),
+    user_id: UUID = Depends(get_current_user_id),
     status: Optional[str] = Query(
         None, description="Filter by status (ACTIVE, ACHIEVED, ARCHIVED)"
     ),
@@ -84,13 +88,46 @@ async def list_goals(
         goals = await service.list_goals(user_id, status)
         return [GoalResponse.model_validate(g) for g in goals]
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to list goals: {str(e)}")
+        logger.error(f"Failed to list goals: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
+
+
+@router.get("/risks/alerts", response_model=list[GoalRiskAlertResponse])
+async def get_goal_risk_alerts(
+    user_id: UUID = Depends(get_current_user_id),
+    service: GoalService = Depends(get_goal_service),
+) -> list[GoalRiskAlertResponse]:
+    """Get risk alerts for all active goals.
+
+    Args:
+        user_id: User ID
+        service: Goal service
+
+    Returns:
+        List of risk alerts
+    """
+    try:
+        alerts = await service.check_goal_risks(user_id)
+
+        return [
+            GoalRiskAlertResponse(
+                goal_id=alert.goal_id,
+                name=alert.name,
+                severity=alert.severity,
+                message=alert.message,
+                recommended_action=alert.recommended_action,
+            )
+            for alert in alerts
+        ]
+    except Exception as e:
+        logger.error(f"Failed to get risk alerts: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
 @router.get("/{goal_id}", response_model=GoalResponse)
 async def get_goal(
     goal_id: UUID,
-    user_id: UUID = Query(..., description="User ID"),
+    user_id: UUID = Depends(get_current_user_id),
     service: GoalService = Depends(get_goal_service),
 ) -> GoalResponse:
     """Get a single goal by ID.
@@ -114,13 +151,14 @@ async def get_goal(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get goal: {str(e)}")
+        logger.error(f"Failed to get goal: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
 @router.get("/{goal_id}/progress", response_model=GoalProgressResponse)
 async def get_goal_progress(
     goal_id: UUID,
-    user_id: UUID = Query(..., description="User ID"),
+    user_id: UUID = Depends(get_current_user_id),
     service: GoalService = Depends(get_goal_service),
 ) -> GoalProgressResponse:
     """Get detailed progress information for a goal.
@@ -156,14 +194,15 @@ async def get_goal_progress(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get goal progress: {str(e)}")
+        logger.error(f"Failed to get goal progress: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
 @router.post("/{goal_id}/progress", response_model=GoalResponse)
 async def update_goal_progress(
     goal_id: UUID,
     progress_update: GoalProgressUpdate,
-    user_id: UUID = Query(..., description="User ID"),
+    user_id: UUID = Depends(get_current_user_id),
     service: GoalService = Depends(get_goal_service),
 ) -> GoalResponse:
     """Update goal progress by adding an amount.
@@ -194,45 +233,15 @@ async def update_goal_progress(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to update goal progress: {str(e)}")
-
-
-@router.get("/risks/alerts", response_model=list[GoalRiskAlertResponse])
-async def get_goal_risk_alerts(
-    user_id: UUID = Query(..., description="User ID"),
-    service: GoalService = Depends(get_goal_service),
-) -> list[GoalRiskAlertResponse]:
-    """Get risk alerts for all active goals.
-
-    Args:
-        user_id: User ID
-        service: Goal service
-
-    Returns:
-        List of risk alerts
-    """
-    try:
-        alerts = await service.check_goal_risks(user_id)
-
-        return [
-            GoalRiskAlertResponse(
-                goal_id=alert.goal_id,
-                name=alert.name,
-                severity=alert.severity,
-                message=alert.message,
-                recommended_action=alert.recommended_action,
-            )
-            for alert in alerts
-        ]
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get risk alerts: {str(e)}")
+        logger.error(f"Failed to update goal progress: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
 @router.put("/{goal_id}", response_model=GoalResponse)
 async def update_goal(
     goal_id: UUID,
     updates: GoalUpdate,
-    user_id: UUID = Query(..., description="User ID"),
+    user_id: UUID = Depends(get_current_user_id),
     service: GoalService = Depends(get_goal_service),
 ) -> GoalResponse:
     """Update a goal.
@@ -275,13 +284,14 @@ async def update_goal(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to update goal: {str(e)}")
+        logger.error(f"Failed to update goal: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
 @router.delete("/{goal_id}", status_code=204)
 async def delete_goal(
     goal_id: UUID,
-    user_id: UUID = Query(..., description="User ID"),
+    user_id: UUID = Depends(get_current_user_id),
     service: GoalService = Depends(get_goal_service),
 ) -> None:
     """Delete a goal.
@@ -301,4 +311,5 @@ async def delete_goal(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to delete goal: {str(e)}")
+        logger.error(f"Failed to delete goal: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")

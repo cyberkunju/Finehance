@@ -32,6 +32,7 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     first_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     last_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    is_active: Mapped[bool] = mapped_column(default=True, server_default="true", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False
