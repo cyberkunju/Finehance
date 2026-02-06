@@ -6,7 +6,7 @@ from decimal import Decimal
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import select, func, and_, desc
+from sqlalchemy import select, func, and_, desc, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.transaction import Transaction
@@ -453,3 +453,33 @@ class TransactionService:
         )
         result = await self.db.execute(stmt)
         return result.scalar_one()
+
+    async def delete_all_transactions(self, user_id: UUID) -> int:
+        """Delete all transactions for a user.
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            Number of deleted transactions
+        """
+        stmt = (
+            update(Transaction)
+            .where(
+                and_(
+                    Transaction.user_id == user_id,
+                    Transaction.deleted_at.is_(None),
+                )
+            )
+            .values(deleted_at=datetime.utcnow())
+        )
+        result = await self.db.execute(stmt)
+        await self.db.flush()
+
+        logger.info(
+            "All transactions deleted for user",
+            user_id=str(user_id),
+            count=result.rowcount,
+        )
+
+        return result.rowcount

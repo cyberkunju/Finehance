@@ -377,6 +377,42 @@ class TestDeleteTransaction:
         )
         assert result is False
 
+    async def test_delete_all_transactions_success(
+        self,
+        transaction_service: TransactionService,
+        test_user: User,
+        db_session: AsyncSession,
+    ):
+        """Test successful deletion of all transactions."""
+        # Create 3 transactions
+        for i in range(3):
+            transaction_data = TransactionCreate(
+                amount=Decimal("100.00"),
+                date=date_type.today(),
+                description=f"To be deleted {i}",
+                type=TransactionType.EXPENSE,
+                source=TransactionSource.MANUAL,
+            )
+            await transaction_service.create_transaction(
+                user_id=test_user.id,
+                transaction_data=transaction_data,
+                category="Shopping",
+            )
+        await db_session.commit()
+
+        # Delete all transactions
+        count = await transaction_service.delete_all_transactions(test_user.id)
+        await db_session.commit()
+
+        assert count == 3
+
+        # Verify all transactions are soft deleted
+        transactions, total = await transaction_service.list_transactions(
+            user_id=test_user.id,
+        )
+        assert total == 0
+        assert len(transactions) == 0
+
 
 class TestListTransactions:
     """Tests for listing transactions."""
