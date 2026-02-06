@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import String, DateTime, Text, ForeignKey, Index, CheckConstraint
@@ -51,7 +51,7 @@ class Connection(Base):
         DateTime, nullable=True, comment="Timestamp of last successful transaction sync"
     )
     status: Mapped[str] = mapped_column(String(20), default="ACTIVE", nullable=False, index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="connections")

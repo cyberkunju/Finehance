@@ -17,6 +17,7 @@ from app.cache import cache_manager
 from app.config import settings
 from app.database import close_db, init_db
 from app.logging_config import configure_logging, get_logger, bind_contextvars, clear_contextvars
+from app.middleware.security import SecurityMiddleware
 
 # Configure logging
 configure_logging()
@@ -212,6 +213,7 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["X-Request-ID", "X-Process-Time"],
 )
+app.add_middleware(SecurityMiddleware)
 
 
 @app.middleware("http")

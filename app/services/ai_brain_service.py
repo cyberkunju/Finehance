@@ -18,6 +18,7 @@ Phase 3 Enhancements:
 """
 
 import asyncio
+import hashlib
 import os
 import time
 from dataclasses import dataclass, field
@@ -604,7 +605,7 @@ class AIBrainService:
 
         # Check cache first
         if use_cache and mode != AIBrainMode.CHAT:
-            cache_key = f"ai_brain:{mode.value}:{hash(query)}"
+            cache_key = f"ai_brain:{mode.value}:{hashlib.sha256(query.encode()).hexdigest()[:16]}"
             cached = await cache_manager.get(cache_key)
             if cached:
                 # Record cache hit

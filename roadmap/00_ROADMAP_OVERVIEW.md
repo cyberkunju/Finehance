@@ -102,31 +102,31 @@ P4 (Testing) ───────────────┘
 - [ ] Manual smoke test: register → login → CRUD with/without tokens
 
 ### Phase 1 — Backend Fixes
-- [ ] Create `app/middleware/security.py` (SecurityMiddleware)
-- [ ] Register SecurityMiddleware in `main.py`
-- [ ] Add `blacklist_token` method to `AuthService`
-- [ ] Add `is_token_blacklisted` method to `AuthService`
-- [ ] Add blacklist check in `get_current_user` dependency
-- [ ] Update logout route to blacklist token
-- [ ] Blacklist old token on refresh
-- [ ] Fix PDF export — add `reportlab` to dependencies or return 501
-- [ ] Replace `datetime.utcnow()` in all models
-- [ ] Replace `datetime.utcnow()` in all services
-- [ ] Replace `datetime.utcnow()` in all routes
-- [ ] Fix commit consistency — `auth_service.py` → flush
-- [ ] Fix commit consistency — `file_import_service.py` → flush
-- [ ] Ensure `get_db` commits on success
-- [ ] Remove dead `PASSWORD_PATTERN` in auth_service
-- [ ] Expand special char set in `validate_password`
-- [ ] Create `app/schemas/connection.py`
-- [ ] Create `app/schemas/ml_model.py`
-- [ ] Add `UserUpdate` schema to `auth.py`
-- [ ] Fix `created_at` type in `UserResponse`
-- [ ] Fix Decimal precision in budget allocations
-- [ ] Filter soft-deleted transactions from export
-- [ ] Fix merchant normalizer location regex for ALL-CAPS
-- [ ] Replace `hash()` with `hashlib.sha256` in ai_brain_service
-- [ ] Fix LRU cache memory leak in merchant_database
+- [x] Create `app/middleware/security.py` (SecurityMiddleware)
+- [x] Register SecurityMiddleware in `main.py`
+- [x] Add `blacklist_token` method to `AuthService`
+- [x] Add `is_token_blacklisted` method to `AuthService`
+- [x] Add blacklist check in `get_current_user` dependency
+- [x] Update logout route to blacklist token
+- [x] Blacklist old token on refresh
+- [x] Fix PDF export — add `reportlab` to dependencies or return 501
+- [x] Replace `datetime.utcnow()` in all models
+- [x] Replace `datetime.utcnow()` in all services
+- [x] Replace `datetime.utcnow()` in all routes
+- [x] Fix commit consistency — `auth_service.py` → flush
+- [x] Fix commit consistency — `file_import_service.py` → flush
+- [x] Ensure `get_db` commits on success
+- [x] Remove dead `PASSWORD_PATTERN` in auth_service
+- [x] Expand special char set in `validate_password`
+- [x] Create `app/schemas/connection.py`
+- [x] Create `app/schemas/ml_model.py`
+- [x] Add `UserUpdate` schema to `auth.py`
+- [x] Fix `created_at` type in `UserResponse`
+- [x] Fix Decimal precision in budget allocations
+- [x] Filter soft-deleted transactions from export
+- [x] Fix merchant normalizer location regex for ALL-CAPS
+- [x] Replace `hash()` with `hashlib.sha256` in ai_brain_service
+- [x] Fix LRU cache memory leak in merchant_database
 - [ ] Run ALL tests
 - [ ] Manual smoke test all fixed flows
 

@@ -6,7 +6,7 @@ import asyncio
 from typing import Optional, Tuple, List
 from decimal import Decimal
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 import joblib
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -517,7 +517,7 @@ class CategorizationEngine:
                 "f1_score": float(f1),
                 "training_samples": len(corrections),
                 "unique_categories": len(unique_categories),
-                "trained_at": datetime.utcnow().isoformat(),
+                "trained_at": datetime.now(timezone.utc).isoformat(),
             }
 
             # Save model

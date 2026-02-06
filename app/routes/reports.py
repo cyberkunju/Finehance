@@ -1,6 +1,6 @@
 """API routes for financial reports."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4, UUID
 from typing import Optional
 
@@ -104,7 +104,7 @@ async def generate_report(
                 )
                 for change in report.spending_changes
             ],
-            generated_at=datetime.utcnow().isoformat(),
+            generated_at=datetime.now(timezone.utc).isoformat(),
         )
     except HTTPException:
         raise
@@ -215,6 +215,19 @@ async def export_report_pdf(
         if start > end:
             raise HTTPException(
                 status_code=400, detail="Start date must be before or equal to end date"
+            )
+
+        logger.info(
+            "Exporting report to PDF", user_id=str(user_id), start_date=start_date, end_date=end_date
+        )
+
+        # Check if reportlab is available
+        try:
+            import reportlab  # noqa: F401
+        except ImportError:
+            raise HTTPException(
+                status_code=501,
+                detail="PDF export is not available. Install reportlab: pip install reportlab",
             )
 
         logger.info(

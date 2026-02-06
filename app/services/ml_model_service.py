@@ -1,6 +1,6 @@
 """Service for managing ML model metadata and versioning."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
 from uuid import UUID
 
@@ -70,7 +70,7 @@ class MLModelService:
             accuracy=accuracy,
             precision=precision,
             recall=recall,
-            trained_at=datetime.utcnow(),
+            trained_at=datetime.now(timezone.utc),
             model_path=model_path,
             is_active=is_active,
         )

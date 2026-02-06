@@ -1,6 +1,6 @@
 """Transaction service for managing financial transactions."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from datetime import date as date_type
 from decimal import Decimal
 from typing import Optional
@@ -245,7 +245,7 @@ class TransactionService:
             else:
                 setattr(transaction, field, value)
 
-        transaction.updated_at = datetime.utcnow()
+        transaction.updated_at = datetime.now(timezone.utc)
         await self.db.flush()
         await self.db.refresh(transaction)
 
@@ -282,7 +282,7 @@ class TransactionService:
             return False
 
         # Soft delete
-        transaction.deleted_at = datetime.utcnow()
+        transaction.deleted_at = datetime.now(timezone.utc)
         await self.db.flush()
 
         logger.info(

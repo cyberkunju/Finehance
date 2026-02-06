@@ -1,6 +1,6 @@
 """Advice generator service for personalized financial recommendations."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import List, Optional
 from uuid import UUID
@@ -118,7 +118,7 @@ class AdviceGenerator:
             stmt = select(Budget).where(and_(Budget.id == budget_id, Budget.user_id == user_id))
         else:
             # Get current active budgets
-            today = datetime.utcnow().date()
+            today = datetime.now(timezone.utc).date()
             stmt = select(Budget).where(
                 and_(
                     Budget.user_id == user_id,
@@ -207,7 +207,7 @@ class AdviceGenerator:
         advice_list = []
 
         # Calculate date range
-        end_date = datetime.utcnow().date()
+        end_date = datetime.now(timezone.utc).date()
         start_date = end_date - timedelta(days=lookback_months * 30)
 
         # Get spending by category
@@ -286,7 +286,7 @@ class AdviceGenerator:
         result = await self.db.execute(stmt)
         goals = result.scalars().all()
 
-        today = datetime.utcnow().date()
+        today = datetime.now(timezone.utc).date()
 
         for goal in goals:
             progress_percent = float((goal.current_amount / goal.target_amount) * 100)
@@ -360,7 +360,7 @@ class AdviceGenerator:
         advice_list = []
 
         # Check for recently achieved goals (within last 7 days)
-        seven_days_ago = datetime.utcnow() - timedelta(days=7)
+        seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
 
         stmt = select(FinancialGoal).where(
             and_(

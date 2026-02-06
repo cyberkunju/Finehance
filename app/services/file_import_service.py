@@ -589,7 +589,7 @@ class FileImportService:
                 error_count += 1
 
         # Commit all changes
-        await self.db.commit()
+        await self.db.flush()
 
         result = ImportResult(
             imported=imported,
@@ -644,6 +644,8 @@ class FileImportService:
 
         # Build query
         query = select(Transaction).where(Transaction.user_id == user_id)
+        # Exclude soft-deleted transactions
+        query = query.where(Transaction.deleted_at.is_(None))
 
         if start_date:
             query = query.where(Transaction.date >= start_date)
