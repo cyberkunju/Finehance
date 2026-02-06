@@ -469,11 +469,11 @@ async def get_smart_advice(
 async def _build_user_context(db: AsyncSession, user_id: UUID) -> dict:
     """Build financial context for a user."""
     from sqlalchemy import select, func, and_
-    from datetime import datetime, timedelta
+    from datetime import datetime, timedelta, timezone
     from app.models.transaction import Transaction
 
     # Get spending by category for last 30 days
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
 
     stmt = (
         select(Transaction.category, func.sum(Transaction.amount).label("total"))

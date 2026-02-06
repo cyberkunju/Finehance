@@ -1,5 +1,6 @@
 """Pydantic schemas for authentication API endpoints."""
 
+from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
@@ -48,7 +49,14 @@ class UserResponse(BaseModel):
     email: str
     first_name: Optional[str]
     last_name: Optional[str]
-    created_at: str
+    created_at: datetime
+
+
+class UserUpdate(BaseModel):
+    """Schema for updating user information."""
+
+    full_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    email: Optional[EmailStr] = None
 
 
 class AuthResponse(BaseModel):

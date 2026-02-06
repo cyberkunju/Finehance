@@ -1,7 +1,7 @@
 """Authentication service for user registration, login, and token management."""
 
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from uuid import UUID
 
@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
 from app.config import settings
+from app.cache import cache_manager
 from app.logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -40,9 +41,9 @@ class AuthService:
 
     # Password requirements
     MIN_PASSWORD_LENGTH = 12
-    PASSWORD_PATTERN = re.compile(
-        r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]"
-    )
+
+    # Default blacklist TTL in seconds (30 minutes)
+    DEFAULT_BLACKLIST_TTL = 30 * 60
 
     def __init__(self, db: AsyncSession):
         """Initialize authentication service.
@@ -81,9 +82,9 @@ class AuthService:
         if not re.search(r"\d", password):
             raise PasswordValidationError("Password must contain at least one number")
 
-        if not re.search(r"[@$!%*?&]", password):
+        if not re.search(r"[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>/?~`]", password):
             raise PasswordValidationError(
-                "Password must contain at least one special character (@$!%*?&)"
+                "Password must contain at least one special character"
             )
 
     def hash_password(self, password: str) -> str:
@@ -162,7 +163,7 @@ class AuthService:
         )
 
         self.db.add(user)
-        await self.db.commit()
+        await self.db.flush()
         await self.db.refresh(user)
 
         logger.info("User registered successfully", user_id=str(user.id), email=email)
@@ -217,7 +218,7 @@ class AuthService:
         if expires_delta is None:
             expires_delta = timedelta(minutes=30)
 
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
 
         to_encode = {"sub": str(user_id), "exp": expire, "type": "access"}
 
@@ -242,7 +243,7 @@ class AuthService:
         if expires_delta is None:
             expires_delta = timedelta(days=7)
 
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
 
         to_encode = {"sub": str(user_id), "exp": expire, "type": "refresh"}
 
@@ -319,6 +320,9 @@ class AuthService:
         new_access_token = self.create_access_token(user_id)
         new_refresh_token = self.create_refresh_token(user_id)
 
+        # Blacklist the old refresh token to prevent reuse
+        await self.blacklist_token(refresh_token, expires_in=7 * 24 * 60 * 60)
+
         logger.info("Tokens refreshed successfully", user_id=str(user_id))
 
         return new_access_token, new_refresh_token
@@ -386,8 +390,25 @@ class AuthService:
 
         # Hash and update password
         user.password_hash = self.hash_password(new_password)
-        user.updated_at = datetime.utcnow()
+        user.updated_at = datetime.now(timezone.utc)
 
-        await self.db.commit()
+        await self.db.flush()
 
         logger.info("Password changed successfully", user_id=str(user_id))
+
+    async def blacklist_token(self, token: str, expires_in: int = None) -> None:
+        """Add a token to the blacklist. Token will be auto-removed from Redis when it naturally expires."""
+        if expires_in is None:
+            try:
+                payload = jwt.decode(token, settings.secret_key, algorithms=["HS256"])
+                exp = payload.get("exp", 0)
+                expires_in = max(0, exp - int(datetime.now(timezone.utc).timestamp()))
+            except JWTError:
+                expires_in = self.DEFAULT_BLACKLIST_TTL
+        
+        await cache_manager.set(f"blacklist:{token}", "1", expire=expires_in)
+
+    async def is_token_blacklisted(self, token: str) -> bool:
+        """Check if a token has been blacklisted."""
+        result = await cache_manager.get(f"blacklist:{token}")
+        return result is not None

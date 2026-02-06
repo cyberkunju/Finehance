@@ -12,7 +12,7 @@ import asyncio
 import json
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from app.logging_config import get_logger
@@ -51,7 +51,7 @@ class CategoryCorrection:
     merchant_normalized: Optional[str]
     original_category: str
     corrected_category: str
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     source: str = "user"  # user, ai, rule
 
     def to_dict(self) -> Dict[str, Any]:
@@ -87,13 +87,13 @@ class MerchantCorrectionAgg:
     merchant_key: str
     corrections: Dict[str, int] = field(default_factory=dict)  # category -> count
     total_corrections: int = 0
-    last_updated: datetime = field(default_factory=datetime.utcnow)
+    last_updated: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def add_correction(self, corrected_category: str):
         """Add a correction to the aggregation."""
         self.corrections[corrected_category] = self.corrections.get(corrected_category, 0) + 1
         self.total_corrections += 1
-        self.last_updated = datetime.utcnow()
+        self.last_updated = datetime.now(timezone.utc)
 
     def get_consensus(self, min_count: int = 3) -> Optional[str]:
         """
@@ -207,7 +207,7 @@ class FeedbackCollector:
                             corrections=agg.get("corrections", {}),
                             total_corrections=agg.get("total_corrections", 0),
                             last_updated=datetime.fromisoformat(
-                                agg.get("last_updated", datetime.utcnow().isoformat())
+                                agg.get("last_updated", datetime.now(timezone.utc).isoformat())
                             ),
                         )
                 logger.info(f"Loaded {len(self._aggregates)} merchant aggregates")
@@ -222,7 +222,7 @@ class FeedbackCollector:
                 corrections_data = {
                     "corrections": [c.to_dict() for c in self._corrections[-10000:]],  # Keep last 10k
                     "stats": self._stats.copy(),
-                    "last_saved": datetime.utcnow().isoformat(),
+                    "last_saved": datetime.now(timezone.utc).isoformat(),
                 }
 
                 aggregates_data = {
@@ -234,7 +234,7 @@ class FeedbackCollector:
                         }
                         for key, agg in self._aggregates.items()
                     },
-                    "last_saved": datetime.utcnow().isoformat(),
+                    "last_saved": datetime.now(timezone.utc).isoformat(),
                 }
 
                 # Run I/O in executor
@@ -522,7 +522,7 @@ class FeedbackCollector:
             json.dump(
                 {
                     "examples": training_data,
-                    "exported_at": datetime.utcnow().isoformat(),
+                    "exported_at": datetime.now(timezone.utc).isoformat(),
                     "total_examples": len(training_data),
                     "min_corrections": min_corrections,
                 },

@@ -1,6 +1,6 @@
 """Budget service for managing budgets and tracking spending."""
 
-from datetime import datetime, date as date_type
+from datetime import datetime, date as date_type, timezone
 from decimal import Decimal
 from typing import Dict, List, Optional
 from uuid import UUID
@@ -131,7 +131,7 @@ class BudgetService:
         stmt = select(Budget).where(Budget.user_id == user_id)
 
         if active_only:
-            today = datetime.utcnow().date()
+            today = datetime.now(timezone.utc).date()
             stmt = stmt.where(and_(Budget.period_start <= today, Budget.period_end >= today))
 
         stmt = stmt.order_by(Budget.period_start.desc())
@@ -292,7 +292,7 @@ class BudgetService:
                 category: float(amount) for category, amount in allocations.items()
             }
 
-        budget.updated_at = datetime.utcnow()
+        budget.updated_at = datetime.now(timezone.utc)
         await self.db.flush()
         await self.db.refresh(budget)
 

@@ -22,11 +22,13 @@ from app.schemas.auth import (
     UserResponse,
     MessageResponse,
 )
+from app.dependencies import oauth2_scheme
 from app.logging_config import get_logger
 
 logger = get_logger(__name__)
 
 router = APIRouter(tags=["auth"])
+
 
 # Rate limiter for auth endpoints (stricter limits)
 limiter = Limiter(key_func=get_remote_address)
@@ -75,7 +77,7 @@ async def register(
                 email=user.email,
                 first_name=user.first_name,
                 last_name=user.last_name,
-                created_at=user.created_at.isoformat(),
+                created_at=user.created_at,
             ),
             tokens=TokenResponse(access_token=access_token, refresh_token=refresh_token),
         )
@@ -128,7 +130,7 @@ async def login(
                 email=user.email,
                 first_name=user.first_name,
                 last_name=user.last_name,
-                created_at=user.created_at.isoformat(),
+                created_at=user.created_at,
             ),
             tokens=TokenResponse(access_token=access_token, refresh_token=refresh_token),
         )
@@ -176,26 +178,27 @@ async def refresh_token(
 
 
 @router.post("/logout", response_model=MessageResponse)
-async def logout() -> MessageResponse:
-    """Logout user.
+async def logout(
+    token: str = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_db),
+) -> MessageResponse:
+    """Logout user by blacklisting their token.
 
-    Note: Since we're using stateless JWT tokens, logout is handled client-side
-    by removing the tokens. This endpoint exists for API completeness and could
-    be extended to implement token blacklisting if needed.
+    Args:
+        token: JWT access token
+        db: Database session
 
     Returns:
         Success message
     """
     logger.info("User logout request")
 
+    auth_service = AuthService(db)
+    await auth_service.blacklist_token(token)
+
     return MessageResponse(
-        message="Logged out successfully. Please remove tokens from client storage."
+        message="Logged out successfully. Token has been revoked."
     )
-
-
-from fastapi.security import OAuth2PasswordBearer
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 
 @router.get("/me", response_model=UserResponse)
@@ -224,7 +227,7 @@ async def get_current_user_profile(
             email=user.email,
             first_name=user.first_name,
             last_name=user.last_name,
-            created_at=user.created_at.isoformat(),
+            created_at=user.created_at,
         )
 
     except (AuthenticationError, TokenError) as e:

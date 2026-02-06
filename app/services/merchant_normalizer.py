@@ -113,7 +113,8 @@ class MerchantNormalizer:
 
     # Location pattern (City, ST or City ST ZIP)
     LOCATION_PATTERN = re.compile(
-        r"\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)(?:,\s*|\s+)([A-Z]{2})\s*(?:\d{5})?$", re.IGNORECASE
+        r"\s+([A-Za-z]+(?:\s+[A-Za-z]+)?)(?:,\s*|\s+)([A-Z]{2})\s*(?:\d{5})?$",
+        re.IGNORECASE,
     )
 
     def __init__(self):

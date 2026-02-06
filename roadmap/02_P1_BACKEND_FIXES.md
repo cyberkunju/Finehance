@@ -588,17 +588,17 @@ Alternatively, switch to a simple dict-based cache within the class (no `lru_cac
 
 ## Granular Checklist — Task 1.1 (SecurityMiddleware)
 
-- [ ] Create `app/middleware/security.py` file
-- [ ] Import `InputGuard` and `OutputGuard` from existing middleware files
-- [ ] Implement `SecurityMiddleware` class extending `BaseHTTPMiddleware`
-- [ ] Add `dispatch()` method — check POST/PUT/PATCH request bodies with InputGuard
-- [ ] Return 400 `"Input rejected due to security concerns."` if InputGuard flags threat
-- [ ] Apply OutputGuard — filter JSON responses on AI endpoint paths
-- [ ] Define AI response paths set: `/api/ai/chat`, `/api/ai/analyze`, `/api/ai/smart-advice`
-- [ ] Add try/except around guard calls — don't crash requests on guard errors
-- [ ] Open `app/main.py`
-- [ ] Add `from app.middleware.security import SecurityMiddleware` import
-- [ ] Add `app.add_middleware(SecurityMiddleware)` — after CORS middleware
+- [x] Create `app/middleware/security.py` file
+- [x] Import `InputGuard` and `OutputGuard` from existing middleware files
+- [x] Implement `SecurityMiddleware` class extending `BaseHTTPMiddleware`
+- [x] Add `dispatch()` method — check POST/PUT/PATCH request bodies with InputGuard
+- [x] Return 400 `"Input rejected due to security concerns."` if InputGuard flags threat
+- [x] Apply OutputGuard — filter JSON responses on AI endpoint paths
+- [x] Define AI response paths set: `/api/ai/chat`, `/api/ai/analyze`, `/api/ai/smart-advice`
+- [x] Add try/except around guard calls — don't crash requests on guard errors
+- [x] Open `app/main.py`
+- [x] Add `from app.middleware.security import SecurityMiddleware` import
+- [x] Add `app.add_middleware(SecurityMiddleware)` — after CORS middleware
 - [ ] Test: send POST with prompt injection text → expect 400
 - [ ] Test: send normal POST request → passes through unchanged
 - [ ] Test: AI endpoint response with PII → PII filtered out
@@ -608,22 +608,22 @@ Alternatively, switch to a simple dict-based cache within the class (no `lru_cac
 ## Granular Checklist — Task 1.2 (Token Blacklisting)
 
 ### Add blacklist methods to AuthService
-- [ ] Open `app/services/auth_service.py`
-- [ ] Import `cache_manager` from `app.cache`
-- [ ] Add `blacklist_token(self, token, expires_in=None)` method
-- [ ] Decode token to find expiry time
-- [ ] Set Redis key `blacklist:{token}` with TTL matching token expiry
-- [ ] Add `is_token_blacklisted(self, token)` method
-- [ ] Check Redis for `blacklist:{token}` key
-- [ ] Return `True` if key exists, `False` otherwise
+- [x] Open `app/services/auth_service.py`
+- [x] Import `cache_manager` from `app.cache`
+- [x] Add `blacklist_token(self, token, expires_in=None)` method
+- [x] Decode token to find expiry time
+- [x] Set Redis key `blacklist:{token}` with TTL matching token expiry
+- [x] Add `is_token_blacklisted(self, token)` method
+- [x] Check Redis for `blacklist:{token}` key
+- [x] Return `True` if key exists, `False` otherwise
 
 ### Wire into auth flow
-- [ ] Open `app/dependencies.py`
-- [ ] Add blacklist check BEFORE token validation in `get_current_user()`
-- [ ] If blacklisted → raise HTTPException 401 "Token has been revoked"
-- [ ] Open `app/routes/auth.py`
-- [ ] Update `/logout` endpoint to call `auth_service.blacklist_token(token)`
-- [ ] Update `/refresh` endpoint to blacklist old access token after issuing new one
+- [x] Open `app/dependencies.py`
+- [x] Add blacklist check BEFORE token validation in `get_current_user()`
+- [x] If blacklisted → raise HTTPException 401 "Token has been revoked"
+- [x] Open `app/routes/auth.py`
+- [x] Update `/logout` endpoint to call `auth_service.blacklist_token(token)`
+- [x] Update `/refresh` endpoint to blacklist old access token after issuing new one
 
 ### Verification
 - [ ] Test: login → get token → call `/me` (200)
@@ -634,11 +634,11 @@ Alternatively, switch to a simple dict-based cache within the class (no `lru_cac
 
 ## Granular Checklist — Task 1.3 (PDF Export Fix)
 
-- [ ] Check if `reportlab` is in `pyproject.toml` dependencies
-- [ ] If not: add `"reportlab>=4.0"` to dependencies list
-- [ ] If not addable: update `app/routes/reports.py` to return 501 when reportlab unavailable
-- [ ] Add `try: import reportlab` check in PDF export route
-- [ ] Return clear error message: "PDF export is not available. Install reportlab."
+- [x] Check if `reportlab` is in `pyproject.toml` dependencies
+- [x] If not: add `"reportlab>=4.0"` to dependencies list
+- [x] If not addable: update `app/routes/reports.py` to return 501 when reportlab unavailable
+- [x] Add `try: import reportlab` check in PDF export route
+- [x] Return clear error message: "PDF export is not available. Install reportlab."
 - [ ] Test: with reportlab installed → export produces valid PDF
 - [ ] Test: without reportlab → clear 501 error (not garbage file)
 
@@ -647,23 +647,23 @@ Alternatively, switch to a simple dict-based cache within the class (no `lru_cac
 ## Granular Checklist — Task 1.4 (datetime.utcnow Replacement)
 
 ### Models
-- [ ] Fix `app/models/transaction.py` — replace `datetime.utcnow` with `lambda: datetime.now(timezone.utc)`
-- [ ] Fix `app/models/user.py` — replace `datetime.utcnow` with `lambda: datetime.now(timezone.utc)`
-- [ ] Fix `app/models/budget.py` — replace `datetime.utcnow` with `lambda: datetime.now(timezone.utc)`
-- [ ] Fix `app/models/goal.py` — replace `datetime.utcnow` with `lambda: datetime.now(timezone.utc)`
-- [ ] Fix `app/models/connection.py` — replace `datetime.utcnow` with `lambda: datetime.now(timezone.utc)`
-- [ ] Fix `app/models/ml_model.py` — replace `datetime.utcnow` with `lambda: datetime.now(timezone.utc)`
-- [ ] Add `from datetime import datetime, timezone` import to each model file
+- [x] Fix `app/models/transaction.py` — replace `datetime.utcnow` with `lambda: datetime.now(timezone.utc)`
+- [x] Fix `app/models/user.py` — replace `datetime.utcnow` with `lambda: datetime.now(timezone.utc)`
+- [x] Fix `app/models/budget.py` — replace `datetime.utcnow` with `lambda: datetime.now(timezone.utc)`
+- [x] Fix `app/models/goal.py` — replace `datetime.utcnow` with `lambda: datetime.now(timezone.utc)`
+- [x] Fix `app/models/connection.py` — replace `datetime.utcnow` with `lambda: datetime.now(timezone.utc)`
+- [x] Fix `app/models/ml_model.py` — replace `datetime.utcnow` with `lambda: datetime.now(timezone.utc)`
+- [x] Add `from datetime import datetime, timezone` import to each model file
 
 ### Services
-- [ ] Fix `app/services/auth_service.py` — token creation timestamps
-- [ ] Fix `app/services/goal_service.py` — progress calculation
-- [ ] Fix `app/services/advice_generator.py` — date comparisons
-- [ ] Fix `app/services/report_service.py` — report timestamp
-- [ ] Fix `app/services/transaction_service.py` — duplicate detection window
+- [x] Fix `app/services/auth_service.py` — token creation timestamps
+- [x] Fix `app/services/goal_service.py` — progress calculation
+- [x] Fix `app/services/advice_generator.py` — date comparisons
+- [x] Fix `app/services/report_service.py` — report timestamp
+- [x] Fix `app/services/transaction_service.py` — duplicate detection window
 
 ### Routes
-- [ ] Fix `app/routes/reports.py` — `generated_at` field
+- [x] Fix `app/routes/reports.py` — `generated_at` field
 
 ### Verification
 - [ ] Run `grep -r "utcnow" app/` — should return 0 results
@@ -673,15 +673,15 @@ Alternatively, switch to a simple dict-based cache within the class (no `lru_cac
 
 ## Granular Checklist — Task 1.5 (Commit Consistency)
 
-- [ ] Open `app/services/auth_service.py`
-- [ ] Change `register_user`: replace `await self.db.commit()` with `await self.db.flush()`
-- [ ] Change `change_password`: replace `await self.db.commit()` with `await self.db.flush()`
-- [ ] Open `app/services/file_import_service.py`
-- [ ] Replace `await self.db.commit()` with `await self.db.flush()`
-- [ ] Open `app/database.py` → `get_db()` function
-- [ ] Verify it has `await session.commit()` on success
-- [ ] Verify it has `await session.rollback()` in except block
-- [ ] If missing: add commit-on-success / rollback-on-error pattern
+- [x] Open `app/services/auth_service.py`
+- [x] Change `register_user`: replace `await self.db.commit()` with `await self.db.flush()`
+- [x] Change `change_password`: replace `await self.db.commit()` with `await self.db.flush()`
+- [x] Open `app/services/file_import_service.py`
+- [x] Replace `await self.db.commit()` with `await self.db.flush()`
+- [x] Open `app/database.py` → `get_db()` function
+- [x] Verify it has `await session.commit()` on success
+- [x] Verify it has `await session.rollback()` in except block
+- [x] If missing: add commit-on-success / rollback-on-error pattern
 - [ ] Test: register user → check DB → user exists
 - [ ] Test: import transactions → check DB → transactions exist
 - [ ] Test: trigger error mid-request → verify no partial data
@@ -690,10 +690,10 @@ Alternatively, switch to a simple dict-based cache within the class (no `lru_cac
 
 ## Granular Checklist — Task 1.6 (Dead Code Removal)
 
-- [ ] Open `app/services/auth_service.py`
-- [ ] Delete `PASSWORD_PATTERN = re.compile(...)` declaration (lines 44-46)
-- [ ] Find `validate_password` method
-- [ ] Expand special character regex from `[@$!%*?&]` to `[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>/?~\`]`
+- [x] Open `app/services/auth_service.py`
+- [x] Delete `PASSWORD_PATTERN = re.compile(...)` declaration (lines 44-46)
+- [x] Find `validate_password` method
+- [x] Expand special character regex from `[@$!%*?&]` to `[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>/?~\`]`
 - [ ] Verify: registration with extended special chars works
 
 ---
@@ -701,50 +701,50 @@ Alternatively, switch to a simple dict-based cache within the class (no `lru_cac
 ## Granular Checklist — Task 1.7 (Missing Schemas)
 
 ### Connection Schema
-- [ ] Create `app/schemas/connection.py` file
-- [ ] Add `ConnectionCreate` schema with required fields
-- [ ] Add `ConnectionResponse` schema with `model_config = {"from_attributes": True}`
-- [ ] Add `ConnectionUpdate` schema with all optional fields
+- [x] Create `app/schemas/connection.py` file
+- [x] Add `ConnectionCreate` schema with required fields
+- [x] Add `ConnectionResponse` schema with `model_config = {"from_attributes": True}`
+- [x] Add `ConnectionUpdate` schema with all optional fields
 
 ### ML Model Schema
-- [ ] Create `app/schemas/ml_model.py` file
-- [ ] Add `MLModelVersionCreate` schema with validation (ge=0.0, le=1.0 for scores)
-- [ ] Add `MLModelVersionResponse` schema with `model_config = {"from_attributes": True}`
+- [x] Create `app/schemas/ml_model.py` file
+- [x] Add `MLModelVersionCreate` schema with validation (ge=0.0, le=1.0 for scores)
+- [x] Add `MLModelVersionResponse` schema with `model_config = {"from_attributes": True}`
 
 ### Auth Schema Updates
-- [ ] Open `app/schemas/auth.py`
-- [ ] Add `UserUpdate` schema (optional `full_name`, optional `email`)
-- [ ] Fix `created_at` type in `UserResponse` — change from `str` to `datetime`
+- [x] Open `app/schemas/auth.py`
+- [x] Add `UserUpdate` schema (optional `full_name`, optional `email`)
+- [x] Fix `created_at` type in `UserResponse` — change from `str` to `datetime`
 - [ ] Verify: all new schemas can be imported without errors
 
 ---
 
 ## Granular Checklist — Task 1.8 (Decimal Precision)
 
-- [ ] Open `app/services/budget_service.py`
-- [ ] Find all places where allocations are read from JSONB
-- [ ] Convert float values via `Decimal(str(amount))` — NOT `Decimal(float_value)`
-- [ ] Ensure all allocation comparisons use `Decimal(str(...))` conversion
+- [x] Open `app/services/budget_service.py`
+- [x] Find all places where allocations are read from JSONB
+- [x] Convert float values via `Decimal(str(amount))` — NOT `Decimal(float_value)`
+- [x] Ensure all allocation comparisons use `Decimal(str(...))` conversion
 - [ ] Test: create budget with allocation 0.1 + 0.2 — should equal 0.3 exactly
 
 ---
 
 ## Granular Checklist — Task 1.9 (Soft-Delete Export Bug)
 
-- [ ] Open `app/services/file_import_service.py`
-- [ ] Find `export_transactions` method
-- [ ] Add `.where(Transaction.deleted_at.is_(None))` to the query
+- [x] Open `app/services/file_import_service.py`
+- [x] Find `export_transactions` method
+- [x] Add `.where(Transaction.deleted_at.is_(None))` to the query
 - [ ] Test: soft-delete a transaction → export → ensure deleted transaction is NOT in export
 
 ---
 
 ## Granular Checklist — Task 1.10 (Location Regex)
 
-- [ ] Open `app/services/merchant_normalizer.py`
-- [ ] Find `LOCATION_PATTERN` regex
-- [ ] Change from `[A-Z][a-z]+` to `[A-Za-z]+` (or add `re.IGNORECASE`)
-- [ ] Add `re.IGNORECASE` flag to `re.compile()`
-- [ ] Normalize extracted city name to title case for display
+- [x] Open `app/services/merchant_normalizer.py`
+- [x] Find `LOCATION_PATTERN` regex
+- [x] Change from `[A-Z][a-z]+` to `[A-Za-z]+` (or add `re.IGNORECASE`)
+- [x] Add `re.IGNORECASE` flag to `re.compile()`
+- [x] Normalize extracted city name to title case for display
 - [ ] Test: input "AUSTIN TX" → matches correctly
 - [ ] Test: input "Austin TX" → still matches correctly
 
@@ -752,20 +752,20 @@ Alternatively, switch to a simple dict-based cache within the class (no `lru_cac
 
 ## Granular Checklist — Task 1.11 (Hash Cache Key)
 
-- [ ] Open `app/services/ai_brain_service.py`
-- [ ] Find `cache_key = f"ai_brain:{mode.value}:{hash(query)}"`
-- [ ] Add `import hashlib` at top of file
-- [ ] Change to `hashlib.sha256(query.encode()).hexdigest()[:16]`
+- [x] Open `app/services/ai_brain_service.py`
+- [x] Find `cache_key = f"ai_brain:{mode.value}:{hash(query)}"`
+- [x] Add `import hashlib` at top of file
+- [x] Change to `hashlib.sha256(query.encode()).hexdigest()[:16]`
 - [ ] Test: same query → same cache key across process restarts
 
 ---
 
 ## Granular Checklist — Task 1.12 (LRU Cache Leak)
 
-- [ ] Open `app/services/merchant_database.py`
-- [ ] Find `@lru_cache(maxsize=10000)` on `_lookup_exact` instance method
-- [ ] Move cache to module-level function (not bound to `self`)
-- [ ] Or replace `@lru_cache` with a simple `dict`-based cache within the class
+- [x] Open `app/services/merchant_database.py`
+- [x] Find `@lru_cache(maxsize=10000)` on `_lookup_exact` instance method
+- [x] Move cache to module-level function (not bound to `self`)
+- [x] Or replace `@lru_cache` with a simple `dict`-based cache within the class
 - [ ] Verify: MerchantDatabase instances can be garbage collected
 
 ---

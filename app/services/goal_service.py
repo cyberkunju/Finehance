@@ -1,6 +1,6 @@
 """Goal service for managing financial goals and tracking progress."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from datetime import date as date_type
 from decimal import Decimal
 from typing import List, Optional
@@ -169,7 +169,7 @@ class GoalService:
         # Calculate days remaining
         days_remaining = None
         if goal.deadline:
-            today = datetime.utcnow().date()
+            today = datetime.now(timezone.utc).date()
             days_remaining = (goal.deadline - today).days
 
         # Estimate completion date based on progress rate
@@ -179,13 +179,13 @@ class GoalService:
 
         if goal.deadline and goal.current_amount > 0:
             # Calculate progress rate (amount per day)
-            days_since_creation = (datetime.utcnow().date() - goal.created_at.date()).days
+            days_since_creation = (datetime.now(timezone.utc).date() - goal.created_at.date()).days
             if days_since_creation > 0:
                 daily_rate = goal.current_amount / days_since_creation
 
                 if daily_rate > 0:
                     days_to_completion = int(remaining_amount / daily_rate)
-                    estimated_completion_date = datetime.utcnow().date() + timedelta(
+                    estimated_completion_date = datetime.now(timezone.utc).date() + timedelta(
                         days=days_to_completion
                     )
 
@@ -232,7 +232,7 @@ class GoalService:
 
         # Update current amount
         goal.current_amount += amount
-        goal.updated_at = datetime.utcnow()
+        goal.updated_at = datetime.now(timezone.utc)
 
         # Check if goal is achieved
         if goal.current_amount >= goal.target_amount and goal.status == "ACTIVE":
@@ -393,7 +393,7 @@ class GoalService:
                 raise ValueError("Invalid status")
             goal.status = status
 
-        goal.updated_at = datetime.utcnow()
+        goal.updated_at = datetime.now(timezone.utc)
         await self.db.flush()
         await self.db.refresh(goal)
 

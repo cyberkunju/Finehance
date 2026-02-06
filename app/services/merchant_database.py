@@ -10,7 +10,6 @@ import os
 import re
 from dataclasses import dataclass
 from difflib import SequenceMatcher
-from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 import logging
@@ -91,6 +90,8 @@ class MerchantDatabase:
         else:
             self._load_database(db_path)
 
+        self._exact_cache: Dict[str, Optional[MerchantInfo]] = {}
+
         logger.info(
             f"MerchantDatabase loaded: {len(self._merchants)} merchants, {len(self._patterns)} patterns"
         )
@@ -165,13 +166,18 @@ class MerchantDatabase:
         # Not found
         return None
 
-    @lru_cache(maxsize=10000)
     def _lookup_exact(self, normalized: str) -> Optional[MerchantInfo]:
         """Look up by exact alias match."""
+        if normalized in self._exact_cache:
+            return self._exact_cache[normalized]
+
+        result = None
         if normalized in self._alias_index:
             key = self._alias_index[normalized]
-            return self._build_merchant_info(key)
-        return None
+            result = self._build_merchant_info(key)
+
+        self._exact_cache[normalized] = result
+        return result
 
     def _lookup_pattern(self, normalized: str) -> Optional[MerchantInfo]:
         """Look up by regex pattern match."""
@@ -327,8 +333,8 @@ class MerchantDatabase:
         for alias in aliases or []:
             self._alias_index[alias.lower()] = key
 
-        # Clear the LRU cache
-        self._lookup_exact.cache_clear()
+        # Clear the exact match cache
+        self._exact_cache.clear()
 
         logger.info(f"Added merchant: {key} -> {category}")
 
