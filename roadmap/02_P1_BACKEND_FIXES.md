@@ -2,6 +2,7 @@
 
 > **Depends on:** P0 (auth must be enforced first)  
 > **Estimated Effort:** 3-4 days  
+> **Status:** ~85% complete (datetime.utcnow replacement is the main remaining item — 22 occurrences)  
 > **Covers:** Middleware wiring, PDF fix, token blacklisting, datetime deprecation, schema gaps, service consistency
 
 ---
@@ -9,7 +10,7 @@
 ## Task 1.1 — Wire Input/Output Guards as ASGI Middleware
 
 ### Problem
-`InputGuard` (512 lines) and `OutputGuard` (700 lines) are well-implemented standalone classes but are **not registered in the FastAPI middleware pipeline**. Only `app/routes/ai.py` manually calls them. All other routes have zero input sanitization.
+`InputGuard` (448 lines) and `OutputGuard` (614 lines) are well-implemented standalone classes but are **not registered in the FastAPI middleware pipeline**. Only `app/routes/ai.py` manually calls them. All other routes have zero input sanitization.
 
 ### What To Do
 
@@ -259,19 +260,19 @@ Also add the import where needed:
 from datetime import datetime, timezone
 ```
 
-**Files affected (from audit):**
-- `app/models/transaction.py` — `server_default`, `onupdate`
-- `app/models/user.py` — `server_default`
-- `app/models/budget.py` — `server_default`
-- `app/models/goal.py` — `server_default`, `onupdate`
-- `app/models/connection.py` — `onupdate`
-- `app/models/ml_model.py` — `server_default`
-- `app/services/auth_service.py` — token creation
-- `app/services/goal_service.py` — progress calculation
-- `app/services/advice_generator.py` — date comparisons
-- `app/services/report_service.py` — report timestamp
-- `app/services/transaction_service.py` — duplicate detection window
-- `app/routes/reports.py` — `generated_at` field
+**Files affected (from audit — 22 occurrences across 10 files):**
+- `app/models/transaction.py` — 3 occurrences (server_default, onupdate)
+- `app/models/user.py` — 3 occurrences (server_default)
+- `app/models/budget.py` — 3 occurrences (server_default)
+- `app/models/financial_goal.py` — 3 occurrences (server_default, onupdate)
+- `app/models/connection.py` — 1 occurrence (onupdate)
+- `app/services/auth_service.py` — 1 occurrence (token creation)
+- `app/services/goal_service.py` — 2 occurrences (progress calculation)
+- `app/services/advice_generator.py` — 1 occurrence (date comparisons)
+- `app/services/budget_service.py` — 1 occurrence (timestamp)
+- `app/services/budget_optimizer.py` — 1 occurrence (timestamp)
+- `app/services/transaction_service.py` — 2 occurrences (duplicate detection)
+- `app/services/ml_model_service.py` — 1 occurrence (model timestamps)
 
 **Note on model `server_default`:** If models use `server_default=func.now()` (SQL-side), those are fine. Only Python-side `default=datetime.utcnow` needs changing to `default=lambda: datetime.now(timezone.utc)`.
 
@@ -647,26 +648,28 @@ Alternatively, switch to a simple dict-based cache within the class (no `lru_cac
 ## Granular Checklist — Task 1.4 (datetime.utcnow Replacement)
 
 ### Models
-- [x] Fix `app/models/transaction.py` — replace `datetime.utcnow` with `lambda: datetime.now(timezone.utc)`
-- [x] Fix `app/models/user.py` — replace `datetime.utcnow` with `lambda: datetime.now(timezone.utc)`
-- [x] Fix `app/models/budget.py` — replace `datetime.utcnow` with `lambda: datetime.now(timezone.utc)`
-- [x] Fix `app/models/goal.py` — replace `datetime.utcnow` with `lambda: datetime.now(timezone.utc)`
-- [x] Fix `app/models/connection.py` — replace `datetime.utcnow` with `lambda: datetime.now(timezone.utc)`
-- [x] Fix `app/models/ml_model.py` — replace `datetime.utcnow` with `lambda: datetime.now(timezone.utc)`
-- [x] Add `from datetime import datetime, timezone` import to each model file
+- [ ] Fix `app/models/transaction.py` — replace `datetime.utcnow` with `lambda: datetime.now(timezone.utc)` (**3 occurrences remain**)
+- [ ] Fix `app/models/user.py` — replace `datetime.utcnow` with `lambda: datetime.now(timezone.utc)` (**3 occurrences remain**)
+- [ ] Fix `app/models/budget.py` — replace `datetime.utcnow` with `lambda: datetime.now(timezone.utc)` (**3 occurrences remain**)
+- [ ] Fix `app/models/financial_goal.py` — replace `datetime.utcnow` with `lambda: datetime.now(timezone.utc)` (**3 occurrences remain**)
+- [ ] Fix `app/models/connection.py` — replace `datetime.utcnow` with `lambda: datetime.now(timezone.utc)` (**1 occurrence remains**)
+- [ ] Fix `app/models/ml_model.py` — replace `datetime.utcnow` with `lambda: datetime.now(timezone.utc)`
+- [ ] Add `from datetime import datetime, timezone` import to each model file
 
 ### Services
-- [x] Fix `app/services/auth_service.py` — token creation timestamps
-- [x] Fix `app/services/goal_service.py` — progress calculation
-- [x] Fix `app/services/advice_generator.py` — date comparisons
-- [x] Fix `app/services/report_service.py` — report timestamp
-- [x] Fix `app/services/transaction_service.py` — duplicate detection window
+- [ ] Fix `app/services/auth_service.py` — token creation timestamps (**1 occurrence remains**)
+- [ ] Fix `app/services/goal_service.py` — progress calculation (**2 occurrences remain**)
+- [ ] Fix `app/services/advice_generator.py` — date comparisons (**1 occurrence remains**)
+- [ ] Fix `app/services/budget_service.py` — timestamp usage (**1 occurrence remains**)
+- [ ] Fix `app/services/budget_optimizer.py` — timestamp usage (**1 occurrence remains**)
+- [ ] Fix `app/services/transaction_service.py` — duplicate detection window (**2 occurrences remain**)
+- [ ] Fix `app/services/ml_model_service.py` — model timestamps (**1 occurrence remains**)
 
 ### Routes
-- [x] Fix `app/routes/reports.py` — `generated_at` field
+- [ ] Fix `app/routes/reports.py` — `generated_at` field
 
 ### Verification
-- [ ] Run `grep -r "utcnow" app/` — should return 0 results
+- [ ] Run `grep -r "utcnow" app/` — should return 0 results (currently returns 22)
 - [ ] All tests still pass
 
 ---

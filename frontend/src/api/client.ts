@@ -63,7 +63,10 @@ apiClient.interceptors.response.use(
         // Refresh failed, clear tokens and redirect to login
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
-        window.location.href = '/login';
+        // Use replace to avoid back-button loops
+        if (window.location.pathname !== '/login') {
+          window.location.replace('/login');
+        }
         return Promise.reject(refreshError);
       }
     }

@@ -4,8 +4,8 @@
   "description": "AI-powered personal finance management platform",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1a1a2e",
-  "theme_color": "#4ecca3",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "orientation": "portrait-primary",
   "scope": "/",
   "icons": [

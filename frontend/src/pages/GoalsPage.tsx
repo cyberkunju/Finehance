@@ -1,12 +1,14 @@
 /**
  * Goals Page
- * 
+ *
  * Set and track financial goals.
  */
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Plus, X, Trash2, Trophy, AlertTriangle, CheckCircle, Clock, Eye } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { usePreferences } from '../contexts/PreferencesContext';
 import { getGoals, createGoal, updateGoalProgress, deleteGoal } from '../api/goals';
 import apiClient from '../api/client';
 import type { FinancialGoal, GoalCreate } from '../types';
@@ -35,6 +37,7 @@ interface GoalRiskAlert {
 
 function GoalsPage() {
   const { user } = useAuth();
+  const { formatCurrency, formatDate } = usePreferences();
   const queryClient = useQueryClient();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showProgressModal, setShowProgressModal] = useState(false);
@@ -158,22 +161,22 @@ function GoalsPage() {
   };
 
   const getProgressColor = (percent: number) => {
-    if (percent >= 100) return '#10b981';
-    if (percent >= 75) return '#3b82f6';
-    if (percent >= 50) return '#f59e0b';
-    return '#ef4444';
+    if (percent >= 100) return 'var(--color-success)';
+    if (percent >= 75) return 'var(--color-text-primary)';
+    if (percent >= 50) return 'var(--color-text-muted)';
+    return 'var(--color-text-tertiary)';
   };
 
   const getSeverityColor = (severity: string) => {
     switch (severity.toLowerCase()) {
       case 'critical':
-        return '#ef4444';
+        return 'var(--color-danger)';
       case 'high':
-        return '#f59e0b';
+        return 'var(--color-warning)';
       case 'medium':
-        return '#3b82f6';
+        return 'var(--color-text-muted)';
       default:
-        return '#6b7280';
+        return 'var(--color-text-tertiary)';
     }
   };
 
@@ -195,6 +198,7 @@ function GoalsPage() {
           <p>Set and achieve your financial objectives</p>
         </div>
         <button className="btn-primary" onClick={() => setShowCreateModal(true)}>
+          <Plus size={16} strokeWidth={2} />
           Create Goal
         </button>
       </div>
@@ -203,7 +207,7 @@ function GoalsPage() {
       {showCelebration && (
         <div className="celebration-banner">
           <div className="celebration-content">
-            <span className="celebration-emoji">🎉</span>
+            <Trophy size={32} strokeWidth={1.5} />
             <div>
               <strong>Congratulations!</strong>
               <p>You've achieved your goal: {celebrationGoal}!</p>
@@ -215,7 +219,10 @@ function GoalsPage() {
       {/* Risk Alerts */}
       {riskAlerts.length > 0 && (
         <div className="alerts-section">
-          <h3>⚠️ Goal Risk Alerts</h3>
+          <h3 className="alerts-heading">
+            <AlertTriangle size={16} strokeWidth={1.5} />
+            Goal Risk Alerts
+          </h3>
           {riskAlerts.map((alert) => (
             <div key={alert.goal_id} className="risk-alert" style={{ borderLeftColor: getSeverityColor(alert.severity) }}>
               <div className="alert-header">
@@ -261,11 +268,11 @@ function GoalsPage() {
                 <div className="goal-header">
                   <h3>{goal.name}</h3>
                   <button
-                    className="btn-delete"
+                    className="btn-icon"
                     onClick={() => handleDelete(goal.id)}
                     title="Delete goal"
                   >
-                    ×
+                    <Trash2 size={16} strokeWidth={1.5} />
                   </button>
                 </div>
 
@@ -276,11 +283,11 @@ function GoalsPage() {
                 <div className="goal-amounts">
                   <div>
                     <label>Current</label>
-                    <span className="amount">${currentAmount.toFixed(2)}</span>
+                    <span className="amount">{formatCurrency(currentAmount)}</span>
                   </div>
                   <div>
                     <label>Target</label>
-                    <span className="amount">${targetAmount.toFixed(2)}</span>
+                    <span className="amount">{formatCurrency(targetAmount)}</span>
                   </div>
                 </div>
 
@@ -299,18 +306,21 @@ function GoalsPage() {
 
                 {goal.deadline && (
                   <div className="goal-deadline">
-                    Deadline: {new Date(goal.deadline).toLocaleDateString()}
+                    <Clock size={12} strokeWidth={1.5} />
+                    {formatDate(goal.deadline)}
                   </div>
                 )}
 
                 {isAchieved && (
                   <div className="achievement-badge">
-                    ✓ Achieved
+                    <CheckCircle size={14} strokeWidth={2} />
+                    Achieved
                   </div>
                 )}
 
                 <div className="goal-actions">
                   <button className="btn-secondary" onClick={() => handleViewProgress(goal)}>
+                    <Eye size={14} strokeWidth={1.5} />
                     View Details
                   </button>
                 </div>
@@ -326,7 +336,9 @@ function GoalsPage() {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Create Financial Goal</h2>
-              <button className="modal-close" onClick={() => setShowCreateModal(false)}>×</button>
+              <button className="modal-close" onClick={() => setShowCreateModal(false)}>
+                <X size={20} strokeWidth={1.5} />
+              </button>
             </div>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
@@ -402,8 +414,10 @@ function GoalsPage() {
         <div className="modal-overlay" onClick={() => setShowProgressModal(false)}>
           <div className="modal modal-large" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{selectedGoal.name} - Progress Details</h2>
-              <button className="modal-close" onClick={() => setShowProgressModal(false)}>×</button>
+              <h2>{selectedGoal.name} — Progress</h2>
+              <button className="modal-close" onClick={() => setShowProgressModal(false)}>
+                <X size={20} strokeWidth={1.5} />
+              </button>
             </div>
 
             {progressData && (
@@ -411,15 +425,15 @@ function GoalsPage() {
                 <div className="progress-stats">
                   <div className="stat-card">
                     <label>Current Amount</label>
-                    <span className="stat-value">${progCurrent.toFixed(2)}</span>
+                    <span className="stat-value">{formatCurrency(progCurrent)}</span>
                   </div>
                   <div className="stat-card">
                     <label>Target Amount</label>
-                    <span className="stat-value">${progTarget.toFixed(2)}</span>
+                    <span className="stat-value">{formatCurrency(progTarget)}</span>
                   </div>
                   <div className="stat-card">
                     <label>Remaining</label>
-                    <span className="stat-value">${progRemaining.toFixed(2)}</span>
+                    <span className="stat-value">{formatCurrency(progRemaining)}</span>
                   </div>
                   <div className="stat-card">
                     <label>Progress</label>
@@ -447,7 +461,7 @@ function GoalsPage() {
                     {progressData.estimated_completion_date && (
                       <p>
                         <strong>Estimated Completion:</strong>{' '}
-                        {new Date(progressData.estimated_completion_date).toLocaleDateString()}
+                        {formatDate(progressData.estimated_completion_date)}
                       </p>
                     )}
                   </div>
@@ -455,7 +469,10 @@ function GoalsPage() {
 
                 {progressData.is_at_risk && progressData.risk_reason && (
                   <div className="risk-warning">
-                    <strong>⚠️ At Risk</strong>
+                    <div className="risk-warning-header">
+                      <AlertTriangle size={16} strokeWidth={1.5} />
+                      <strong>At Risk</strong>
+                    </div>
                     <p>{progressData.risk_reason}</p>
                   </div>
                 )}

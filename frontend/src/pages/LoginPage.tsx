@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import ThemeToggle from '../components/ThemeToggle';
 import './AuthPages.css';
 
 function LoginPage() {
@@ -24,7 +25,14 @@ function LoginPage() {
       await login({ email, password });
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+      if (err.response?.data?.detail) {
+        const detail = err.response.data.detail;
+        setError(typeof detail === 'string' ? detail : 'Login failed. Please check your credentials.');
+      } else if (err.code === 'ERR_NETWORK' || err.message === 'Network Error') {
+        setError('Cannot reach API. Check backend status, VITE_API_BASE_URL, and backend CORS ALLOWED_ORIGINS.');
+      } else {
+        setError('Login failed. Please check your credentials.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -32,11 +40,16 @@ function LoginPage() {
 
   return (
     <div className="auth-page">
+      <div className="auth-theme-toggle">
+        <ThemeToggle />
+      </div>
       <div className="auth-container">
         <div className="auth-header">
-          <h1>AI Finance Platform</h1>
-          <h2>Welcome Back</h2>
-          <p>Sign in to manage your finances</p>
+          <div className="auth-brand">
+            <img src="/logo.svg" alt="Logo" className="auth-brand-logo" />
+            <img src="/logo-text.svg" alt="Finheance" className="auth-brand-text" />
+          </div>
+          <p className="auth-subtitle">Sign in to your account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
@@ -50,7 +63,7 @@ function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              placeholder="your@email.com"
+              placeholder="you@example.com"
               autoComplete="email"
             />
           </div>
@@ -63,19 +76,26 @@ function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              placeholder="••••••••"
+              placeholder="••••••••••••"
               autoComplete="current-password"
             />
           </div>
 
           <button type="submit" className="submit-btn" disabled={isLoading}>
-            {isLoading ? 'Signing in...' : 'Sign In'}
+            {isLoading ? (
+              <span className="btn-loading">
+                <span className="spinner" />
+                Signing in
+              </span>
+            ) : (
+              'Sign In'
+            )}
           </button>
         </form>
 
         <div className="auth-footer">
           <p>
-            Don't have an account? <Link to="/register">Sign up</Link>
+            Don't have an account? <Link to="/register">Create one</Link>
           </p>
         </div>
       </div>

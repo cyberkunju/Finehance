@@ -1,44 +1,47 @@
 # FINEHANCE — Production Perfection Roadmap
 
 > **How to use:** Check off boxes `- [x]` as you complete each item. Every small step has its own checkbox.
+>
+> **Last verified against codebase:** February 2026
 
 ---
 
 ## Current State (Post-Audit, Feb 2026)
 
-| Area | Status | Rating |
-|------|--------|--------|
-| FastAPI structure | Working | A |
-| Database/Cache | Working | A |
-| Auth system (built) | Working | B+ |
-| **Auth enforcement** | **WIRED** | **A-** |
-| Transaction CRUD | Working | A- |
-| Budget CRUD + tracking | Working | B+ |
-| Goal CRUD + tracking | Working (div/0 fixed) | B+ |
-| Reports | Working (PDF broken) | B- |
-| File import/export | Working (needs limits) | B |
-| ML Categorization | Working (toy data) | B- |
-| Prediction Engine | Correct but too slow | C+ |
-| AI Brain LLM | Non-functional on Windows | D |
-| RAG System | Mock data only | F |
-| Input/Output Guards | Built but not wired | C |
-| Prometheus Metrics | Working | A- |
-| Test Suite (~212 tests) | Good, needs live DB | B |
-| Frontend | Skeleton | C+ |
-| Security | Auth wired | B+ |
+| Area | Status | Rating | Notes |
+|------|--------|--------|-------|
+| FastAPI structure | Working | A | 10 routers, 17 services, lifespan events |
+| Database/Cache | Working | A | PostgreSQL 16 + Redis 7, async SQLAlchemy |
+| Auth system | **Fully wired** | A | JWT + token blacklisting + `is_active` check |
+| Auth enforcement | **All routes protected** | A | `get_current_user_id` dependency on all routes |
+| Transaction CRUD | Working | A | Soft-delete, duplicate detection, auto-categorization |
+| Budget CRUD + tracking | Working | A- | Optimization suggestions, progress tracking |
+| Goal CRUD + tracking | Working | A- | Division-by-zero fixed, risk alerts |
+| Reports | Working | B+ | CSV export working, PDF via reportlab |
+| File import/export | Working | B+ | CSV/XLSX import, template download |
+| ML Categorization | Working | B- | TF-IDF + NB on synthetic data (~170 samples) |
+| Prediction Engine | Functional but slow | C+ | ARIMA grid-searches 50+ params per call |
+| AI Brain LLM | Requires NVIDIA GPU | C | Works via HTTP mode, 4 runtime bugs remain |
+| RAG System | Mock data only | D | rag_retriever.py returns hardcoded data |
+| Input/Output Guards | **Wired** | A- | SecurityMiddleware registered in main.py |
+| Prometheus Metrics | Working | A- | 18 AI + 13 GPU metrics, 18 alert rules |
+| Test Suite | 57/57 passing | A- | 28 files, 100% pass rate, needs more coverage |
+| Frontend | 7 pages working | B- | React 19, only 2 reusable components |
+| Security | Strong | B+ | JWT, blacklisting, guards, rate limiting |
+| `datetime.utcnow()` | **22 occurrences remain** | C | Deprecated since Python 3.12, unfixed |
 
 ---
 
 ## Phase Structure
 
-| Phase | Document | Focus | Estimated Effort |
-|-------|----------|-------|-----------------|
-| **P0** | [01_P0_CRITICAL_SECURITY.md](01_P0_CRITICAL_SECURITY.md) | Auth enforcement, error leaking, critical bugs | 2-3 days |
-| **P1** | [02_P1_BACKEND_FIXES.md](02_P1_BACKEND_FIXES.md) | Middleware wiring, PDF, token blacklist, datetime, schema fixes | 3-4 days |
-| **P2** | [03_P2_ML_AI_FIXES.md](03_P2_ML_AI_FIXES.md) | Training data, ARIMA caching, RAG implementation, AI Brain fixes | 5-7 days |
-| **P3** | [04_P3_FRONTEND_COMPLETION.md](04_P3_FRONTEND_COMPLETION.md) | Components, design system, UX, accessibility | 5-7 days |
-| **P4** | [05_P4_TESTING_QUALITY.md](05_P4_TESTING_QUALITY.md) | Test infra, missing tests, E2E, CI/CD | 3-5 days |
-| **P5** | [06_P5_PRODUCTION_HARDENING.md](06_P5_PRODUCTION_HARDENING.md) | Rate limiting, encryption, monitoring, deployment, performance | 3-4 days |
+| Phase | Document | Focus | Estimated Effort | Progress |
+|-------|----------|-------|-----------------|----------|
+| **P0** | [01_P0_CRITICAL_SECURITY.md](01_P0_CRITICAL_SECURITY.md) | Auth enforcement, error leaking, critical bugs | 2-3 days | ~88% |
+| **P1** | [02_P1_BACKEND_FIXES.md](02_P1_BACKEND_FIXES.md) | Middleware wiring, PDF, token blacklist, datetime, schema fixes | 3-4 days | ~85% |
+| **P2** | [03_P2_ML_AI_FIXES.md](03_P2_ML_AI_FIXES.md) | Training data, ARIMA caching, RAG implementation, AI Brain fixes | 5-7 days | ~13% |
+| **P3** | [04_P3_FRONTEND_COMPLETION.md](04_P3_FRONTEND_COMPLETION.md) | Components, design system, UX, accessibility | 5-7 days | ~0% |
+| **P4** | [05_P4_TESTING_QUALITY.md](05_P4_TESTING_QUALITY.md) | Test infra, missing tests, E2E, CI/CD | 3-5 days | ~12% |
+| **P5** | [06_P5_PRODUCTION_HARDENING.md](06_P5_PRODUCTION_HARDENING.md) | Rate limiting, encryption, monitoring, deployment, performance | 3-4 days | ~8% |
 
 **Total estimated effort: 21-30 days**
 
@@ -66,7 +69,7 @@ P4 (Testing) ───────────────┘
 
 ## Master Progress Tracker
 
-### Phase 0 — Critical Security (MUST DO FIRST)
+### Phase 0 — Critical Security (MUST DO FIRST) — ~88% Done
 - [x] Create `app/dependencies.py` with `get_current_user`
 - [x] Create `app/dependencies.py` with `get_current_user_id`
 - [x] Wire auth into `transactions.py` — `create_transaction`
@@ -98,10 +101,10 @@ P4 (Testing) ───────────────┘
 - [x] Add `is_active` field to `User` model
 - [x] Add `is_active` check in auth dependency
 - [x] Create Alembic migration for `is_active`
-- [ ] Run ALL existing tests
+- [ ] Run ALL existing tests — verify no regressions
 - [ ] Manual smoke test: register → login → CRUD with/without tokens
 
-### Phase 1 — Backend Fixes
+### Phase 1 — Backend Fixes — ~85% Done
 - [x] Create `app/middleware/security.py` (SecurityMiddleware)
 - [x] Register SecurityMiddleware in `main.py`
 - [x] Add `blacklist_token` method to `AuthService`
@@ -110,9 +113,9 @@ P4 (Testing) ───────────────┘
 - [x] Update logout route to blacklist token
 - [x] Blacklist old token on refresh
 - [x] Fix PDF export — add `reportlab` to dependencies or return 501
-- [x] Replace `datetime.utcnow()` in all models
-- [x] Replace `datetime.utcnow()` in all services
-- [x] Replace `datetime.utcnow()` in all routes
+- [ ] Replace `datetime.utcnow()` in all models (22 occurrences remain)
+- [ ] Replace `datetime.utcnow()` in all services
+- [ ] Replace `datetime.utcnow()` in all routes
 - [x] Fix commit consistency — `auth_service.py` → flush
 - [x] Fix commit consistency — `file_import_service.py` → flush
 - [x] Ensure `get_db` commits on success
@@ -130,7 +133,7 @@ P4 (Testing) ───────────────┘
 - [ ] Run ALL tests
 - [ ] Manual smoke test all fixed flows
 
-### Phase 2 — ML & AI Fixes
+### Phase 2 — ML & AI Fixes — ~13% Done
 - [ ] Create `app/constants/categories.py` — unified taxonomy
 - [ ] Update `training_data.py` to import from constants
 - [ ] Update `categorization_engine.py` to import from constants
@@ -163,7 +166,7 @@ P4 (Testing) ───────────────┘
 - [ ] Add category validation to feedback collector
 - [ ] Run end-to-end test: transaction → categorization → AI → correction → retrain
 
-### Phase 3 — Frontend Completion
+### Phase 3 — Frontend Completion — ~0% Done
 - [ ] Create `DataTable.tsx` component
 - [ ] Create `FormField.tsx` component
 - [ ] Create `Modal.tsx` component
@@ -208,7 +211,7 @@ P4 (Testing) ───────────────┘
 - [ ] Visual review — dark mode
 - [ ] Lighthouse accessibility audit ≥ 90
 
-### Phase 4 — Testing & Quality
+### Phase 4 — Testing & Quality — ~12% Done
 - [ ] Add `aiosqlite` to test dependencies
 - [ ] Update `conftest.py` for SQLite fallback
 - [ ] Mark PostgreSQL-only tests with `@requires_postgres`
@@ -238,13 +241,13 @@ P4 (Testing) ───────────────┘
 - [ ] Create `.github/workflows/ci.yml` — backend tests job
 - [ ] Create `.github/workflows/ci.yml` — frontend tests job
 - [ ] Create `.github/workflows/ci.yml` — type-check job
-- [ ] Add `pytest-cov` to dependencies
-- [ ] Configure coverage in `pyproject.toml`
+- [x] Add `pytest-cov` to dependencies
+- [x] Configure coverage in `pyproject.toml`
 - [ ] Verify coverage ≥ 70%
 - [ ] All tests pass locally
 - [ ] CI pipeline runs green on a PR
 
-### Phase 5 — Production Hardening
+### Phase 5 — Production Hardening — ~8% Done
 - [ ] Create `app/middleware/rate_limiter.py`
 - [ ] Define rate limit rules per endpoint group
 - [ ] Register RateLimitMiddleware in `main.py`
@@ -261,7 +264,7 @@ P4 (Testing) ───────────────┘
 - [ ] Create `docker-compose.prod.yml` — Prometheus + Grafana
 - [ ] Create `frontend/Dockerfile`
 - [ ] Create `nginx/nginx.conf` with security headers
-- [ ] Implement structured JSON logging (`JSONFormatter`)
+- [x] Implement structured JSON logging (`JSONFormatter`)
 - [ ] Update `logging_config.py` with `setup_logging()`
 - [ ] Call `setup_logging()` in `main.py`
 - [ ] Add `deleted_at` column to Budget model
@@ -272,7 +275,7 @@ P4 (Testing) ───────────────┘
 - [ ] Create Alembic migration for soft-delete columns
 - [ ] Create `app/middleware/request_id.py`
 - [ ] Register RequestIDMiddleware in `main.py`
-- [ ] Create `.env.example`
+- [x] Create `.env.example`
 - [ ] Add missing database indexes (Transaction.date, composite)
 - [ ] Tune connection pool settings
 - [ ] Set Redis `maxmemory-policy`
@@ -289,8 +292,9 @@ P4 (Testing) ───────────────┘
 ## Success Criteria (Definition of "Done")
 
 - [x] **Zero auth bypass** — every endpoint validates JWT tokens
-- [ ] **Zero error leaks** — no internal exceptions exposed to clients
-- [ ] **Zero critical bugs** — no division-by-zero, no schema mismatches
+- [x] **Error redaction** — generic messages in production, real errors in logs
+- [x] **Critical bug fixes** — division-by-zero, category NULL fallback, route ordering
+- [ ] **datetime modernized** — replace all 22 `datetime.utcnow()` with `datetime.now(timezone.utc)`
 - [ ] **Working AI Brain** — at minimum via HTTP mode with documented setup
 - [ ] **Real RAG** — database-backed context retrieval, not mock data
 - [ ] **Production ML** — real training data, cached predictions, consistent taxonomy

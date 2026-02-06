@@ -2,7 +2,9 @@
 
 ## Overview
 
-This guide covers deploying the AI Finance Platform to production environments. The platform can be deployed using Docker containers on various cloud providers or on-premises infrastructure.
+This guide covers deploying Finehance to production environments. The platform is designed for Docker-based deployment with optional cloud provider hosting.
+
+**Note**: A production Docker Compose file (`docker-compose.prod.yml`) does not yet exist. The current `docker-compose.yml` is designed for development. See the [P5 roadmap](../roadmap/06_P5_PRODUCTION_HARDENING.md) for production deployment plans.
 
 ## Table of Contents
 
@@ -329,7 +331,7 @@ http {
 
 1. **Clone Repository**:
 ```bash
-git clone https://github.com/your-org/ai-finance-platform.git
+git clone https://github.com/cyberkunju/Finehance.git
 cd ai-finance-platform
 ```
 
@@ -768,9 +770,9 @@ docker stats
 
 ### Getting Help
 
-- **Documentation**: https://docs.aifinanceplatform.com
-- **GitHub Issues**: https://github.com/your-org/ai-finance-platform/issues
-- **Email Support**: devops@aifinanceplatform.com
+- **Swagger UI**: `http://localhost:8000/docs` (interactive API docs)
+- **GitHub Issues**: [github.com/cyberkunju/Finehance/issues](https://github.com/cyberkunju/Finehance/issues)
+- **Project Docs**: See `docs/` directory in the repository
 
 ---
 
@@ -810,9 +812,9 @@ You now have a production-ready deployment of the AI Finance Platform. Remember 
 - Stay updated with security patches
 - Scale as your user base grows
 
-For additional support, contact our DevOps team at devops@aifinanceplatform.com.
+For additional support, open an issue on [GitHub](https://github.com/cyberkunju/Finehance/issues).
 
 ---
 
 **Version**: 1.0.0  
-**Last Updated**: January 30, 2026
+**Last Updated**: February 6, 2026

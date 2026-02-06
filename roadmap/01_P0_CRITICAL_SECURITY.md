@@ -2,8 +2,9 @@
 
 > **Priority:** MUST DO FIRST — nothing else matters until auth is enforced  
 > **Estimated Effort:** 2-3 days  
+> **Status:** ~88% complete (all code changes done, final validation remaining)  
 > **Files Modified:** 17  
-> **Files Created:** 1 new (`app/dependencies.py`)
+> **Files Created:** 1 (`app/dependencies.py`)
 
 ---
 

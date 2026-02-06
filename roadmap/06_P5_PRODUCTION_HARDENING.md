@@ -2,6 +2,7 @@
 
 > **Do this last — after all code is stable and tested**  
 > **Estimated Effort:** 3-4 days  
+> **Status:** ~8% complete — Prometheus/Grafana monitoring exists but most hardening tasks are not started  
 > **Covers:** Rate limiting everywhere, encryption improvements, Docker production config, nginx, monitoring, performance, logging
 
 ---

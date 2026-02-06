@@ -23,9 +23,18 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         # Paths where output guard should filter responses
         self.ai_response_paths = {"/api/ai/chat", "/api/ai/analyze", "/api/ai/smart-advice"}
 
+    # Paths exempt from input scanning (auth payloads contain "password" key)
+    EXEMPT_PATHS = {
+        "/api/auth/register",
+        "/api/auth/login",
+        "/api/auth/refresh",
+        "/api/auth/change-password",
+        "/api/auth/profile",
+    }
+
     async def dispatch(self, request: Request, call_next):
-        # INPUT GUARD: Check POST/PUT/PATCH bodies
-        if request.method in ("POST", "PUT", "PATCH"):
+        # INPUT GUARD: Check POST/PUT/PATCH bodies (skip auth endpoints)
+        if request.method in ("POST", "PUT", "PATCH") and request.url.path not in self.EXEMPT_PATHS:
             try:
                 body = await request.body()
                 if body:

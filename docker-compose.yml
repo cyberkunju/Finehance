@@ -63,7 +63,7 @@ services:
       SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:-dev-encryption-key-32-chars-long}
       # CORS
-      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-'["http://localhost:3000","http://localhost:5173","http://localhost:8000"]'}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-'["http://localhost:3000","http://localhost:5173","http://localhost:5175","http://localhost:8000"]'}
       # ML Models
       MODEL_STORAGE_PATH: /app/models
       GLOBAL_MODEL_PATH: /app/models/global_categorization_model.pkl
@@ -114,7 +114,7 @@ services:
       SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:-dev-encryption-key-32-chars-long}
       # CORS
-      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-'["http://localhost:3000","http://localhost:5173","http://localhost:8000"]'}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-'["http://localhost:3000","http://localhost:5173","http://localhost:5175","http://localhost:8000"]'}
       # AI Brain
       AI_BRAIN_URL: ${AI_BRAIN_URL:-http://ai-brain:8080}
       AI_BRAIN_ENABLED: ${AI_BRAIN_ENABLED:-true}

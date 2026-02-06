@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { PreferencesProvider } from './contexts/PreferencesContext';
 
 // Pages
 import LoginPage from './pages/LoginPage';
@@ -17,6 +18,7 @@ import TransactionsPage from './pages/TransactionsPage';
 import BudgetsPage from './pages/BudgetsPage';
 import GoalsPage from './pages/GoalsPage';
 import ReportsPage from './pages/ReportsPage';
+import SettingsPage from './pages/SettingsPage';
 
 // Layout
 import Layout from './components/Layout';
@@ -98,6 +100,7 @@ function AppRoutes() {
         <Route path="budgets" element={<BudgetsPage />} />
         <Route path="goals" element={<GoalsPage />} />
         <Route path="reports" element={<ReportsPage />} />
+        <Route path="settings" element={<SettingsPage />} />
       </Route>
 
       {/* Catch all - redirect to dashboard */}
@@ -109,13 +112,15 @@ function AppRoutes() {
 function App() {
   return (
     <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <AuthProvider>
-            <AppRoutes />
-          </AuthProvider>
-        </BrowserRouter>
-      </QueryClientProvider>
+      <PreferencesProvider>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <AuthProvider>
+              <AppRoutes />
+            </AuthProvider>
+          </BrowserRouter>
+        </QueryClientProvider>
+      </PreferencesProvider>
     </ThemeProvider>
   );
 }

@@ -2,7 +2,10 @@
 
 ## Overview
 
-This document describes the database schema for the AI Finance Platform. The schema consists of 6 main tables that support user management, transaction tracking, budgeting, financial goals, ML model management, and external API connections.
+This document describes the database schema for Finehance. The schema consists of 6 main tables managed via SQLAlchemy 2.0 async ORM with Alembic migrations, running on PostgreSQL 16.
+
+**ORM model files**: `app/models/` (user.py, transaction.py, budget.py, financial_goal.py, ml_model.py, connection.py, base.py)  
+**Schema files**: `app/schemas/` (auth.py, transaction.py, budget.py, goal.py, prediction.py, report.py, advice.py, connection.py, ml_model.py)
 
 ## Tables
 
@@ -16,6 +19,7 @@ Stores user account information for authentication and profile management.
 - `password_hash` (VARCHAR(255), NOT NULL): Hashed password using bcrypt
 - `first_name` (VARCHAR(100)): User's first name
 - `last_name` (VARCHAR(100)): User's last name
+- `is_active` (BOOLEAN, NOT NULL, DEFAULT TRUE): Account active status (for suspension/deactivation)
 - `created_at` (TIMESTAMP, NOT NULL): Account creation timestamp
 - `updated_at` (TIMESTAMP, NOT NULL): Last update timestamp
 

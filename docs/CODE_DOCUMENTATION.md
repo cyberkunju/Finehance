@@ -2,7 +2,9 @@
 
 ## Overview
 
-This document provides an overview of the codebase structure, key components, and coding conventions used in the AI Finance Platform.
+This document provides an overview of the codebase structure, key components, and coding conventions used in Finehance (AI Finance Platform).
+
+**Repository**: [github.com/cyberkunju/Finehance](https://github.com/cyberkunju/Finehance)
 
 ## Table of Contents
 
@@ -12,8 +14,9 @@ This document provides an overview of the codebase structure, key components, an
 4. [Service Layer](#service-layer)
 5. [API Layer](#api-layer)
 6. [ML Components](#ml-components)
-7. [Testing](#testing)
-8. [Coding Conventions](#coding-conventions)
+7. [Security Middleware](#security-middleware)
+8. [Testing](#testing)
+9. [Coding Conventions](#coding-conventions)
 
 ---
 
@@ -24,22 +27,34 @@ ai-finance-platform/
 ├── app/                      # Main application code
 │   ├── models/              # SQLAlchemy ORM models
 │   ├── schemas/             # Pydantic schemas for validation
-│   ├── services/            # Business logic layer
-│   ├── routes/              # FastAPI route handlers
-│   ├── ml/                  # Machine learning components
-│   ├── config.py            # Configuration management
+│   ├── services/            # Business logic layer (17 services)
+│   ├── routes/              # FastAPI route handlers (10 routers)
+│   ├── ml/                  # Machine learning components (5 modules)
+│   ├── middleware/           # InputGuard, OutputGuard security middleware
+│   ├── metrics/             # Prometheus + GPU metrics collection
+│   ├── config.py            # Configuration management (40+ settings)
 │   ├── database.py          # Database connection setup
 │   ├── cache.py             # Redis cache manager
 │   ├── logging_config.py    # Logging configuration
-│   └── main.py              # FastAPI application entry point
-├── tests/                   # Test suite
+│   └── main.py              # FastAPI app entry point (Sentry, Prometheus, CORS)
+├── ai_brain/                # AI Brain LLM inference service
+│   ├── inference/           # Inference server, confidence, validation, templates
+│   ├── models/              # LoRA adapter weights
+│   └── config/              # Model configuration
+├── tests/                   # Test suite (28 files, 57/57 passing)
 ├── alembic/                 # Database migrations
+├── data/                    # Merchant JSON database + feedback storage
 ├── docs/                    # Documentation
-├── frontend/                # React frontend application
+├── frontend/                # React 19 + TypeScript frontend
+├── grafana/                 # Grafana dashboards + provisioning
+├── prometheus/              # Prometheus config + 18 alert rules
 ├── models/                  # Trained ML models storage
 ├── scripts/                 # Utility scripts
-├── docker-compose.yml       # Docker services configuration
+├── docker-compose.yml       # 7 Docker services (postgres, redis, dev, app, ai-brain, prometheus, grafana)
+├── Dockerfile               # Production container (non-root appuser)
 ├── Dockerfile.dev           # Development container
+├── Dockerfile.ai-brain      # AI Brain GPU container (non-root aiuser)
+├── .env.example             # Environment variable template (13 sections)
 ├── pyproject.toml           # Python dependencies
 └── README.md                # Project overview
 ```
@@ -324,6 +339,21 @@ class BudgetService:
 
 ## API Layer
 
+### Route Modules
+
+| Module | File | Endpoints |
+|--------|------|-----------|
+| Auth | `app/routes/auth.py` | Register, Login, Profile |
+| Transactions | `app/routes/transactions.py` | CRUD + filtering |
+| Budgets | `app/routes/budgets.py` | CRUD + progress tracking |
+| Goals | `app/routes/goals.py` | CRUD + achievement |
+| Predictions | `app/routes/predictions.py` | Expense forecasting |
+| Advice | `app/routes/advice.py` | Financial advice generator |
+| Reports | `app/routes/reports.py` | PDF/CSV reports |
+| File Import | `app/routes/file_import.py` | CSV/XLSX import |
+| ML Models | `app/routes/ml.py` | 9 endpoints: categorize, corrections, train |
+| AI Brain | `app/routes/ai.py` | 7 endpoints: chat, analyze, parse, advice, feedback |
+
 ### Routes (`app/routes/`)
 
 FastAPI route handlers define API endpoints:
@@ -500,20 +530,80 @@ class PredictionEngine:
 
 ---
 
+## Security Middleware
+
+The platform uses a multi-layer security middleware stack registered in `app/main.py`.
+
+### InputGuard (`app/middleware/input_guard.py` — 448 lines)
+
+Scans all incoming request bodies for prompt injection and malicious content:
+
+| Category | Pattern Count | Threat Levels |
+|----------|---------------|---------------|
+| Instruction Override | 8 | CRITICAL, HIGH |
+| Role/Persona Manipulation | 11 | CRITICAL, HIGH, MEDIUM |
+| System Prompt Extraction | 5 | HIGH, MEDIUM |
+| Code Injection | 8 | CRITICAL, HIGH, MEDIUM |
+| Financial Dangerous | 4 | CRITICAL, HIGH |
+| Delimiter/Boundary Attacks | 5 | CRITICAL, MEDIUM |
+| Obfuscation Detection | 5 | HIGH, MEDIUM, LOW |
+| **Total** | **46 patterns** | — |
+
+### OutputGuard (`app/middleware/output_guard.py` — 614 lines)
+
+Filters all outgoing AI responses for sensitive or harmful content:
+
+- **PII Detection**: SSN, credit card, bank account, routing number, email, phone, IP, DOB
+- **Harmful Advice**: 11 patterns (guaranteed returns, get-rich-quick, tax evasion, etc.)
+- **Hallucination**: 5 patterns (fabricated percentages, amounts, income assumptions)
+- **Profanity Filter**: 2 pattern groups
+- **Disclaimer Triggers**: 6 topic categories (investment, tax, retirement, etc.)
+
+### SecurityMiddleware (`app/middleware/security.py`)
+
+ASGI middleware wired into the FastAPI middleware pipeline in `app/main.py`. Wraps InputGuard and OutputGuard to apply scanning on every request/response.
+
+```python
+# In app/main.py
+app.add_middleware(SecurityMiddleware)
+```
+
+---
+
 ## Testing
 
 ### Test Structure
 
 ```
-tests/
-├── conftest.py              # Pytest fixtures
-├── test_models.py           # Model tests
-├── test_transaction_service.py
-├── test_budget_service.py
-├── test_categorization_engine.py
-├── test_prediction_engine.py
-├── test_transaction_routes.py
-└── test_e2e_integration.py
+tests/                              # 28 test files, 57/57 passing (100%)
+├── conftest.py                     # Pytest fixtures
+├── test_models.py                  # ORM model tests
+├── test_main.py                    # App startup tests
+├── test_transaction_service.py     # Transaction CRUD
+├── test_transaction_routes.py      # Transaction API routes
+├── test_budget_service.py          # Budget logic
+├── test_budget_optimizer.py        # Budget optimization
+├── test_budget_routes.py           # Budget API routes
+├── test_goal_service.py            # Goal tracking
+├── test_goal_routes.py             # Goal API routes
+├── test_auth_service.py            # Authentication logic
+├── test_auth_routes.py             # Auth API routes
+├── test_categorization_engine.py   # ML categorization
+├── test_prediction_engine.py       # ARIMA predictions
+├── test_prediction_routes.py       # Prediction API routes
+├── test_ml_model_service.py        # ML model management
+├── test_advice_generator.py        # Advice generation
+├── test_advice_routes.py           # Advice API routes
+├── test_report_service.py          # Reports
+├── test_report_routes.py           # Report API routes
+├── test_file_import_service.py     # CSV/XLSX import
+├── test_file_import_routes.py      # Import API routes
+├── test_encryption_service.py      # AES-256 encryption
+├── test_connection_encryption.py   # Connection security
+├── test_ai_brain_service.py        # AI Brain (32 tests, 5 classes)
+├── test_phase4_quality.py          # Confidence, validation, templates
+├── test_rag_system.py              # RAG pipeline tests (510 lines)
+└── test_e2e_integration.py         # End-to-end integration
 ```
 
 ### Writing Tests
@@ -687,4 +777,4 @@ def get_user(user_id: uuid.UUID) -> User:
 ---
 
 **Version**: 1.0.0  
-**Last Updated**: January 30, 2026
+**Last Updated**: February 6, 2026

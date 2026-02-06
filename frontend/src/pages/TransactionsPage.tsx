@@ -1,36 +1,39 @@
 /**
  * Transactions Page
- * 
+ *
  * View and manage financial transactions.
  */
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Plus, Pencil, Trash2, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { 
-  getTransactions, 
-  createTransaction, 
-  updateTransaction, 
-  deleteTransaction 
+import { usePreferences } from '../contexts/PreferencesContext';
+import {
+  getTransactions,
+  createTransaction,
+  updateTransaction,
+  deleteTransaction
 } from '../api/transactions';
 import type { Transaction, TransactionCreate, TransactionType } from '../types';
 import './TransactionsPage.css';
 
 function TransactionsPage() {
   const { user } = useAuth();
+  const { formatCurrency, formatDate } = usePreferences();
   const queryClient = useQueryClient();
-  
+
   // State for filters
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState<TransactionType | ''>('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  
+
   // State for modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
-  
+
   // State for form
   const [formData, setFormData] = useState<TransactionCreate>({
     amount: 0,
@@ -39,7 +42,7 @@ function TransactionsPage() {
     type: 'EXPENSE',
     category: '',
   });
-  
+
   // Fetch transactions
   const { data: transactionsData, isLoading, error } = useQuery({
     queryKey: ['transactions', user?.id, searchTerm, categoryFilter, typeFilter, startDate, endDate],
@@ -52,7 +55,7 @@ function TransactionsPage() {
     }),
     enabled: !!user,
   });
-  
+
   // Create mutation
   const createMutation = useMutation({
     mutationFn: (data: TransactionCreate) => createTransaction(user!.id, data),
@@ -63,7 +66,7 @@ function TransactionsPage() {
       closeModal();
     },
   });
-  
+
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<TransactionCreate> }) =>
@@ -75,7 +78,7 @@ function TransactionsPage() {
       closeModal();
     },
   });
-  
+
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteTransaction(id, user!.id),
@@ -85,7 +88,7 @@ function TransactionsPage() {
       queryClient.invalidateQueries({ queryKey: ['dashboard-report'] });
     },
   });
-  
+
   // Handlers
   const openCreateModal = () => {
     setEditingTransaction(null);
@@ -98,7 +101,7 @@ function TransactionsPage() {
     });
     setIsModalOpen(true);
   };
-  
+
   const openEditModal = (transaction: Transaction) => {
     setEditingTransaction(transaction);
     setFormData({
@@ -110,28 +113,28 @@ function TransactionsPage() {
     });
     setIsModalOpen(true);
   };
-  
+
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingTransaction(null);
   };
-  
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (editingTransaction) {
       updateMutation.mutate({ id: editingTransaction.id, data: formData });
     } else {
       createMutation.mutate(formData);
     }
   };
-  
+
   const handleDelete = (id: string) => {
     if (window.confirm('Are you sure you want to delete this transaction?')) {
       deleteMutation.mutate(id);
     }
   };
-  
+
   const clearFilters = () => {
     setSearchTerm('');
     setCategoryFilter('');
@@ -139,24 +142,7 @@ function TransactionsPage() {
     setStartDate('');
     setEndDate('');
   };
-  
-  // Format currency
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
-  
-  // Format date
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-  
+
   if (isLoading) {
     return (
       <div className="transactions-page">
@@ -165,7 +151,7 @@ function TransactionsPage() {
       </div>
     );
   }
-  
+
   if (error) {
     return (
       <div className="transactions-page">
@@ -174,18 +160,18 @@ function TransactionsPage() {
       </div>
     );
   }
-  
+
   const transactions = transactionsData?.items || [];
-  
+
   return (
     <div className="transactions-page">
       <div className="page-header">
         <h1>Transactions</h1>
         <button className="btn-primary" onClick={openCreateModal}>
-          + Add Transaction
+          <Plus size={16} strokeWidth={2} /> Add Transaction
         </button>
       </div>
-      
+
       {/* Filters */}
       <div className="filters-section">
         <div className="filters-grid">
@@ -196,7 +182,7 @@ function TransactionsPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="filter-input"
           />
-          
+
           <input
             type="text"
             placeholder="Filter by category..."
@@ -204,7 +190,7 @@ function TransactionsPage() {
             onChange={(e) => setCategoryFilter(e.target.value)}
             className="filter-input"
           />
-          
+
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value as TransactionType | '')}
@@ -214,7 +200,7 @@ function TransactionsPage() {
             <option value="INCOME">Income</option>
             <option value="EXPENSE">Expense</option>
           </select>
-          
+
           <input
             type="date"
             placeholder="Start date"
@@ -222,7 +208,7 @@ function TransactionsPage() {
             onChange={(e) => setStartDate(e.target.value)}
             className="filter-input"
           />
-          
+
           <input
             type="date"
             placeholder="End date"
@@ -230,13 +216,13 @@ function TransactionsPage() {
             onChange={(e) => setEndDate(e.target.value)}
             className="filter-input"
           />
-          
+
           <button onClick={clearFilters} className="btn-secondary">
             Clear Filters
           </button>
         </div>
       </div>
-      
+
       {/* Transactions List */}
       <div className="transactions-list">
         {transactions.length === 0 ? (
@@ -253,7 +239,7 @@ function TransactionsPage() {
               <div className="col-amount">Amount</div>
               <div className="col-actions">Actions</div>
             </div>
-            
+
             {transactions.map((transaction: Transaction) => (
               <div key={transaction.id} className="table-row">
                 <div className="col-date">{formatDate(transaction.date)}</div>
@@ -276,14 +262,14 @@ function TransactionsPage() {
                     className="btn-icon"
                     title="Edit"
                   >
-                    ✏️
+                    <Pencil size={16} strokeWidth={1.5} />
                   </button>
                   <button
                     onClick={() => handleDelete(transaction.id)}
                     className="btn-icon"
                     title="Delete"
                   >
-                    🗑️
+                    <Trash2 size={16} strokeWidth={1.5} />
                   </button>
                 </div>
               </div>
@@ -291,16 +277,18 @@ function TransactionsPage() {
           </div>
         )}
       </div>
-      
+
       {/* Modal */}
       {isModalOpen && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>{editingTransaction ? 'Edit Transaction' : 'Add Transaction'}</h2>
-              <button onClick={closeModal} className="btn-close">×</button>
+              <button onClick={closeModal} className="btn-close">
+                <X size={20} strokeWidth={1.5} />
+              </button>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="transaction-form">
               <div className="form-group">
                 <label htmlFor="type">Type *</label>
@@ -314,7 +302,7 @@ function TransactionsPage() {
                   <option value="INCOME">Income</option>
                 </select>
               </div>
-              
+
               <div className="form-group">
                 <label htmlFor="amount">Amount *</label>
                 <input
@@ -327,7 +315,7 @@ function TransactionsPage() {
                   required
                 />
               </div>
-              
+
               <div className="form-group">
                 <label htmlFor="date">Date *</label>
                 <input
@@ -338,7 +326,7 @@ function TransactionsPage() {
                   required
                 />
               </div>
-              
+
               <div className="form-group">
                 <label htmlFor="description">Description *</label>
                 <input
@@ -350,7 +338,7 @@ function TransactionsPage() {
                   required
                 />
               </div>
-              
+
               <div className="form-group">
                 <label htmlFor="category">Category</label>
                 <input
@@ -362,13 +350,13 @@ function TransactionsPage() {
                 />
                 <small>Leave empty for automatic categorization</small>
               </div>
-              
+
               <div className="form-actions">
                 <button type="button" onClick={closeModal} className="btn-secondary">
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="btn-primary"
                   disabled={createMutation.isPending || updateMutation.isPending}
                 >
@@ -379,7 +367,7 @@ function TransactionsPage() {
                     : 'Add Transaction'}
                 </button>
               </div>
-              
+
               {(createMutation.isError || updateMutation.isError) && (
                 <p className="error-message">
                   Failed to save transaction. Please try again.

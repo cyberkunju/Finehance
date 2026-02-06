@@ -204,16 +204,19 @@ if PROMETHEUS_AVAILABLE and settings.enable_metrics:
     )
     logger.info("Prometheus /metrics endpoint enabled")
 
-# Configure CORS
+# Security middleware (MUST be added BEFORE CORS so CORS is outermost)
+app.add_middleware(SecurityMiddleware)
+
+# Configure CORS (MUST be outermost middleware so all responses get CORS headers)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
+    allow_origin_regex=settings.allowed_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["X-Request-ID", "X-Process-Time"],
 )
-app.add_middleware(SecurityMiddleware)
 
 
 @app.middleware("http")

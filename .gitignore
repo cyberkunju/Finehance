@@ -5,6 +5,8 @@ Desktop.ini
 *~
 *.swp
 *.swo
+.claude/
+NUL
 
 # --- Archive (Cleaned up files) ---
 _archive/

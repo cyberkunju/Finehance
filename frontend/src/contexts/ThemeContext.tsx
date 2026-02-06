@@ -1,7 +1,8 @@
 /**
  * Theme Context for Dark Mode Support
- * 
+ *
  * Provides theme switching functionality throughout the application.
+ * Defaults to dark theme for pure black aesthetic.
  */
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
@@ -20,17 +21,17 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 const THEME_STORAGE_KEY = 'ai-finance-theme';
 
 function getSystemTheme(): 'light' | 'dark' {
-  if (typeof window === 'undefined') return 'light';
+  if (typeof window === 'undefined') return 'dark';
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window === 'undefined') return 'system';
+    if (typeof window === 'undefined') return 'dark';
     const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    return (stored as Theme) || 'system';
+    return (stored as Theme) || 'dark';
   });
-  
+
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() => {
     if (theme === 'system') return getSystemTheme();
     return theme;
@@ -41,7 +42,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const updateResolvedTheme = () => {
       const newResolved = theme === 'system' ? getSystemTheme() : theme;
       setResolvedTheme(newResolved);
-      
+
       // Apply theme to document
       document.documentElement.setAttribute('data-theme', newResolved);
       document.documentElement.classList.remove('light', 'dark');
@@ -57,7 +58,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         updateResolvedTheme();
       }
     };
-    
+
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, [theme]);

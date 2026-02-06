@@ -55,8 +55,15 @@ class UserResponse(BaseModel):
 class UserUpdate(BaseModel):
     """Schema for updating user information."""
 
-    full_name: Optional[str] = Field(None, min_length=1, max_length=100)
-    email: Optional[EmailStr] = None
+    first_name: Optional[str] = Field(None, max_length=100, description="User's first name")
+    last_name: Optional[str] = Field(None, max_length=100, description="User's last name")
+
+
+class PasswordChangeRequest(BaseModel):
+    """Schema for changing password."""
+
+    current_password: str = Field(..., description="Current password")
+    new_password: str = Field(..., min_length=12, description="New password (min 12 characters)")
 
 
 class AuthResponse(BaseModel):

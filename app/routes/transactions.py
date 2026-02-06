@@ -220,6 +220,56 @@ async def update_transaction(
         raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
 
 
+class DeleteAllResponse(BaseModel):
+    """Response for delete all transactions."""
+    message: str
+    deleted_count: int
+
+
+@router.delete("/all", response_model=DeleteAllResponse)
+async def delete_all_transactions(
+    user_id: UUID = Depends(get_current_user_id),
+    service: TransactionService = Depends(get_transaction_service),
+) -> DeleteAllResponse:
+    """Delete all transactions for a user.
+
+    Args:
+        user_id: User ID
+        service: Transaction service
+
+    Returns:
+        Message with count of deleted transactions
+
+    Raises:
+        HTTPException: If deletion fails
+    """
+    try:
+        # Get all transactions
+        from app.schemas.transaction import TransactionFilters, Pagination
+        
+        transactions, total = await service.list_transactions(
+            user_id=user_id,
+            filters=TransactionFilters(),
+            pagination=Pagination(page=1, page_size=10000),
+        )
+        
+        # Delete each transaction
+        deleted_count = 0
+        for transaction in transactions:
+            success = await service.delete_transaction(transaction.id, user_id)
+            if success:
+                deleted_count += 1
+        
+        logger.info(f"Deleted {deleted_count} transactions for user {user_id}")
+        return DeleteAllResponse(
+            message=f"Successfully deleted {deleted_count} transactions",
+            deleted_count=deleted_count
+        )
+    except Exception as e:
+        logger.error(f"Failed to delete all transactions: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred. Please try again later.")
+
+
 @router.delete("/{transaction_id}", status_code=204)
 async def delete_transaction(
     transaction_id: UUID,

@@ -1,71 +1,91 @@
 /**
  * Main Layout Component
- * 
- * Provides the app shell with navigation and content area.
+ *
+ * Provides the app shell with collapsible sidebar navigation.
  */
 
+import { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import {
+  LayoutDashboard,
+  ArrowLeftRight,
+  Wallet,
+  Target,
+  BarChart3,
+  Settings,
+  PanelLeftClose,
+  PanelLeftOpen,
+} from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import './Layout.css';
 
 function Layout() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const location = useLocation();
+  const [sidebarPinned, setSidebarPinned] = useState(false);
+  const [sidebarHover, setSidebarHover] = useState(false);
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
-  };
+  const isExpanded = sidebarPinned || sidebarHover;
+
+  const displayName = user?.first_name && user?.last_name
+    ? `${user.first_name} ${user.last_name}`
+    : user?.email;
 
   const isActive = (path: string) => {
     return location.pathname === path ? 'active' : '';
   };
 
+  const navItems = [
+    { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { path: '/transactions', icon: ArrowLeftRight, label: 'Transactions' },
+    { path: '/budgets', icon: Wallet, label: 'Budgets' },
+    { path: '/goals', icon: Target, label: 'Goals' },
+    { path: '/reports', icon: BarChart3, label: 'Reports' },
+    { path: '/settings', icon: Settings, label: 'Settings' },
+  ];
+
   return (
     <div className="layout">
-      <nav className="sidebar">
+      <nav
+        className={`sidebar ${isExpanded ? 'expanded' : 'collapsed'}`}
+        onMouseEnter={() => setSidebarHover(true)}
+        onMouseLeave={() => setSidebarHover(false)}
+      >
         <div className="sidebar-header">
-          <h1>AI Finance</h1>
-          <p className="user-email">{user?.email}</p>
+          <div className="sidebar-brand">
+            <img src="/logo.svg" alt="Logo" className="brand-logo" />
+            <img src="/logo-text.svg" alt="Finheance" className="brand-text-img" />
+          </div>
+          <p className="user-email">{displayName}</p>
         </div>
 
         <ul className="nav-menu">
-          <li>
-            <Link to="/dashboard" className={isActive('/dashboard')}>
-              📊 Dashboard
-            </Link>
-          </li>
-          <li>
-            <Link to="/transactions" className={isActive('/transactions')}>
-              💳 Transactions
-            </Link>
-          </li>
-          <li>
-            <Link to="/budgets" className={isActive('/budgets')}>
-              💰 Budgets
-            </Link>
-          </li>
-          <li>
-            <Link to="/goals" className={isActive('/goals')}>
-              🎯 Goals
-            </Link>
-          </li>
-          <li>
-            <Link to="/reports" className={isActive('/reports')}>
-              📈 Reports
-            </Link>
-          </li>
+          {navItems.map((item) => (
+            <li key={item.path}>
+              <Link to={item.path} className={`nav-link ${isActive(item.path)}`}>
+                <item.icon size={20} strokeWidth={1.5} />
+                <span className="nav-label">{item.label}</span>
+              </Link>
+            </li>
+          ))}
         </ul>
 
         <div className="sidebar-footer">
-          <ThemeToggle />
-          <button onClick={handleLogout} className="logout-btn">
-            🚪 Logout
-          </button>
+          <div className="footer-controls">
+            <ThemeToggle />
+            <button
+              onClick={() => setSidebarPinned(!sidebarPinned)}
+              className="sidebar-toggle"
+              title={sidebarPinned ? 'Collapse sidebar' : 'Pin sidebar'}
+            >
+              {sidebarPinned ? (
+                <PanelLeftClose size={18} strokeWidth={1.5} />
+              ) : (
+                <PanelLeftOpen size={18} strokeWidth={1.5} />
+              )}
+            </button>
+          </div>
         </div>
       </nav>
 

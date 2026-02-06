@@ -22,6 +22,8 @@ from app.schemas.auth import (
     AuthResponse,
     TokenResponse,
     UserResponse,
+    UserUpdate,
+    PasswordChangeRequest,
     MessageResponse,
 )
 from app.dependencies import oauth2_scheme
@@ -222,3 +224,83 @@ async def get_current_user_profile(
         last_name=current_user.last_name,
         created_at=current_user.created_at,
     )
+
+
+@router.put("/profile", response_model=UserResponse)
+async def update_profile(
+    request_data: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> UserResponse:
+    """Update user profile information.
+
+    Args:
+        request_data: Profile update data
+        current_user: Current authenticated user
+        db: Database session
+
+    Returns:
+        Updated user profile
+    """
+    logger.info("Profile update request", user_id=str(current_user.id))
+
+    # Update fields if provided
+    if request_data.first_name is not None:
+        current_user.first_name = request_data.first_name
+    if request_data.last_name is not None:
+        current_user.last_name = request_data.last_name
+
+    await db.flush()
+    await db.refresh(current_user)
+
+    logger.info("Profile updated successfully", user_id=str(current_user.id))
+
+    return UserResponse(
+        id=current_user.id,
+        email=current_user.email,
+        first_name=current_user.first_name,
+        last_name=current_user.last_name,
+        created_at=current_user.created_at,
+    )
+
+
+@router.post("/change-password", response_model=MessageResponse)
+async def change_password(
+    request_data: PasswordChangeRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> MessageResponse:
+    """Change user password.
+
+    Args:
+        request_data: Password change request
+        current_user: Current authenticated user
+        db: Database session
+
+    Returns:
+        Success message
+
+    Raises:
+        HTTPException: If password change fails
+    """
+    logger.info("Password change request", user_id=str(current_user.id))
+
+    auth_service = AuthService(db)
+
+    try:
+        await auth_service.change_password(
+            user_id=current_user.id,
+            current_password=request_data.current_password,
+            new_password=request_data.new_password,
+        )
+
+        logger.info("Password changed successfully", user_id=str(current_user.id))
+
+        return MessageResponse(message="Password changed successfully")
+
+    except AuthenticationError as e:
+        logger.warning("Password change failed: authentication error", error=str(e))
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+    except PasswordValidationError as e:
+        logger.warning("Password change failed: validation error", error=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

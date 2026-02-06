@@ -1,171 +1,54 @@
-# AI Finance Platform - Documentation
+# Finehance — Documentation Index
 
-Welcome to the AI Finance Platform documentation! This directory contains comprehensive guides for users, developers, and system administrators.
-
-## Documentation Index
-
-### 📚 User Documentation
-
-- **[User Guide](USER_GUIDE.md)** - Complete guide for end users
-  - Getting started
-  - Managing transactions
-  - Budget management
-  - Financial goals
-  - AI-powered features
-  - Reports and analytics
-  - Import/export functionality
-  - Tips and best practices
-
-### 🔧 Developer Documentation
-
-- **[API Documentation](API_DOCUMENTATION.md)** - REST API reference
-  - Authentication endpoints
-  - Transaction management
-  - Budget tracking
-  - Goal tracking
-  - Predictions and advice
-  - Reports and analytics
-  - Import/export
-  - Error handling
-
-- **[Code Documentation](CODE_DOCUMENTATION.md)** - Codebase overview
-  - Project structure
-  - Core components
-  - Database layer
-  - Service layer
-  - API layer
-  - ML components
-  - Testing
-  - Coding conventions
-
-- **[Database Schema](database_schema.md)** - Database structure
-  - Entity-relationship diagram
-  - Table definitions
-  - Relationships
-  - Indexes
-
-### 🚀 Operations Documentation
-
-- **[Deployment Guide](DEPLOYMENT_GUIDE.md)** - Production deployment
-  - Prerequisites
-  - Environment configuration
-  - Docker deployment
-  - Cloud deployment (AWS, GCP, Azure)
-  - Database setup
-  - Security configuration
-  - Monitoring and logging
-  - Backup and recovery
-  - Scaling
-  - Troubleshooting
-
-- **[Docker Development Guide](../DOCKER_DEVELOPMENT.md)** - Local development
-  - Docker setup
-  - Development workflow
-  - Running tests
-  - Database management
-  - Troubleshooting
-
-### 📋 Project Documentation
-
-- **[README](../README.md)** - Project overview
-  - Features
-  - Technology stack
-  - Quick start
-  - Development workflow
-
-- **[Release Notes](RELEASE_NOTES.md)** - Version 1.0.0 release information
-  - What's new
-  - Installation
-  - Known issues
-  - What's next
-
-- **[Contributing Guidelines](../CONTRIBUTING.md)** - How to contribute
-  - Code style
-  - Pull request process
-  - Testing requirements
-
-- **[Setup Verification](../SETUP_VERIFICATION.md)** - Verify your setup
-  - Environment checks
-  - Test execution
-  - Common issues
-
-### 🎯 Specification Documents
-
-Located in `.kiro/specs/ai-finance-platform/`:
-
-- **[Requirements](../.kiro/specs/ai-finance-platform/requirements.md)** - Functional requirements
-  - User stories
-  - Acceptance criteria
-  - Feature specifications
-
-- **[Design Document](../.kiro/specs/ai-finance-platform/design.md)** - System design
-  - Architecture overview
-  - Component design
-  - Data models
-  - ML model design
-  - Correctness properties
-
-- **[Tasks](../.kiro/specs/ai-finance-platform/tasks.md)** - Implementation plan
-  - Task breakdown
-  - Progress tracking
-  - Dependencies
-
-## Quick Links
-
-### For End Users
-Start with the [User Guide](USER_GUIDE.md) to learn how to use the platform.
-
-### For Developers
-1. Read the [README](../README.md) for project overview
-2. Follow the [Docker Development Guide](../DOCKER_DEVELOPMENT.md) to set up your environment
-3. Review the [Code Documentation](CODE_DOCUMENTATION.md) to understand the codebase
-4. Check the [API Documentation](API_DOCUMENTATION.md) for API reference
-
-### For DevOps/SysAdmins
-1. Review the [Deployment Guide](DEPLOYMENT_GUIDE.md) for production setup
-2. Configure monitoring and logging
-3. Set up automated backups
-4. Review security best practices
-
-## Documentation Standards
-
-All documentation follows these standards:
-
-- **Markdown Format**: All docs are in Markdown for easy reading and version control
-- **Clear Structure**: Each document has a table of contents and logical sections
-- **Code Examples**: Practical examples are provided where applicable
-- **Up-to-Date**: Documentation is updated with each release
-- **Versioned**: Each document includes version and last updated date
-
-## Contributing to Documentation
-
-Found an error or want to improve the documentation?
-
-1. Fork the repository
-2. Make your changes
-3. Submit a pull request
-4. Follow the [Contributing Guidelines](../CONTRIBUTING.md)
-
-## Support
-
-Need help? Here are your options:
-
-- **Documentation**: You're already here! Browse the guides above
-- **GitHub Issues**: [Report bugs or request features](https://github.com/your-org/ai-finance-platform/issues)
-- **Email Support**: support@aifinanceplatform.com
-- **Community Forum**: https://community.aifinanceplatform.com
-
-## Version History
-
-### Version 1.0.0 (January 30, 2026)
-- Initial documentation release
-- User guide
-- API documentation
-- Deployment guide
-- Code documentation
-- Database schema
+This directory contains all project documentation for the AI Finance Platform.
 
 ---
 
-**Last Updated**: January 30, 2026  
-**Documentation Version**: 1.0.0
+## User Documentation
+
+- **[User Guide](USER_GUIDE.md)** — End-user walkthrough covering transactions, budgets, goals, AI features, reports, and import/export
+
+## Developer Documentation
+
+- **[API Documentation](API_DOCUMENTATION.md)** — REST API reference for all 10 route groups (auth, transactions, budgets, goals, predictions, advice, reports, import/export, ML, AI Brain)
+- **[Code Documentation](CODE_DOCUMENTATION.md)** — Codebase architecture (project structure, core components, database layer, service layer, ML pipeline, testing conventions)
+- **[Database Schema](DATABASE_SCHEMA.md)** — Table definitions (users, transactions, budgets, financial_goals, ml_models, connections), relationships, indexes, query patterns
+
+## Operations Documentation
+
+- **[Deployment Guide](DEPLOYMENT_GUIDE.md)** — Production deployment (Docker, cloud providers, nginx, SSL, monitoring, backup, scaling)
+- **[Docker Development Guide](DOCKER_DEVELOPMENT.md)** — Local development environment (7 Docker services, Make commands, GPU setup, monitoring stack)
+
+## Project Documentation
+
+- **[Release Notes](RELEASE_NOTES.md)** — Version 1.0.0 release information, known issues, roadmap status
+- **[README](../README.md)** — Project overview, architecture, quick start, tech stack
+- **[Roadmap](../roadmap/00_ROADMAP_OVERVIEW.md)** — Production perfection roadmap (P0–P5 phases)
+
+## AI Brain Documentation
+
+- **[AI Brain Production Roadmap](AI_BRAIN_PRODUCTION_ROADMAP.md)** — Production readiness phases (security, reliability, observability, quality — all complete; scalability — not started). Includes RAG strategy, merchant database design, and continuous improvement loop.
+- **[AI/ML Integration Guide](AI_ML_INTEGRATION.md)** — Two-tier ML + LLM architecture (TF-IDF categorization, Qwen 2.5-3B inference, RAG pipeline, all API endpoints)
+
+## AI Brain Technical Docs (in `ai_brain/docs/`)
+
+- **[Model Architecture](../ai_brain/docs/01_MODEL_ARCHITECTURE.md)** — Qwen 2.5-3B, QLoRA methodology, hybrid "Tag & Sum" architecture
+- **[Dataset & Training](../ai_brain/docs/02_DATASET_AND_TRAINING.md)** — Sujet-Finance-Instruct-177k, ChatML format, training hyperparameters
+- **[Implementation Guide](../ai_brain/docs/03_IMPLEMENTATION_GUIDE.md)** — Prompt patterns, strict mode, JSON output, Python post-processing
+- **[Performance Report](../ai_brain/docs/04_PERFORMANCE_REPORT.md)** — Raw vs fine-tuned comparison (70% → 95% accuracy)
+
+---
+
+## Quick Links
+
+| Audience | Start Here |
+|----------|-----------|
+| **End users** | [User Guide](USER_GUIDE.md) |
+| **Developers** | [Docker Development Guide](DOCKER_DEVELOPMENT.md) → [Code Documentation](CODE_DOCUMENTATION.md) → [API Documentation](API_DOCUMENTATION.md) |
+| **DevOps** | [Deployment Guide](DEPLOYMENT_GUIDE.md) |
+| **AI/ML engineers** | [AI/ML Integration Guide](AI_ML_INTEGRATION.md) → [ai_brain/ docs](../ai_brain/docs/) |
+
+---
+
+**Repository**: [github.com/cyberkunju/Finehance](https://github.com/cyberkunju/Finehance)  
+**Last Updated**: February 2026

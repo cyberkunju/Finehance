@@ -2,6 +2,7 @@
 
 > **Can run in parallel with P3 and P4 after P0 is done**  
 > **Estimated Effort:** 5-7 days  
+> **Status:** ~13% complete — most ML/AI tasks are not yet started  
 > **Covers:** Training data quality, preprocessing mismatch, ARIMA performance, RAG implementation, AI Brain runtime fixes, category taxonomy unification
 
 ---

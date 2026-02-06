@@ -1,12 +1,14 @@
 /**
  * Reports Page
- * 
+ *
  * Generate and view financial reports, import/export transactions.
  */
 
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { FileText, Upload, Download, FileSpreadsheet, BarChart3, ArrowDownToLine } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { usePreferences } from '../contexts/PreferencesContext';
 import apiClient from '../api/client';
 import type { Report } from '../types';
 import './ReportsPage.css';
@@ -26,6 +28,7 @@ interface ImportResult {
 
 function ReportsPage() {
   const { user } = useAuth();
+  const { formatCurrency, formatDate } = usePreferences();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'reports' | 'import' | 'export'>('reports');
 
@@ -239,19 +242,22 @@ function ReportsPage() {
           className={`tab ${activeTab === 'reports' ? 'active' : ''}`}
           onClick={() => setActiveTab('reports')}
         >
-          Generate Reports
+          <BarChart3 size={14} strokeWidth={1.5} />
+          Reports
         </button>
         <button
           className={`tab ${activeTab === 'import' ? 'active' : ''}`}
           onClick={() => setActiveTab('import')}
         >
-          Import Transactions
+          <Upload size={14} strokeWidth={1.5} />
+          Import
         </button>
         <button
           className={`tab ${activeTab === 'export' ? 'active' : ''}`}
           onClick={() => setActiveTab('export')}
         >
-          Export Transactions
+          <Download size={14} strokeWidth={1.5} />
+          Export
         </button>
       </div>
 
@@ -292,31 +298,33 @@ function ReportsPage() {
                   <h3>Financial Report</h3>
                   <div className="report-actions">
                     <button className="btn-secondary" onClick={() => handleExportReport('pdf')}>
-                      Export PDF
+                      <Download size={14} strokeWidth={1.5} />
+                      PDF
                     </button>
                     <button className="btn-secondary" onClick={() => handleExportReport('csv')}>
-                      Export CSV
+                      <Download size={14} strokeWidth={1.5} />
+                      CSV
                     </button>
                   </div>
                 </div>
 
                 <div className="report-period">
-                  {new Date(generatedReport.start_date).toLocaleDateString()} - {new Date(generatedReport.end_date).toLocaleDateString()}
+                  {formatDate(generatedReport.start_date)} - {formatDate(generatedReport.end_date)}
                 </div>
 
                 <div className="report-summary">
                   <div className="summary-card">
                     <label>Total Income</label>
-                    <span className="amount positive">${parseFloat(String(generatedReport.income_summary?.total_income || 0)).toFixed(2)}</span>
+                    <span className="amount positive">{formatCurrency(parseFloat(String(generatedReport.income_summary?.total_income || 0)))}</span>
                   </div>
                   <div className="summary-card">
                     <label>Total Expenses</label>
-                    <span className="amount negative">${parseFloat(String(generatedReport.expense_summary?.total_expenses || 0)).toFixed(2)}</span>
+                    <span className="amount negative">{formatCurrency(parseFloat(String(generatedReport.expense_summary?.total_expenses || 0)))}</span>
                   </div>
                   <div className="summary-card">
                     <label>Net Savings</label>
                     <span className={`amount ${parseFloat(String(generatedReport.net_savings || 0)) >= 0 ? 'positive' : 'negative'}`}>
-                      ${parseFloat(String(generatedReport.net_savings || 0)).toFixed(2)}
+                      {formatCurrency(parseFloat(String(generatedReport.net_savings || 0)))}
                     </span>
                   </div>
                   <div className="summary-card">
@@ -331,7 +339,7 @@ function ReportsPage() {
                     {Object.entries(generatedReport.expense_summary?.expenses_by_category || {}).map(([category, amount]) => (
                       <div key={category} className="breakdown-item">
                         <span className="category">{category}</span>
-                        <span className="amount">${parseFloat(String(amount)).toFixed(2)}</span>
+                        <span className="amount">{formatCurrency(parseFloat(String(amount)))}</span>
                       </div>
                     ))}
                   </div>
@@ -344,7 +352,7 @@ function ReportsPage() {
                       {Object.entries(generatedReport.income_summary?.income_by_category || {}).map(([category, amount]) => (
                         <div key={category} className="breakdown-item">
                           <span className="category">{category}</span>
-                          <span className="amount">${parseFloat(String(amount)).toFixed(2)}</span>
+                          <span className="amount">{formatCurrency(parseFloat(String(amount)))}</span>
                         </div>
                       ))}
                     </div>
@@ -353,7 +361,7 @@ function ReportsPage() {
 
                 <div className="report-stats">
                   <p><strong>Total Transactions:</strong> {(generatedReport.income_summary?.transaction_count || 0) + (generatedReport.expense_summary?.transaction_count || 0)}</p>
-                  <p><strong>Average Expense:</strong> ${parseFloat(String(generatedReport.expense_summary?.average_transaction || 0)).toFixed(2)}</p>
+                  <p><strong>Average Expense:</strong> {formatCurrency(parseFloat(String(generatedReport.expense_summary?.average_transaction || 0)))}</p>
                 </div>
               </div>
             )}
@@ -371,13 +379,15 @@ function ReportsPage() {
             </p>
 
             <div className="template-download">
-              <p>Don't have a file? Download a template:</p>
+              <p>Download a template to get started:</p>
               <div className="template-buttons">
                 <button className="btn-secondary" onClick={() => handleDownloadTemplate('csv')}>
-                  Download CSV Template
+                  <FileSpreadsheet size={14} strokeWidth={1.5} />
+                  CSV Template
                 </button>
                 <button className="btn-secondary" onClick={() => handleDownloadTemplate('xlsx')}>
-                  Download XLSX Template
+                  <FileSpreadsheet size={14} strokeWidth={1.5} />
+                  XLSX Template
                 </button>
               </div>
             </div>
@@ -398,13 +408,13 @@ function ReportsPage() {
               />
               {selectedFile ? (
                 <div className="file-selected">
-                  <span className="file-icon">📄</span>
+                  <FileText size={28} strokeWidth={1.5} />
                   <span className="file-name">{selectedFile.name}</span>
                   <span className="file-size">({(selectedFile.size / 1024).toFixed(1)} KB)</span>
                 </div>
               ) : (
                 <div className="drop-zone-content">
-                  <span className="upload-icon">📁</span>
+                  <ArrowDownToLine size={36} strokeWidth={1} />
                   <p>Drag and drop your file here</p>
                   <p className="or-text">or</p>
                   <button type="button" className="btn-secondary">
@@ -421,6 +431,7 @@ function ReportsPage() {
                   Clear
                 </button>
                 <button className="btn-primary" onClick={handleImport} disabled={isImporting}>
+                  <Upload size={14} strokeWidth={1.5} />
                   {isImporting ? 'Importing...' : 'Import Transactions'}
                 </button>
               </div>
@@ -431,11 +442,11 @@ function ReportsPage() {
                 <h3>Import Results</h3>
                 <div className="result-summary">
                   <div className="result-stat success">
-                    <label>Successfully Imported</label>
+                    <label>Imported</label>
                     <span>{importResult.success_count}</span>
                   </div>
                   <div className="result-stat duplicate">
-                    <label>Duplicates Skipped</label>
+                    <label>Duplicates</label>
                     <span>{importResult.duplicate_count}</span>
                   </div>
                   <div className="result-stat error">
@@ -510,6 +521,7 @@ function ReportsPage() {
               </div>
 
               <button className="btn-primary" onClick={handleExportTransactions}>
+                <Download size={14} strokeWidth={1.5} />
                 Export to CSV
               </button>
             </div>

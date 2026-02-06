@@ -1,8 +1,8 @@
-# AI Finance Platform - User Guide
+# Finehance — User Guide
 
-## Welcome!
+## Welcome
 
-Welcome to the AI Finance Platform - your intelligent personal finance management companion. This guide will help you get started and make the most of the platform's powerful features.
+Finehance is an AI-powered personal finance management platform. This guide covers all features available to end users.
 
 ## Table of Contents
 
@@ -489,7 +489,7 @@ Export your transaction data:
 
 - All passwords are hashed using bcrypt
 - Sensitive data is encrypted at rest (AES-256)
-- All communications use TLS 1.3 encryption
+- JWT authentication with token blacklisting
 - We never share your data with third parties
 
 ### Best Practices
@@ -505,55 +505,32 @@ Export your transaction data:
 
 ### Support Resources
 
-- **Documentation**: https://docs.aifinanceplatform.com
-- **Email Support**: support@aifinanceplatform.com
-- **FAQ**: https://aifinanceplatform.com/faq
-- **Community Forum**: https://community.aifinanceplatform.com
+- **API Docs**: `http://localhost:8000/docs` (Swagger UI, when backend is running)
+- **GitHub Issues**: [github.com/cyberkunju/Finehance/issues](https://github.com/cyberkunju/Finehance/issues)
+- **Project Documentation**: See `docs/` directory in the repository
 
 ### Providing Feedback
 
-We love hearing from our users! Share your feedback:
+We welcome contributions and feedback:
 
 - Feature requests
 - Bug reports
 - Usability suggestions
-- Success stories
 
-Email us at: feedback@aifinanceplatform.com
-
----
-
-## What's Next?
-
-### Upcoming Features
-
-- Mobile apps (iOS and Android)
-- Bank account integration (automatic transaction sync)
-- Investment tracking
-- Bill reminders
-- Shared budgets for families
-- Advanced analytics and insights
-
-### Stay Updated
-
-- Follow us on social media
-- Subscribe to our newsletter
-- Check the changelog for new features
+Submit feedback via [GitHub Issues](https://github.com/cyberkunju/Finehance/issues).
 
 ---
 
 ## Conclusion
 
-Congratulations! You're now ready to take control of your finances with the AI Finance Platform. Remember:
+You're now ready to take control of your finances with Finehance. Remember:
 
 - Start by adding transactions regularly
 - Create budgets to plan your spending
 - Set goals to work towards
 - Let the AI help you make better financial decisions
 
-Happy budgeting! 💰
-
 ---
 
 **Version**: 1.0.0  
-**Last Updated**: January 30, 2026
+**Last Updated**: February 6, 2026

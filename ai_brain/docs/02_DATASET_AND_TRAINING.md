@@ -14,7 +14,7 @@ Data quality is the ceiling of model performance. We used a "High Quality, Low V
     - Future fine-tuning will incorporate real user transaction logs (anonymized) to specialize the model further in "Transaction → Category" mapping.
 
 ### **Data formatting: ChatML**
-We standarized all data into the **ChatML** format, which represents conversation history explicitly. This format is native to the Qwen model family.
+We standardized all data into the **ChatML** format, which represents conversation history explicitly. This format is native to the Qwen model family.
 
 **Schema:**
 ```json

@@ -2,6 +2,7 @@
 
 > **Can run in parallel with P2 and P4 after P0 is done**  
 > **Estimated Effort:** 5-7 days  
+> **Status:** ~0% complete — frontend scaffolding exists but none of these tasks have been started  
 > **Covers:** Reusable components, design system, error handling, form validation, UX polish, accessibility
 
 ---

@@ -2,9 +2,10 @@
  * Register Page
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import ThemeToggle from '../components/ThemeToggle';
 import './AuthPages.css';
 
 function RegisterPage() {
@@ -18,19 +19,32 @@ function RegisterPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
 
+  const passwordChecks = useMemo(() => ([
+    { label: '12+ characters', met: password.length >= 12 },
+    { label: 'Uppercase', met: /[A-Z]/.test(password) },
+    { label: 'Lowercase', met: /[a-z]/.test(password) },
+    { label: 'Number', met: /\d/.test(password) },
+    { label: 'Special char', met: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?~`]/.test(password) },
+  ]), [password]);
+
+  const passwordStrength = useMemo(() => {
+    const met = passwordChecks.filter(c => c.met).length;
+    if (met === 0) return 0;
+    return Math.round((met / passwordChecks.length) * 100);
+  }, [passwordChecks]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    // Validate passwords match
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
 
-    // Validate password strength
-    if (password.length < 12) {
-      setError('Password must be at least 12 characters long');
+    const failedCheck = passwordChecks.find(c => !c.met);
+    if (failedCheck) {
+      setError(`Password requirement not met: ${failedCheck.label}`);
       return;
     }
 
@@ -45,7 +59,14 @@ function RegisterPage() {
       });
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      if (err.response?.data?.detail) {
+        const detail = err.response.data.detail;
+        setError(typeof detail === 'string' ? detail : 'Registration failed. Please try again.');
+      } else if (err.code === 'ERR_NETWORK' || err.message === 'Network Error') {
+        setError('Cannot reach API. Check backend status, VITE_API_BASE_URL, and backend CORS ALLOWED_ORIGINS.');
+      } else {
+        setError('Registration failed. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -53,11 +74,16 @@ function RegisterPage() {
 
   return (
     <div className="auth-page">
+      <div className="auth-theme-toggle">
+        <ThemeToggle />
+      </div>
       <div className="auth-container">
         <div className="auth-header">
-          <h1>AI Finance Platform</h1>
-          <h2>Create Account</h2>
-          <p>Start managing your finances smarter</p>
+          <div className="auth-brand">
+            <img src="/logo.svg" alt="Logo" className="auth-brand-logo" />
+            <img src="/logo-text.svg" alt="Finheance" className="auth-brand-text" />
+          </div>
+          <p className="auth-subtitle">Create your account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
@@ -65,18 +91,18 @@ function RegisterPage() {
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="firstName">First Name (Optional)</label>
+              <label htmlFor="firstName">First Name</label>
               <input
                 id="firstName"
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                placeholder="John"
+                placeholder="Jane"
               />
             </div>
 
             <div className="form-group">
-              <label htmlFor="lastName">Last Name (Optional)</label>
+              <label htmlFor="lastName">Last Name</label>
               <input
                 id="lastName"
                 type="text"
@@ -95,7 +121,7 @@ function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              placeholder="your@email.com"
+              placeholder="you@example.com"
               autoComplete="email"
             />
           </div>
@@ -108,10 +134,30 @@ function RegisterPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              placeholder="••••••••"
+              placeholder="Min. 12 characters"
               autoComplete="new-password"
             />
-            <small>Minimum 12 characters, include uppercase, lowercase, number, and special character</small>
+            {password.length > 0 && (
+              <div className="password-strength">
+                <div className="strength-track">
+                  <div
+                    className="strength-fill"
+                    style={{ width: `${passwordStrength}%` }}
+                    data-strength={
+                      passwordStrength <= 40 ? 'weak' :
+                      passwordStrength <= 80 ? 'medium' : 'strong'
+                    }
+                  />
+                </div>
+                <div className="strength-checks">
+                  {passwordChecks.map(c => (
+                    <span key={c.label} className={`check-tag ${c.met ? 'met' : ''}`}>
+                      {c.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="form-group">
@@ -122,13 +168,23 @@ function RegisterPage() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              placeholder="••••••••"
+              placeholder="Re-enter password"
               autoComplete="new-password"
             />
+            {confirmPassword.length > 0 && password !== confirmPassword && (
+              <small className="mismatch-hint">Passwords don't match</small>
+            )}
           </div>
 
           <button type="submit" className="submit-btn" disabled={isLoading}>
-            {isLoading ? 'Creating account...' : 'Create Account'}
+            {isLoading ? (
+              <span className="btn-loading">
+                <span className="spinner" />
+                Creating account
+              </span>
+            ) : (
+              'Create Account'
+            )}
           </button>
         </form>
 

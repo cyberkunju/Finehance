@@ -2,6 +2,7 @@
 
 > **Can run in parallel with P2 and P3 after P0 is done**  
 > **Estimated Effort:** 3-5 days  
+> **Status:** ~12% complete — test suite runs (57/57 pass) but many tasks here are not started  
 > **Covers:** Test infrastructure, missing test coverage, E2E fixes, CI/CD pipeline
 
 ---
@@ -10,11 +11,11 @@
 
 | Metric | Value |
 |--------|-------|
-| Total test files | 13+ |
-| Total tests | ~212 |
+| Total test files | 28 |
+| Total tests | 57 (all passing) |
 | Test quality | High for services, weak for routes |
-| DB requirement | **Live PostgreSQL required** |
-| SQLite fallback | None |
+| DB requirement | **Live PostgreSQL required** (via Docker) |
+| SQLite fallback | None (conftest.py uses asyncpg) |
 | Middleware tests | None |
 | Frontend tests | None (Playwright in deps but no test files) |
 | E2E tests | 7 tests, likely broken |

@@ -2,12 +2,11 @@
 
 ## Overview
 
-The AI Finance Platform provides a RESTful API for managing personal finances, including transactions, budgets, goals, predictions, and financial advice. All endpoints require authentication unless otherwise specified.
+Finehance provides a RESTful API for managing personal finances, including transactions, budgets, goals, predictions, and financial advice. All endpoints require JWT authentication unless otherwise specified.
 
-**Base URL**: `http://localhost:8000/api`
-
-**Authentication**: JWT Bearer Token
-
+**Base URL**: `http://localhost:8000/api`  
+**Swagger UI**: `http://localhost:8000/docs` (interactive, auto-generated)  
+**Authentication**: JWT Bearer Token (HS256)  
 **Content-Type**: `application/json`
 
 ## Table of Contents
@@ -20,7 +19,9 @@ The AI Finance Platform provides a RESTful API for managing personal finances, i
 6. [Advice](#advice)
 7. [Reports](#reports)
 8. [Import/Export](#importexport)
-9. [Error Handling](#error-handling)
+9. [ML Models](#ml-models)
+10. [AI Brain](#ai-brain)
+11. [Error Handling](#error-handling)
 
 ---
 
@@ -954,23 +955,272 @@ Pagination metadata is included in responses:
 
 ---
 
-## Webhooks (Future Feature)
+## ML Models
 
-Webhooks will be available in a future release to notify your application of events:
+### ML Status
 
-- Transaction created
-- Budget exceeded
-- Goal achieved
-- Prediction recalibrated
+Get overall ML system status.
+
+**Endpoint**: `GET /api/ml/status`
+
+**Authentication**: Not required
+
+**Response** (200):
+```json
+{
+  "global_model_loaded": true,
+  "total_categories": 15,
+  "model_type": "TF-IDF + Naive Bayes"
+}
+```
+
+---
+
+### Global Model Info
+
+**Endpoint**: `GET /api/ml/models/global`
+
+**Authentication**: Not required
+
+---
+
+### User Model Status
+
+**Endpoint**: `GET /api/ml/models/user/me`
+
+**Authentication**: Required (JWT)
+
+**Response** (200):
+```json
+{
+  "has_model": true,
+  "correction_count": 25,
+  "accuracy": 0.95,
+  "last_trained": "2026-02-01T10:00:00Z"
+}
+```
+
+---
+
+### Categorize Transaction
+
+**Endpoint**: `POST /api/ml/categorize`
+
+**Authentication**: Required (JWT)
+
+**Request Body**:
+```json
+{
+  "description": "STARBUCKS COFFEE #12345",
+  "amount": 5.50
+}
+```
+
+**Response** (200):
+```json
+{
+  "category": "Food & Dining",
+  "confidence": 0.999,
+  "model_type": "GLOBAL",
+  "llm_enhanced": false
+}
+```
+
+---
+
+### Batch Categorization
+
+**Endpoint**: `POST /api/ml/categorize/batch`
+
+**Authentication**: Required (JWT)
+
+**Request Body**:
+```json
+{
+  "transactions": [
+    {"description": "UBER TRIP", "amount": 15},
+    {"description": "NETFLIX MONTHLY", "amount": 14.99}
+  ]
+}
+```
+
+---
+
+### Submit Correction
+
+Submit a categorization correction to improve the user's personalized model.
+
+**Endpoint**: `POST /api/ml/corrections`
+
+**Authentication**: Required (JWT)
+
+**Request Body**:
+```json
+{
+  "description": "DOORDASH*THAI FOOD",
+  "correct_category": "Food & Dining"
+}
+```
+
+---
+
+### Train User Model
+
+Manually trigger training of the user's personalized ML model.
+
+**Endpoint**: `POST /api/ml/models/user/me/train`
+
+**Authentication**: Required (JWT)
+
+---
+
+### Delete User Model
+
+Delete the current user's personalized ML model.
+
+**Endpoint**: `DELETE /api/ml/models/user/me`
+
+**Authentication**: Required (JWT)
+
+---
+
+### Get Categories
+
+**Endpoint**: `GET /api/ml/categories`
+
+**Authentication**: Not required
+
+---
+
+## AI Brain
+
+The AI Brain endpoints require the GPU-powered LLM service to be running (`docker compose --profile gpu up`). All AI endpoints are protected by InputGuard (prompt injection detection) and OutputGuard (PII masking, harmful content filtering).
+
+### AI Status
+
+**Endpoint**: `GET /api/ai/status`
+
+**Authentication**: Not required
+
+**Rate Limit**: 30 requests/minute
+
+---
+
+### Chat
+
+Conversational financial assistant.
+
+**Endpoint**: `POST /api/ai/chat`
+
+**Authentication**: Required (JWT)
+
+**Rate Limit**: 5/minute, 100/hour
+
+**Request Body**:
+```json
+{
+  "message": "How can I reduce my food spending?",
+  "context": {
+    "monthly_income": 5000,
+    "spending": {"Food & Dining": 800, "Shopping": 400}
+  }
+}
+```
+
+---
+
+### Analyze
+
+Request comprehensive financial analysis.
+
+**Endpoint**: `POST /api/ai/analyze`
+
+**Authentication**: Required (JWT)
+
+**Rate Limit**: 5/minute, 100/hour
+
+---
+
+### Parse Transaction
+
+Parse a raw transaction description into structured data using AI + RAG.
+
+**Endpoint**: `POST /api/ai/parse-transaction`
+
+**Authentication**: Required (JWT)
+
+**Rate Limit**: 30/minute
+
+**Request Body**:
+```json
+{
+  "description": "WHOLEFDS 12345 AUSTIN TX $89.52"
+}
+```
+
+**Response** (200):
+```json
+{
+  "merchant": "Whole Foods Market",
+  "amount": 89.52,
+  "category": "Groceries",
+  "confidence": 0.94,
+  "is_recurring": false
+}
+```
+
+---
+
+### Smart Advice
+
+Get personalized AI-powered financial advice.
+
+**Endpoint**: `POST /api/ai/smart-advice`
+
+**Authentication**: Required (JWT)
+
+**Rate Limit**: 5/minute, 100/hour
+
+---
+
+### Submit Category Correction (Feedback)
+
+Submit a correction to improve the RAG system's merchant database. When 3+ users submit the same correction, the merchant database auto-updates.
+
+**Endpoint**: `POST /api/ai/feedback/correction`
+
+**Authentication**: Required (JWT)
+
+**Rate Limit**: 30/minute
+
+**Request Body**:
+```json
+{
+  "merchant_raw": "WHOLEFDS 12345 AUSTIN TX",
+  "original_category": "Fast Food",
+  "corrected_category": "Groceries"
+}
+```
+
+---
+
+### Feedback Stats
+
+Get feedback statistics.
+
+**Endpoint**: `GET /api/ai/feedback/stats`
+
+**Authentication**: Required (JWT)
+
+**Rate Limit**: 10/minute
 
 ---
 
 ## Support
 
-For API support, please contact:
-- Email: support@aifinanceplatform.com
-- Documentation: https://docs.aifinanceplatform.com
-- GitHub Issues: https://github.com/your-org/ai-finance-platform/issues
+For API support:
+- **Swagger UI**: `http://localhost:8000/docs` (interactive, auto-generated)
+- **GitHub Issues**: [github.com/cyberkunju/Finehance/issues](https://github.com/cyberkunju/Finehance/issues)
 
 ---
 

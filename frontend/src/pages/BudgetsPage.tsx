@@ -1,12 +1,14 @@
 /**
  * Budgets Page
- * 
+ *
  * Create and manage budgets, view progress, and get optimization suggestions.
  */
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Plus, X, Trash2, BarChart3, Sparkles, ArrowRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { usePreferences } from '../contexts/PreferencesContext';
 import { getBudgets, createBudget, deleteBudget } from '../api/budgets';
 import apiClient from '../api/client';
 import type { Budget, BudgetCreate } from '../types';
@@ -47,6 +49,7 @@ interface OptimizationSuggestion {
 
 function BudgetsPage() {
   const { user } = useAuth();
+  const { formatCurrency, formatDate } = usePreferences();
   const queryClient = useQueryClient();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [activeOnly, setActiveOnly] = useState(true);
@@ -168,7 +171,7 @@ function BudgetsPage() {
 
   const handleApplyOptimizations = async () => {
     if (!selectedBudget) return;
-    
+
     try {
       await apiClient.put(
         `/api/budgets/${selectedBudget.id}/apply-optimization`,
@@ -178,7 +181,7 @@ function BudgetsPage() {
         },
         { params: { user_id: user!.id } }
       );
-      
+
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
       setShowOptimizationModal(false);
       alert('Optimizations applied successfully!');
@@ -192,29 +195,29 @@ function BudgetsPage() {
     switch (status.toLowerCase()) {
       case 'ok':
       case 'good':
-        return '#10b981';
+        return 'var(--color-success)';
       case 'warning':
-        return '#f59e0b';
+        return 'var(--color-warning)';
       case 'exceeded':
       case 'over':
-        return '#ef4444';
+        return 'var(--color-danger)';
       default:
-        return '#6b7280';
+        return 'var(--color-text-muted)';
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority.toUpperCase()) {
       case 'CRITICAL':
-        return '#ef4444';
+        return 'var(--color-danger)';
       case 'HIGH':
-        return '#f59e0b';
+        return 'var(--color-warning)';
       case 'MEDIUM':
-        return '#3b82f6';
+        return 'var(--color-text-muted)';
       case 'LOW':
-        return '#6b7280';
+        return 'var(--color-text-tertiary)';
       default:
-        return '#6b7280';
+        return 'var(--color-text-tertiary)';
     }
   };
 
@@ -230,6 +233,7 @@ function BudgetsPage() {
           <p>Plan and track your spending</p>
         </div>
         <button className="btn-primary" onClick={() => setShowCreateModal(true)}>
+          <Plus size={16} strokeWidth={2} />
           Create Budget
         </button>
       </div>
@@ -256,34 +260,38 @@ function BudgetsPage() {
               <div className="budget-header">
                 <h3>{budget.name}</h3>
                 <button
-                  className="btn-delete"
+                  className="btn-icon"
                   onClick={() => handleDelete(budget.id)}
                   title="Delete budget"
                 >
-                  ×
+                  <Trash2 size={16} strokeWidth={1.5} />
                 </button>
               </div>
               <div className="budget-period">
-                {new Date(budget.period_start).toLocaleDateString()} - {new Date(budget.period_end).toLocaleDateString()}
+                {formatDate(budget.period_start)} - {formatDate(budget.period_end)}
               </div>
               <div className="budget-categories">
-                <strong>Categories:</strong>
+                <span className="budget-categories-label">Categories</span>
                 <ul>
                   {Object.entries(budget.allocations).map(([category, amount]) => (
                     <li key={category}>
-                      {category}: ${amount.toFixed(2)}
+                      <span>{category}</span>
+                      <span className="allocation-amount">{formatCurrency(amount)}</span>
                     </li>
                   ))}
                 </ul>
               </div>
               <div className="budget-total">
-                <strong>Total Budget:</strong> ${Object.values(budget.allocations).reduce((sum, val) => sum + val, 0).toFixed(2)}
+                <span>Total Budget</span>
+                <span className="budget-total-amount">{formatCurrency(Object.values(budget.allocations).reduce((sum, val) => sum + val, 0))}</span>
               </div>
               <div className="budget-actions">
                 <button className="btn-secondary" onClick={() => handleViewProgress(budget)}>
-                  View Progress
+                  <BarChart3 size={14} strokeWidth={1.5} />
+                  Progress
                 </button>
                 <button className="btn-secondary" onClick={() => handleGetOptimizations(budget)}>
+                  <Sparkles size={14} strokeWidth={1.5} />
                   Optimize
                 </button>
               </div>
@@ -298,7 +306,9 @@ function BudgetsPage() {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Create Budget</h2>
-              <button className="modal-close" onClick={() => setShowCreateModal(false)}>×</button>
+              <button className="modal-close" onClick={() => setShowCreateModal(false)}>
+                <X size={20} strokeWidth={1.5} />
+              </button>
             </div>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
@@ -330,7 +340,7 @@ function BudgetsPage() {
                   />
                 </div>
               </div>
-              
+
               <div className="form-section">
                 <h3>Category Allocations</h3>
                 <div className="form-row">
@@ -359,21 +369,22 @@ function BudgetsPage() {
                     onClick={handleAddCategory}
                     style={{ marginTop: '24px' }}
                   >
+                    <Plus size={14} strokeWidth={2} />
                     Add
                   </button>
                 </div>
-                
+
                 {Object.keys(formData.allocations).length > 0 && (
                   <div className="allocations-list">
                     {Object.entries(formData.allocations).map(([category, amount]) => (
                       <div key={category} className="allocation-item">
-                        <span>{category}: ${amount.toFixed(2)}</span>
+                        <span>{category}: {formatCurrency(amount)}</span>
                         <button
                           type="button"
                           className="btn-delete-small"
                           onClick={() => handleRemoveCategory(category)}
                         >
-                          ×
+                          <X size={14} strokeWidth={2} />
                         </button>
                       </div>
                     ))}
@@ -399,10 +410,12 @@ function BudgetsPage() {
         <div className="modal-overlay" onClick={() => setShowProgressModal(false)}>
           <div className="modal modal-large" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{selectedBudget.name} - Progress</h2>
-              <button className="modal-close" onClick={() => setShowProgressModal(false)}>×</button>
+              <h2>{selectedBudget.name} — Progress</h2>
+              <button className="modal-close" onClick={() => setShowProgressModal(false)}>
+                <X size={20} strokeWidth={1.5} />
+              </button>
             </div>
-            
+
             {progressData && (
               <div className="progress-content">
                 {/* Alerts */}
@@ -410,7 +423,7 @@ function BudgetsPage() {
                   <div className="alerts-section">
                     <h3>Alerts</h3>
                     {progressData.alerts.map((alert, idx) => (
-                      <div key={idx} className="alert" style={{ borderLeftColor: alert.severity === 'high' ? '#ef4444' : '#f59e0b' }}>
+                      <div key={idx} className="alert" style={{ borderLeftColor: alert.severity === 'high' ? 'var(--color-danger)' : 'var(--color-warning)' }}>
                         <strong>{alert.category}</strong>
                         <p>{alert.message}</p>
                         <small>Over budget by {alert.percent_over.toFixed(1)}%</small>
@@ -427,7 +440,7 @@ function BudgetsPage() {
                       <div className="progress-header">
                         <span className="category-name">{progress.category}</span>
                         <span className="progress-amounts">
-                          ${progress.spent.toFixed(2)} / ${progress.allocated.toFixed(2)}
+                          {formatCurrency(progress.spent)} / {formatCurrency(progress.allocated)}
                         </span>
                       </div>
                       <div className="progress-bar-container">
@@ -444,7 +457,7 @@ function BudgetsPage() {
                           {progress.percent_used.toFixed(1)}% used
                         </span>
                         <span>
-                          ${progress.remaining.toFixed(2)} remaining
+                          {formatCurrency(progress.remaining)} remaining
                         </span>
                       </div>
                     </div>
@@ -461,10 +474,12 @@ function BudgetsPage() {
         <div className="modal-overlay" onClick={() => setShowOptimizationModal(false)}>
           <div className="modal modal-large" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{selectedBudget.name} - Optimization Suggestions</h2>
-              <button className="modal-close" onClick={() => setShowOptimizationModal(false)}>×</button>
+              <h2>{selectedBudget.name} — Optimization</h2>
+              <button className="modal-close" onClick={() => setShowOptimizationModal(false)}>
+                <X size={20} strokeWidth={1.5} />
+              </button>
             </div>
-            
+
             {optimizations.length === 0 ? (
               <div className="empty-state">
                 <p>No optimization suggestions available. Your budget looks good!</p>
@@ -474,7 +489,7 @@ function BudgetsPage() {
                 <p className="optimization-intro">
                   Based on your spending patterns over the last 3 months, here are some suggestions to optimize your budget:
                 </p>
-                
+
                 {optimizations.map((suggestion, idx) => (
                   <div key={idx} className="optimization-card" style={{ borderLeftColor: getPriorityColor(suggestion.priority) }}>
                     <div className="optimization-header">
@@ -485,16 +500,18 @@ function BudgetsPage() {
                     </div>
                     <div className="optimization-amounts">
                       <div>
-                        <label>Current:</label>
-                        <span>${suggestion.current_allocation.toFixed(2)}</span>
+                        <label>Current</label>
+                        <span>{formatCurrency(suggestion.current_allocation)}</span>
                       </div>
-                      <div className="arrow">→</div>
+                      <div className="arrow">
+                        <ArrowRight size={18} strokeWidth={1.5} />
+                      </div>
                       <div>
-                        <label>Suggested:</label>
-                        <span>${suggestion.suggested_allocation.toFixed(2)}</span>
+                        <label>Suggested</label>
+                        <span>{formatCurrency(suggestion.suggested_allocation)}</span>
                       </div>
                       <div className={suggestion.change_amount > 0 ? 'change-positive' : 'change-negative'}>
-                        {suggestion.change_amount > 0 ? '+' : ''}${suggestion.change_amount.toFixed(2)}
+                        {suggestion.change_amount > 0 ? '+' : ''}{formatCurrency(Math.abs(suggestion.change_amount))}
                         ({suggestion.change_percent > 0 ? '+' : ''}{suggestion.change_percent.toFixed(1)}%)
                       </div>
                     </div>

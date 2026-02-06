@@ -1,5 +1,6 @@
 """Application configuration management."""
 
+import json
 from typing import List
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -61,7 +62,11 @@ class Settings(BaseSettings):
 
     # CORS
     allowed_origins: List[str] = Field(
-        default=["http://localhost:3000", "http://localhost:8000"], alias="ALLOWED_ORIGINS"
+        default=["http://localhost:3000", "http://localhost:5173", "http://localhost:5175", "http://localhost:8000"], alias="ALLOWED_ORIGINS"
+    )
+    allowed_origin_regex: str | None = Field(
+        default=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
+        alias="ALLOWED_ORIGIN_REGEX",
     )
 
     @field_validator("allowed_origins", mode="before")
@@ -69,8 +74,34 @@ class Settings(BaseSettings):
     def parse_cors_origins(cls, v: str | List[str]) -> List[str]:
         """Parse CORS origins from comma-separated string or list."""
         if isinstance(v, str):
-            return [origin.strip() for origin in v.split(",")]
-        return v
+            raw = v.strip()
+            if not raw:
+                return []
+
+            # Prefer JSON array format from .env, fallback to comma-separated values.
+            if raw.startswith("["):
+                try:
+                    parsed = json.loads(raw)
+                    if isinstance(parsed, list):
+                        return [str(origin).strip() for origin in parsed if str(origin).strip()]
+                except json.JSONDecodeError:
+                    pass
+
+            return [
+                origin.strip().strip('"').strip("'")
+                for origin in raw.split(",")
+                if origin.strip()
+            ]
+        return [origin.strip() for origin in v if str(origin).strip()]
+
+    @field_validator("allowed_origin_regex", mode="before")
+    @classmethod
+    def parse_cors_origin_regex(cls, v: str | None) -> str | None:
+        """Normalize empty regex values to None."""
+        if v is None:
+            return None
+        value = str(v).strip()
+        return value or None
 
     # ML Models
     model_storage_path: str = Field(default="./models", alias="MODEL_STORAGE_PATH")
