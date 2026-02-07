@@ -42,6 +42,7 @@ class OmniIntent(str, Enum):
     """All intents the OmniBar can handle."""
 
     ADD_TRANSACTION = "add_transaction"
+    BULK_ADD_TRANSACTIONS = "bulk_add_transactions"
     ADD_GOAL = "add_goal"
     ADD_BUDGET = "add_budget"
     UPDATE_GOAL_PROGRESS = "update_goal_progress"
@@ -145,6 +146,11 @@ class IntentClassifier:
         Uses pattern matching with confidence scoring.
         """
         text_lower = text.lower().strip()
+
+        # Check for bulk/multi-transaction input first
+        bulk_result = self._detect_bulk_input(text, text_lower)
+        if bulk_result:
+            return bulk_result
 
         # Score each intent
         scores: Dict[OmniIntent, float] = {}
@@ -463,51 +469,76 @@ class IntentClassifier:
             "dinner": "Food & Dining",
             "breakfast": "Food & Dining",
             "snack": "Food & Dining",
+            "snacks": "Food & Dining",
             "sandwich": "Food & Dining",
             "pizza": "Food & Dining",
             "burger": "Food & Dining",
             "biryani": "Food & Dining",
+            "dosa": "Food & Dining",
             "meal": "Food & Dining",
+            "bun": "Food & Dining",
+            "ice cream": "Food & Dining",
+            "juice": "Food & Dining",
             "restaurant": "Restaurants",
+            "udupi": "Restaurants",
+            "mess": "Food & Dining",
+            "hotel": "Food & Dining",
             "cafe": "Coffee & Beverages",
             "coffee": "Coffee & Beverages",
             "tea": "Coffee & Beverages",
+            "chai": "Coffee & Beverages",
             "starbucks": "Coffee & Beverages",
+            "third wave": "Coffee & Beverages",
             "grocery": "Groceries",
             "groceries": "Groceries",
             "vegetable": "Groceries",
             "fruit": "Groceries",
             "supermarket": "Groceries",
+            "reliance": "Groceries",
+            "reliance smart": "Groceries",
+            "more supermarket": "Groceries",
+            "restock": "Groceries",
             "uber": "Transportation",
             "ola": "Transportation",
             "cab": "Transportation",
             "taxi": "Transportation",
-            "bus": "Transportation",
+            "bus ticket": "Transportation",
             "train": "Transportation",
             "metro": "Transportation",
+            "auto ride": "Transportation",
             "auto": "Transportation",
             "rickshaw": "Transportation",
             "fuel": "Gas & Fuel",
             "petrol": "Gas & Fuel",
             "diesel": "Gas & Fuel",
-            "gas": "Gas & Fuel",
+            "gas station": "Gas & Fuel",
+            "indian oil": "Gas & Fuel",
+            "shell": "Gas & Fuel",
+            "bharat petroleum": "Gas & Fuel",
+            "hp petrol": "Gas & Fuel",
             "netflix": "Subscriptions",
             "spotify": "Subscriptions",
             "subscription": "Subscriptions",
             "amazon prime": "Subscriptions",
             "hotstar": "Subscriptions",
             "youtube premium": "Subscriptions",
+            "ott": "Subscriptions",
             "movie": "Entertainment",
             "cinema": "Entertainment",
             "game": "Entertainment",
             "entertainment": "Entertainment",
             "electricity": "Bills & Utilities",
             "electric": "Bills & Utilities",
+            "electricity bill": "Bills & Utilities",
             "water bill": "Bills & Utilities",
             "internet": "Bills & Utilities",
             "wifi": "Bills & Utilities",
+            "wifi bill": "Bills & Utilities",
             "phone bill": "Bills & Utilities",
             "recharge": "Bills & Utilities",
+            "jio": "Bills & Utilities",
+            "airtel": "Bills & Utilities",
+            "vodafone": "Bills & Utilities",
             "rent": "Housing",
             "housing": "Housing",
             "emi": "Housing",
@@ -518,16 +549,18 @@ class IntentClassifier:
             "medical": "Healthcare",
             "pharmacy": "Healthcare",
             "health": "Healthcare",
+            "tablets": "Healthcare",
             "insurance": "Insurance",
             "school": "Education",
             "college": "Education",
             "course": "Education",
             "tuition": "Education",
             "book": "Education",
+            "books": "Education",
+            "stationery": "Education",
             "udemy": "Education",
             "travel": "Travel",
             "flight": "Travel",
-            "hotel": "Travel",
             "trip": "Travel",
             "vacation": "Travel",
             "shopping": "Shopping & Retail",
@@ -541,6 +574,8 @@ class IntentClassifier:
             "laptop": "Shopping & Retail",
             "phone": "Shopping & Retail",
             "mobile": "Shopping & Retail",
+            "online shopping": "Shopping & Retail",
+            "online purchase": "Shopping & Retail",
             "salary": "Income",
             "freelance": "Income",
             "income": "Income",
@@ -556,6 +591,7 @@ class IntentClassifier:
             "fast food": "Fast Food",
             "mcdonalds": "Fast Food",
             "kfc": "Fast Food",
+            "dominos": "Fast Food",
         }
 
         # Check for multi-word categories first (longest match)
@@ -586,9 +622,10 @@ class IntentClassifier:
         cleaned = " ".join(cleaned.split()).strip()
 
         if cleaned and len(cleaned) > 1:
-            return cleaned.title()
+            # Truncate to safe length (well under 500 char schema limit)
+            return cleaned.title()[:200]
 
-        return text.strip()[:100]  # Fallback to truncated original text
+        return text.strip()[:200]  # Fallback to truncated original text
 
     def _extract_quantity(self, text: str) -> Optional[int]:
         """Extract quantity from text like '2 sandwiches'."""
@@ -647,6 +684,458 @@ class IntentClassifier:
             else:
                 start = today - timedelta(days=30)
             return (start, today)
+
+        return None
+
+    def _detect_bulk_input(self, text: str, text_lower: str) -> Optional[IntentResult]:
+        """
+        Detect if the input contains multiple transactions (table, paragraph,
+        or messy freeform human text).
+
+        Handles:
+        - Markdown table format (| Date | Expense | Amount | ...)
+        - Multi-sentence paragraphs with varied phrasing
+        - Messy human language with dates and amounts scattered across lines
+        """
+        transactions: List[Dict[str, Any]] = []
+
+        # ---- Pattern A: Markdown / pipe-delimited table ----
+        table_rows = re.findall(
+            r"\|\s*(\d{1,2}[-/]\w{3}[-/]\d{2,4})\s*\|\s*(.+?)\s*\|\s*([\d,]+(?:\.\d+)?)\s*\|\s*(.+?)\s*\|",
+            text,
+        )
+        if len(table_rows) >= 2:
+            for row in table_rows:
+                date_str, description, amount_str, location = row
+                amount_str = amount_str.replace(",", "")
+                try:
+                    amount = float(amount_str)
+                except ValueError:
+                    continue
+                parsed_date = self._parse_date_str(date_str.strip())
+                desc = description.strip()
+                loc = location.strip()
+                category = self._extract_category(f"{desc} {loc}".lower())
+                transactions.append({
+                    "amount": amount,
+                    "description": f"{desc} at {loc}" if loc else desc,
+                    "date": parsed_date.isoformat() if parsed_date else date.today().isoformat(),
+                    "category": category,
+                })
+
+        # ---- Pattern B: Freeform human text (line-by-line) ----
+        # Split into lines, then parse each line for amounts and dates
+        if not transactions:
+            transactions = self._parse_freeform_bulk(text, text_lower)
+
+        # ---- Pattern C: Simple repeated lines ----
+        if not transactions:
+            # "Groceries 2350\nCoffee 180\nPetrol 1500"
+            line_pattern = re.findall(
+                r"^\s*(.+?)\s+(?:₹|rs\.?|\$)?\s*([\d,]+(?:\.\d+)?)\s*(?:₹|rs\.?)?\s*$",
+                text,
+                re.MULTILINE,
+            )
+            if len(line_pattern) >= 3:
+                for desc_raw, amount_str in line_pattern:
+                    amount_str = amount_str.replace(",", "")
+                    try:
+                        amount = float(amount_str)
+                        if amount < 1:
+                            continue
+                    except ValueError:
+                        continue
+                    desc = desc_raw.strip()[:200]
+                    category = self._extract_category(desc.lower())
+                    transactions.append({
+                        "amount": amount,
+                        "description": desc.title(),
+                        "date": date.today().isoformat(),
+                        "category": category,
+                    })
+
+        if len(transactions) >= 2:
+            return IntentResult(
+                intent=OmniIntent.BULK_ADD_TRANSACTIONS,
+                confidence=0.9,
+                entities={"transactions": transactions, "count": len(transactions)},
+                raw_text=text[:500],
+            )
+
+        return None
+
+    def _parse_freeform_bulk(self, text: str, text_lower: str) -> List[Dict[str, Any]]:
+        """
+        Parse messy, conversational multi-line text into individual transactions.
+
+        Handles human language like:
+        - "jan 7 gave ₹90 in some cafe for tea"
+        - "filled petrol maybe ₹1520 at indian oil"
+        - "bought book ₹450 and also coffee ₹190 same day"
+        - "paid electricity bill ₹2150 on jan 5"
+        """
+        transactions: List[Dict[str, Any]] = []
+
+        # Split into lines (each line is likely a separate transaction)
+        lines = [l.strip() for l in text.split('\n') if l.strip()]
+
+        # If only 1 line, try splitting by sentence-like boundaries
+        if len(lines) == 1:
+            # Split on period-space or semicolons but not on abbreviations like "rs."
+            lines = re.split(r'(?<=[^r])\.\s+|;\s*', text)
+            lines = [l.strip() for l in lines if l.strip()]
+
+        for line in lines:
+            line_lower = line.lower().strip()
+            if not line_lower or len(line_lower) < 5:
+                continue
+
+            # Extract ALL amounts from this line (handles "book ₹450 and coffee ₹190")
+            amounts_in_line = self._extract_all_amounts(line, line_lower)
+
+            if not amounts_in_line:
+                continue
+
+            # Extract the date for this line
+            line_date = self._extract_freeform_date(line_lower)
+
+            # If multiple amounts in one line, split into sub-transactions
+            if len(amounts_in_line) > 1:
+                for amt_val, amt_start, amt_end in amounts_in_line:
+                    # Try to find a description near this amount
+                    desc = self._extract_nearby_description(line, line_lower, amt_start, amt_end)
+                    category = self._extract_category(desc.lower()) if desc else None
+                    transactions.append({
+                        "amount": amt_val,
+                        "description": (desc or "Expense").title()[:200],
+                        "date": line_date.isoformat() if line_date else date.today().isoformat(),
+                        "category": category,
+                    })
+            else:
+                # Single amount in this line
+                amt_val = amounts_in_line[0][0]
+                desc = self._extract_line_description(line, line_lower)
+                category = self._extract_category(line_lower)
+                transactions.append({
+                    "amount": amt_val,
+                    "description": (desc or "Expense").title()[:200],
+                    "date": line_date.isoformat() if line_date else date.today().isoformat(),
+                    "category": category,
+                })
+
+        return transactions
+
+    def _extract_all_amounts(self, text: str, text_lower: str) -> List[tuple]:
+        """
+        Extract ALL monetary amounts from a line of text.
+        Returns list of (value, start_pos, end_pos).
+        """
+        results = []
+        seen_positions = set()
+
+        # Pattern 1: ₹/Rs followed by number — "₹90", "rs 1520", "Rs.2150"
+        for m in re.finditer(r'(?:₹|rs\.?\s*)([\d,]+(?:\.\d{1,2})?)', text, re.IGNORECASE):
+            amt_str = m.group(1).replace(",", "").rstrip('+')
+            try:
+                val = float(amt_str)
+                if val >= 5:
+                    pos_key = m.start()
+                    if pos_key not in seen_positions:
+                        seen_positions.add(pos_key)
+                        results.append((val, m.start(), m.end()))
+            except ValueError:
+                continue
+
+        # Pattern 2: Number followed by rs/rupees — "1520 rs", "2150 rupees"
+        for m in re.finditer(r'([\d,]+(?:\.\d{1,2})?)\s*(?:rs\.?|rupees?)\b', text, re.IGNORECASE):
+            amt_str = m.group(1).replace(",", "").rstrip('+')
+            try:
+                val = float(amt_str)
+                if val >= 5:
+                    pos_key = m.start()
+                    if pos_key not in seen_positions:
+                        seen_positions.add(pos_key)
+                        results.append((val, m.start(), m.end()))
+            except ValueError:
+                continue
+
+        # Pattern 3: Dollar sign — "$250"
+        for m in re.finditer(r'\$([\d,]+(?:\.\d{1,2})?)', text):
+            amt_str = m.group(1).replace(",", "")
+            try:
+                val = float(amt_str)
+                if val >= 1:
+                    pos_key = m.start()
+                    if pos_key not in seen_positions:
+                        seen_positions.add(pos_key)
+                        results.append((val, m.start(), m.end()))
+            except ValueError:
+                continue
+
+        return results
+
+    def _extract_freeform_date(self, text_lower: str) -> Optional[date]:
+        """
+        Extract date from messy text like "jan 7", "on jan 5", "january 12",
+        "jan 2 night".
+
+        More aggressive than _extract_date, designed for per-line parsing
+        in bulk mode.
+        """
+        today = date.today()
+        current_year = today.year
+
+        months = {
+            "jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
+            "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12,
+            "january": 1, "february": 2, "march": 3, "april": 4,
+            "june": 6, "july": 7, "august": 8, "september": 9,
+            "october": 10, "november": 11, "december": 12,
+        }
+
+        # Match "jan 7", "jan 28", "january 5", "feb 14" etc.
+        # Flexible: "jan 7", "on jan 7", "around jan 7", "jan 2 night"
+        for month_name, month_num in months.items():
+            # "jan 7" or "jan 28" — month followed by day
+            match = re.search(
+                rf'\b{month_name}\s+(\d{{1,2}})\b', text_lower
+            )
+            if match:
+                day = int(match.group(1))
+                if 1 <= day <= 31:
+                    try:
+                        return date(current_year, month_num, day)
+                    except ValueError:
+                        continue
+
+            # "7 jan" or "28 january" — day followed by month
+            match = re.search(
+                rf'\b(\d{{1,2}})\s+{month_name}\b', text_lower
+            )
+            if match:
+                day = int(match.group(1))
+                if 1 <= day <= 31:
+                    try:
+                        return date(current_year, month_num, day)
+                    except ValueError:
+                        continue
+
+            # "7th jan", "5th january"
+            match = re.search(
+                rf'\b(\d{{1,2}})(?:st|nd|rd|th)\s+{month_name}\b', text_lower
+            )
+            if match:
+                day = int(match.group(1))
+                if 1 <= day <= 31:
+                    try:
+                        return date(current_year, month_num, day)
+                    except ValueError:
+                        continue
+
+        # Relative dates
+        if "today" in text_lower:
+            return today
+        if "yesterday" in text_lower:
+            return today - timedelta(days=1)
+
+        # "N days ago"
+        match = re.search(r'(\d+)\s*days?\s*ago', text_lower)
+        if match:
+            return today - timedelta(days=int(match.group(1)))
+
+        return None
+
+    def _extract_nearby_description(
+        self, text: str, text_lower: str, amt_start: int, amt_end: int
+    ) -> Optional[str]:
+        """
+        Extract a description for a specific amount in a multi-amount line.
+
+        E.g., for "bought book ₹450 and also coffee ₹190 same day":
+        - For the ₹450 at position X: returns "book"
+        - For the ₹190 at position Y: returns "coffee"
+        """
+        # Look at text before the amount for the description
+        before = text_lower[:amt_start].strip()
+        after = text_lower[amt_end:].strip()
+
+        # Find the most relevant word(s) before the amount
+        # Strip common filler words from the end of 'before'
+        before = re.sub(
+            r'\s*(maybe|around|approx|approximately|like|about|roughly|near|'
+            r'₹|rs\.?|\$|for|paid|spent|gave|cost|was|is|and|also|plus|'
+            r'another|then|later)\s*$',
+            '', before, flags=re.IGNORECASE
+        ).strip()
+
+        # Get the last meaningful phrase from 'before'
+        # Split on conjunctions/separators to isolate this sub-item
+        parts = re.split(r'\b(?:and|also|plus|then|later|,)\b', before)
+        desc_part = parts[-1].strip() if parts else before
+
+        # Clean up the description
+        desc = self._clean_description_text(desc_part)
+
+        if desc and len(desc) >= 2:
+            return desc
+
+        # Try the text after the amount
+        after_clean = re.sub(
+            r'^[\s,\.\-]+', '', after
+        )
+        after_parts = re.split(r'\b(?:and|also|plus|then|later|,)\b', after_clean)
+        if after_parts:
+            desc = self._clean_description_text(after_parts[0].strip())
+            if desc and len(desc) >= 2:
+                return desc
+
+        return None
+
+    def _extract_line_description(self, text: str, text_lower: str) -> Optional[str]:
+        """
+        Extract a clean description from a single-amount freeform line.
+
+        E.g., "uhh on jan 7 i think i gave around ₹90 in some small cafe for tea and bun"
+        → "Tea and bun at cafe"
+        """
+        # Strategy: Remove dates, amounts, filler words, and extract what's left
+        cleaned = text_lower
+
+        # Remove date references
+        cleaned = re.sub(
+            r'\b(?:on\s+)?(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|'
+            r'may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|'
+            r'nov(?:ember)?|dec(?:ember)?)\s+\d{1,2}(?:st|nd|rd|th)?\b',
+            ' ', cleaned, flags=re.IGNORECASE
+        )
+
+        # Remove amounts: "₹90", "rs 1520", "1520 rs", "₹2300+"
+        cleaned = re.sub(r'(?:₹|rs\.?\s*)[\d,]+(?:\.\d+)?\+?', ' ', cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r'[\d,]+(?:\.\d+)?\+?\s*(?:rs\.?|rupees?)', ' ', cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r'\$[\d,]+(?:\.\d+)?', ' ', cleaned)
+
+        # Remove standalone numbers (likely amounts/dates without context)
+        cleaned = re.sub(r'\b\d{3,}\+?\b', ' ', cleaned)
+
+        # Remove filler/noise words
+        filler = (
+            r'\b(uhh|umm|hmm|idk|i think|i guess|i remember|maybe|'
+            r'probably|around|approx|approximately|like|about|roughly|'
+            r'or something|or so|not sure|dont remember|don\'t remember|'
+            r'something|somewhere|somehow|went|was|is|are|am|'
+            r'felt|wasted|spent time|spent|spending|the|a|an|on|in|at|to|for|from|of|'
+            r'it|my|me|i|we|he|she|they|with|this|that|these|those|'
+            r'did|does|do|had|has|have|got|been|being|be|'
+            r'some|any|much|more|too|very|really|actually|honestly|'
+            r'anyway|tho|though|but|and|also|plus|then|later|after|before|'
+            r'morning|afternoon|evening|night|late|early|'
+            r'last|next|day|days|week|month|year|same day|'
+            r'paid|gave|cost|costs|costed|bought|purchased|ordered|took|'
+            r'filled|charged|wasted|remember|near|nearby|'
+            r'not worth|worth|exact|exactly|no reason|crazy|hell|'
+            r'wallet cried|life saved|overprice|cant live without|become|became|'
+            r'nothing special|random|quick|big|small|normal|average|'
+            r'didnt|didn\'t|have change|change|'
+            r'one|two|first|second|trip|how|why|bill became|'
+            r'painful|prices|price|stuff|etc|idk|reason)\b'
+        )
+        cleaned = re.sub(filler, ' ', cleaned, flags=re.IGNORECASE)
+
+        # Remove leftover punctuation noise
+        cleaned = re.sub(r'[,\.\!\?;:\-\+]+', ' ', cleaned)
+        cleaned = ' '.join(cleaned.split()).strip()
+
+        if cleaned and len(cleaned) >= 2:
+            # Capitalize nicely
+            return cleaned.strip().title()
+
+        # Fallback: try to get a keyword from the category map
+        category = self._extract_category(text_lower)
+        if category:
+            return category
+
+        return None
+
+    def _clean_description_text(self, text: str) -> str:
+        """Clean description text by removing noise words and formatting."""
+        # Remove dates
+        cleaned = re.sub(
+            r'\b(?:on\s+)?(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|'
+            r'may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|'
+            r'nov(?:ember)?|dec(?:ember)?)\s+\d{1,2}(?:st|nd|rd|th)?\b',
+            ' ', text, flags=re.IGNORECASE
+        )
+
+        # Remove noise
+        noise = (
+            r'\b(uhh|umm|hmm|idk|i think|i guess|i remember|maybe|'
+            r'probably|around|approx|like|about|roughly|or something|'
+            r'not sure|dont remember|somewhere|somehow|'
+            r'on|in|at|to|for|from|of|it|my|me|i|we|spending|near|nearby|'
+            r'did|had|has|got|been|some|any|the|a|an|took|'
+            r'morning|afternoon|evening|night|late|early|'
+            r'paid|gave|spent|bought|filled|cost|charged|wasted|'
+            r'didnt|didn\'t|have change|change|how|why|bill became|'
+            r'painful|prices|price|stuff|etc|reason|again)\b'
+        )
+        cleaned = re.sub(noise, ' ', cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r'[,\.\!\?;:\-\+]+', ' ', cleaned)
+        cleaned = ' '.join(cleaned.split()).strip()
+
+        return cleaned
+
+    def _parse_date_str(self, date_str: str) -> Optional[date]:
+        """Parse various date string formats."""
+        months = {
+            "jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
+            "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12,
+            "january": 1, "february": 2, "march": 3, "april": 4,
+            "june": 6, "july": 7, "august": 8, "september": 9,
+            "october": 10, "november": 11, "december": 12,
+        }
+
+        date_str = date_str.lower().strip()
+
+        # "01-Jan-2026" or "01/Jan/2026"
+        match = re.match(r"(\d{1,2})[-/](\w{3,})[-/](\d{2,4})", date_str)
+        if match:
+            day = int(match.group(1))
+            month_str = match.group(2).lower()
+            year = int(match.group(3))
+            if year < 100:
+                year += 2000
+            month = months.get(month_str)
+            if month:
+                try:
+                    return date(year, month, day)
+                except ValueError:
+                    pass
+
+        # "January 1, 2026" or "january 1 2026"
+        match = re.match(r"(\w+)\s+(\d{1,2})(?:,?\s*(\d{4}))?" , date_str)
+        if match:
+            month_str = match.group(1).lower()
+            day = int(match.group(2))
+            year = int(match.group(3)) if match.group(3) else date.today().year
+            month = months.get(month_str)
+            if month:
+                try:
+                    return date(year, month, day)
+                except ValueError:
+                    pass
+
+        # "1 January 2026"
+        match = re.match(r"(\d{1,2})\s+(\w+)(?:\s+(\d{4}))?" , date_str)
+        if match:
+            day = int(match.group(1))
+            month_str = match.group(2).lower()
+            year = int(match.group(3)) if match.group(3) else date.today().year
+            month = months.get(month_str)
+            if month:
+                try:
+                    return date(year, month, day)
+                except ValueError:
+                    pass
 
         return None
 
@@ -734,6 +1223,7 @@ class OmniBarExecutor:
         try:
             handler = {
                 OmniIntent.ADD_TRANSACTION: self._add_transaction,
+                OmniIntent.BULK_ADD_TRANSACTIONS: self._bulk_add_transactions,
                 OmniIntent.ADD_GOAL: self._add_goal,
                 OmniIntent.ADD_BUDGET: self._add_budget,
                 OmniIntent.UPDATE_GOAL_PROGRESS: self._update_goal_progress,
@@ -791,6 +1281,9 @@ class OmniBarExecutor:
                 tx_date = date.today()
 
         description = entities.get("description", result.raw_text[:100])
+        # Enforce max length to avoid validation errors
+        if description and len(description) > 200:
+            description = description[:200].rsplit(' ', 1)[0]
         category = entities.get("category")
         
         # Determine type — check for income keywords
@@ -839,6 +1332,104 @@ class OmniBarExecutor:
                 "category": cat_display,
                 "date": tx_date.isoformat() if isinstance(tx_date, date) else tx_date,
                 "type": tx_type,
+            },
+            confidence=result.confidence,
+        )
+
+    async def _bulk_add_transactions(self, result: IntentResult) -> OmniResponse:
+        """Create multiple transactions from bulk input (table or paragraph)."""
+        from app.services.transaction_service import TransactionService
+        from app.schemas.transaction import TransactionCreate, TransactionSource
+
+        transactions_data = result.entities.get("transactions", [])
+        if not transactions_data:
+            return OmniResponse(
+                success=False,
+                message="I couldn't parse any transactions from your input. Try pasting them one at a time.",
+                intent=result.intent.value,
+            )
+
+        service = TransactionService(self.db)
+        created_count = 0
+        total_amount = 0.0
+        errors = []
+        created_items = []
+
+        for i, tx_data in enumerate(transactions_data):
+            try:
+                amount = tx_data.get("amount", 0)
+                if amount <= 0:
+                    continue
+
+                tx_date = tx_data.get("date", date.today().isoformat())
+                if isinstance(tx_date, str):
+                    try:
+                        tx_date = date.fromisoformat(tx_date)
+                    except ValueError:
+                        tx_date = date.today()
+
+                description = str(tx_data.get("description", "Expense"))[:200]
+                category = tx_data.get("category")
+
+                tx_create = TransactionCreate(
+                    amount=Decimal(str(amount)),
+                    date=tx_date,
+                    description=description,
+                    type="EXPENSE",
+                    source=TransactionSource.MANUAL,
+                    category=category,
+                )
+
+                created = await service.create_transaction(
+                    user_id=self.user_id,
+                    transaction_data=tx_create,
+                    category=category,
+                )
+                created_count += 1
+                total_amount += amount
+                cat_display = created.category or category or "Uncategorized"
+                created_items.append({
+                    "description": description,
+                    "amount": amount,
+                    "category": cat_display,
+                    "date": tx_date.isoformat() if isinstance(tx_date, date) else tx_date,
+                })
+            except Exception as e:
+                errors.append(f"Row {i+1}: {str(e)[:80]}")
+                continue
+
+        if created_count == 0:
+            return OmniResponse(
+                success=False,
+                message="Failed to create any transactions. " + (errors[0] if errors else "Check your input format."),
+                intent=result.intent.value,
+            )
+
+        # Build summary message
+        msg = f"📋 **Bulk Import Complete!**\n\n"
+        msg += f"• **{created_count}** transactions added\n"
+        msg += f"• Total: **₹{total_amount:,.2f}**\n\n"
+
+        # Show first 10 items
+        msg += "| # | Description | Amount | Category |\n"
+        msg += "|---|-------------|--------|----------|\n"
+        for j, item in enumerate(created_items[:10]):
+            msg += f"| {j+1} | {item['description'][:30]} | ₹{item['amount']:,.0f} | {item['category']} |\n"
+        if len(created_items) > 10:
+            msg += f"\n...and {len(created_items) - 10} more\n"
+
+        if errors:
+            msg += f"\n⚠️ {len(errors)} row(s) had errors and were skipped."
+
+        return OmniResponse(
+            success=True,
+            message=msg.strip(),
+            intent=result.intent.value,
+            data={
+                "created_count": created_count,
+                "total_amount": total_amount,
+                "items": created_items[:20],
+                "errors": errors[:5],
             },
             confidence=result.confidence,
         )
