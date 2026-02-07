@@ -1,12 +1,12 @@
 """Transaction service for managing financial transactions."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from datetime import date as date_type
 from decimal import Decimal
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import select, func, and_, desc
+from sqlalchemy import select, func, and_, desc, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.transaction import Transaction
@@ -292,6 +292,40 @@ class TransactionService:
         )
 
         return True
+
+    async def delete_all_user_transactions(self, user_id: UUID) -> int:
+        """Soft delete all transactions for a user.
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            Number of transactions deleted
+        """
+        # Soft delete all transactions for user
+        stmt = (
+            update(Transaction)
+            .where(
+                and_(
+                    Transaction.user_id == user_id,
+                    Transaction.deleted_at.is_(None),
+                )
+            )
+            .values(deleted_at=datetime.utcnow())
+        )
+
+        result = await self.db.execute(stmt)
+        await self.db.flush()
+
+        deleted_count = int(result.rowcount or 0)  # type: ignore
+
+        logger.info(
+            "All transactions deleted for user",
+            user_id=str(user_id),
+            count=deleted_count,
+        )
+
+        return deleted_count
 
     async def list_transactions(
         self,
