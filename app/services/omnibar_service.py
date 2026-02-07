@@ -582,6 +582,7 @@ class IntentClassifier:
             "mobile": "Shopping & Retail",
             "online shopping": "Shopping & Retail",
             "online purchase": "Shopping & Retail",
+            "online": "Shopping & Retail",
             "salary": "Income",
             "freelance": "Income",
             "income": "Income",
@@ -615,13 +616,19 @@ class IntentClassifier:
         cleaned = re.sub(
             r"\b(i |i've |had |bought |purchased |spent |paid |cost |costs? |"
             r"yesterday |today |tomorrow |last |this |at |on |for |the |a |an |"
-            r"was |is |it |my |me |rs\.? |₹ |\$ |rupees? |dollars? )\b",
+            r"was |is |it |my |me |₹ |\$ |dollars? )\b",
             " ",
             text,
             flags=re.IGNORECASE,
         )
-        # Remove amounts
+        # Remove amounts with currency suffixes ("332rs", "500 rupees")
+        cleaned = re.sub(r'[\d,]+(?:\.\d+)?\s*(?:rs\.?|rupees?)\b', ' ', cleaned, flags=re.IGNORECASE)
+        # Remove currency prefixes with amounts ("rs 500", "rs.200")
+        cleaned = re.sub(r'\b(?:rs\.?|rupees?)\s*[\d,]+', ' ', cleaned, flags=re.IGNORECASE)
+        # Remove remaining standalone amounts
         cleaned = re.sub(r"[\d,]+(?:\.\d+)?", " ", cleaned)
+        # Remove leftover standalone 'rs' / 'rupees'
+        cleaned = re.sub(r'\brs\.?\b|\brupees?\b', ' ', cleaned, flags=re.IGNORECASE)
         # Remove times
         cleaned = re.sub(r"\d{1,2}(?::\d{2})?\s*(?:am|pm)", " ", cleaned, flags=re.IGNORECASE)
         # Clean up whitespace
@@ -835,6 +842,13 @@ class IntentClassifier:
             if zone_date:
                 current_date = zone_date
 
+            # ---- Quantity multiplication ----
+            # Detect patterns like "3 puffs for 1 puffs its 32" → 3 × 32 = 96
+            # Pattern: "N item(s) ... 1 item ... (its|is|costs|=) AMOUNT"
+            quantity = self._detect_quantity_multiplier(zone_lower)
+            if quantity and quantity > 1:
+                amt_val = amt_val * quantity
+
             # Extract description from zone (last clause approach)
             desc = self._extract_zone_description(zone)
 
@@ -874,6 +888,50 @@ class IntentClassifier:
             last_end = amt_end
 
         return transactions
+
+    def _detect_quantity_multiplier(self, zone_lower: str) -> Optional[int]:
+        """
+        Detect unit-price multiplication pattern in a zone.
+
+        "3 puffs for 1 puffs its" → returns 3 (caller multiplies amount by 3)
+        "2 pazhampori for 1 pazhampori its" → returns 2
+        "3 vada for" → returns None (no per-unit indicator)
+
+        Generic patterns detected:
+        - "N item ... 1 item ... (its|is|costs|each|per)" → quantity = N
+        - "N item ... each (is|costs|=)" → quantity = N
+        - "N item ... per (item|piece|unit)" → quantity = N
+        - "N x AMOUNT" or "N × AMOUNT" → quantity = N
+        """
+        # Pattern 1: "N item(s) ... 1 item (its|is|costs)"
+        # e.g., "3 puffs for 1 puffs its" or "2 pazhampori for 1 pazhampori its"
+        m = re.search(
+            r'(\d+)\s+(\w+).*?\b1\s+\2.*?\b(?:its|is|costs?|was|=)',
+            zone_lower
+        )
+        if m:
+            qty = int(m.group(1))
+            if 2 <= qty <= 100:
+                return qty
+
+        # Pattern 2: "N item(s) ... each ... (its|is|costs)"
+        m = re.search(
+            r'(\d+)\s+\w+.*?\beach\b',
+            zone_lower
+        )
+        if m:
+            qty = int(m.group(1))
+            if 2 <= qty <= 100:
+                return qty
+
+        # Pattern 3: "N x" or "N ×" immediately before the amount
+        m = re.search(r'(\d+)\s*[x×]\s*$', zone_lower.strip())
+        if m:
+            qty = int(m.group(1))
+            if 2 <= qty <= 100:
+                return qty
+
+        return None
 
     def _extract_zone_description(self, zone: str) -> Optional[str]:
         """
@@ -953,6 +1011,15 @@ class IntentClassifier:
         cleaned = re.sub(noise, ' ', last_clause, flags=re.IGNORECASE)
         cleaned = re.sub(r'[,\.\!\?;:\-\+\…\"\']+', ' ', cleaned)
         cleaned = ' '.join(cleaned.split()).strip()
+
+        # Deduplicate consecutive repeated words ("Pazhampori Pazhampori" → "Pazhampori")
+        if cleaned:
+            words = cleaned.split()
+            deduped = [words[0]]
+            for w in words[1:]:
+                if w.lower() != deduped[-1].lower():
+                    deduped.append(w)
+            cleaned = ' '.join(deduped)
 
         if cleaned and len(cleaned) >= 2:
             return cleaned.title()
