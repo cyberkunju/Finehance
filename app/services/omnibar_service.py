@@ -507,6 +507,7 @@ class IntentClassifier:
             "metro": "Transportation",
             "auto ride": "Transportation",
             "auto": "Transportation",
+            "ride": "Transportation",
             "rickshaw": "Transportation",
             "fuel": "Gas & Fuel",
             "petrol": "Gas & Fuel",
@@ -530,6 +531,8 @@ class IntentClassifier:
             "electricity": "Bills & Utilities",
             "electric": "Bills & Utilities",
             "electricity bill": "Bills & Utilities",
+            "current bill": "Bills & Utilities",
+            "light bill": "Bills & Utilities",
             "water bill": "Bills & Utilities",
             "internet": "Bills & Utilities",
             "wifi": "Bills & Utilities",
@@ -558,6 +561,9 @@ class IntentClassifier:
             "book": "Education",
             "books": "Education",
             "stationery": "Education",
+            "stationary": "Education",
+            "pens": "Education",
+            "notebooks": "Education",
             "udemy": "Education",
             "travel": "Travel",
             "flight": "Travel",
@@ -766,96 +772,235 @@ class IntentClassifier:
 
     def _parse_freeform_bulk(self, text: str, text_lower: str) -> List[Dict[str, Any]]:
         """
-        Parse messy, conversational multi-line text into individual transactions.
+        Amount-centric parser for messy freeform human text.
 
-        Handles human language like:
-        - "jan 7 gave ₹90 in some cafe for tea"
-        - "filled petrol maybe ₹1520 at indian oil"
-        - "bought book ₹450 and also coffee ₹190 same day"
-        - "paid electricity bill ₹2150 on jan 5"
+        Instead of parsing line-by-line, this finds ALL amounts in the entire
+        text and extracts description/date from the surrounding context ("zone")
+        of each amount. This prevents context bleed between expenses.
+
+        The "zone" for each amount is the text between the end of the previous
+        amount and the start of this amount. The description is extracted from
+        the LAST CLAUSE of the zone (closest to the amount).
+
+        Handles:
+        - "jan 1 grocery 2350 reliance" (bare numbers, no ₹/Rs)
+        - "coffee ₹200 ₹220 ₹180" (rapid-fire amounts with shared description)
+        - "auto ₹130, cab ₹210, uber ₹240" (different descriptions per amount)
+        - Paragraph-style with emotional noise and context bleed prevention
         """
         transactions: List[Dict[str, Any]] = []
 
-        # Split into lines (each line is likely a separate transaction)
-        lines = [l.strip() for l in text.split('\n') if l.strip()]
+        # Step 1: Find all date number positions to exclude from amount detection
+        date_number_positions: set = set()
+        date_pos_pattern = (
+            r'\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|'
+            r'may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|'
+            r'nov(?:ember)?|dec(?:ember)?)'
+            r'\s+(?:(?:maybe|around|about|like|probably|i\s+think)\s+)?'
+            r'(\d{1,2})\b'
+        )
+        for m in re.finditer(date_pos_pattern, text_lower):
+            date_number_positions.add((m.start(1), m.end(1)))
+        # Also "7 jan", "5th january"
+        date_pos_rev = (
+            r'\b(\d{1,2})(?:st|nd|rd|th)?\s+'
+            r'(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|'
+            r'may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|'
+            r'nov(?:ember)?|dec(?:ember)?)\b'
+        )
+        for m in re.finditer(date_pos_rev, text_lower):
+            date_number_positions.add((m.start(1), m.end(1)))
 
-        # If only 1 line, try splitting by sentence-like boundaries
-        if len(lines) == 1:
-            # Split on period-space or semicolons but not on abbreviations like "rs."
-            lines = re.split(r'(?<=[^r])\.\s+|;\s*', text)
-            lines = [l.strip() for l in lines if l.strip()]
+        # Step 2: Find ALL amounts (₹/Rs/$ prefixed + bare numbers)
+        amounts = self._extract_all_amounts(text, text_lower, date_number_positions)
 
-        for line in lines:
-            line_lower = line.lower().strip()
-            if not line_lower or len(line_lower) < 5:
-                continue
+        if len(amounts) < 2:
+            return []
 
-            # Extract ALL amounts from this line (handles "book ₹450 and coffee ₹190")
-            amounts_in_line = self._extract_all_amounts(line, line_lower)
+        # Sort by position in text
+        amounts.sort(key=lambda x: x[1])
 
-            if not amounts_in_line:
-                continue
+        # Step 3: For each amount, extract description from its "zone"
+        current_date: Optional[date] = None
+        last_desc: Optional[str] = None
+        last_end = 0
 
-            # Extract the date for this line
-            line_date = self._extract_freeform_date(line_lower)
+        for idx, (amt_val, amt_start, amt_end) in enumerate(amounts):
+            # Zone = text between end of previous amount and start of this amount
+            zone = text[last_end:amt_start]
+            zone_lower = zone.lower()
 
-            # If multiple amounts in one line, split into sub-transactions
-            if len(amounts_in_line) > 1:
-                for amt_val, amt_start, amt_end in amounts_in_line:
-                    # Try to find a description near this amount
-                    desc = self._extract_nearby_description(line, line_lower, amt_start, amt_end)
-                    category = self._extract_category(desc.lower()) if desc else None
-                    transactions.append({
-                        "amount": amt_val,
-                        "description": (desc or "Expense").title()[:200],
-                        "date": line_date.isoformat() if line_date else date.today().isoformat(),
-                        "category": category,
-                    })
+            # Extract date from zone (update tracking)
+            zone_date = self._extract_freeform_date(zone_lower)
+            if zone_date:
+                current_date = zone_date
+
+            # Extract description from zone (last clause approach)
+            desc = self._extract_zone_description(zone)
+
+            # If no description in zone before, INHERIT from previous first.
+            # Only look at after-zone if there's no previous description to inherit.
+            # This prevents rapid-fire amounts (₹200 ₹220 ₹180) from grabbing
+            # the NEXT expense's description instead of sharing the current one.
+            if not desc:
+                if last_desc:
+                    desc = last_desc
+                else:
+                    # No previous desc to inherit — try small window after amount
+                    if idx + 1 < len(amounts):
+                        after_zone = text[amt_end:amounts[idx + 1][1]]
+                    else:
+                        after_zone = text[amt_end:min(amt_end + 60, len(text))]
+                    after_desc = self._extract_zone_description(after_zone)
+                    if after_desc:
+                        desc = after_desc
+
+            # Update tracking
+            if desc and len(desc) >= 2:
+                last_desc = desc
             else:
-                # Single amount in this line
-                amt_val = amounts_in_line[0][0]
-                desc = self._extract_line_description(line, line_lower)
-                category = self._extract_category(line_lower)
-                transactions.append({
-                    "amount": amt_val,
-                    "description": (desc or "Expense").title()[:200],
-                    "date": line_date.isoformat() if line_date else date.today().isoformat(),
-                    "category": category,
-                })
+                desc = last_desc or "Expense"
+
+            # Categorize from the CLEAN description only (prevents category leakage)
+            category = self._extract_category(desc.lower())
+
+            transactions.append({
+                "amount": amt_val,
+                "description": desc.title()[:200],
+                "date": current_date.isoformat() if current_date else date.today().isoformat(),
+                "category": category,
+            })
+
+            last_end = amt_end
 
         return transactions
 
-    def _extract_all_amounts(self, text: str, text_lower: str) -> List[tuple]:
+    def _extract_zone_description(self, zone: str) -> Optional[str]:
         """
-        Extract ALL monetary amounts from a line of text.
+        Extract description from the text zone between two amounts.
+
+        Uses a "last clause" strategy: split by sentence/clause boundaries,
+        take the last clause (closest to the amount), and clean it.
+        This naturally prevents context bleed from earlier expenses.
+        """
+        if not zone or not zone.strip():
+            return None
+
+        zone_text = zone.lower()
+
+        # Remove date references (with optional filler between month and day)
+        zone_text = re.sub(
+            r'\b(?:on\s+)?(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|'
+            r'may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|'
+            r'nov(?:ember)?|dec(?:ember)?)'
+            r'(?:\s+(?:(?:maybe|around|about|like|probably|i\s+think)\s+)?'
+            r'\d{1,2}(?:st|nd|rd|th)?)?\b',
+            ' ', zone_text
+        )
+
+        # Remove any remaining amounts/numbers
+        zone_text = re.sub(r'(?:₹|rs\.?\s*)[\d,]+', ' ', zone_text, flags=re.IGNORECASE)
+        zone_text = re.sub(r'[\d,]+\s*(?:rs\.?|rupees?)', ' ', zone_text, flags=re.IGNORECASE)
+        zone_text = re.sub(r'\$[\d,]+', ' ', zone_text)
+        zone_text = re.sub(r'\b\d+\b', ' ', zone_text)
+
+        # Split into clauses by natural boundaries (period, newline, comma+space, conjunctions)
+        clauses = re.split(
+            r'[.\n…]+\s*|\s*,\s+|\s+(?:but|then|also|and then|and also)\s+',
+            zone_text
+        )
+
+        # Filter out empty clauses and work from the last one
+        clauses = [c.strip() for c in clauses if c and c.strip()]
+
+        if not clauses:
+            return None
+
+        # Take the last clause (closest to the amount)
+        last_clause = clauses[-1]
+
+        # Clean noise words
+        noise = (
+            r'\b(uhh|umm|hmm|idk|i think|i guess|maybe|ok|okay|alright|'
+            r'probably|around|approx|like|about|roughly|'
+            r'or something|not sure|'
+            r'went|was|is|are|am|felt|'
+            r'the|a|an|on|in|at|to|for|from|of|'
+            r'it|its|my|me|i|we|he|she|they|with|this|that|'
+            r'did|does|do|had|has|have|got|been|being|be|'
+            r'some|any|much|more|too|very|really|actually|honestly|'
+            r'tho|though|but|then|and|also|plus|later|after|before|'
+            r'morning|afternoon|evening|night|late|early|'
+            r'paid|gave|spent|bought|ordered|took|'
+            r'filled|charged|wasted|remember|'
+            r'worth|not worth|exactly|no reason|crazy|hell|'
+            r'wallet cried|overprice|cant live without|'
+            r'nothing special|random|quick|big|small|normal|average|'
+            r'didnt|didn\'t|again|'
+            r'one|two|first|second|how|why|'
+            r'painful|prices?|stuff|etc|reason|'
+            r'needed|still|eating|money|gone|start|itself|'
+            r'worst|crying|must|pay|smart|'
+            r'getting|bad|should|stop|multiple|'
+            r'stupid|even|buy|'
+            r'necessary|fine|keep|adding|silently|'
+            r'draining|flowing|water|seriously|need|control|'
+            r'cycle|repeat|same|finish|end|month|year|week|'
+            r'regret|not good|taste|shock|heavy|bags|'
+            r'cold|spicy|expensive|man|'
+            r'hurt|addiction|spending|too much|waste|time|traffic)\b'
+        )
+        cleaned = re.sub(noise, ' ', last_clause, flags=re.IGNORECASE)
+        cleaned = re.sub(r'[,\.\!\?;:\-\+\…\"\']+', ' ', cleaned)
+        cleaned = ' '.join(cleaned.split()).strip()
+
+        if cleaned and len(cleaned) >= 2:
+            return cleaned.title()
+
+        return None
+
+    def _extract_all_amounts(
+        self, text: str, text_lower: str,
+        date_positions: Optional[set] = None
+    ) -> List[tuple]:
+        """
+        Extract ALL monetary amounts from text.
         Returns list of (value, start_pos, end_pos).
+
+        Handles:
+        - ₹/Rs prefixed amounts ("₹90", "rs 1520")
+        - Dollar amounts ("$250")
+        - Bare numbers ("grocery 2350", "petrol 1500") — when date_positions
+          is provided, excludes numbers that are part of date patterns
         """
+        if date_positions is None:
+            date_positions = set()
+
         results = []
-        seen_positions = set()
+        seen_ranges: List[tuple] = []  # (start, end) of found amounts
+
+        def _overlaps(start: int, end: int) -> bool:
+            return any(not (end <= sr[0] or start >= sr[1]) for sr in seen_ranges)
 
         # Pattern 1: ₹/Rs followed by number — "₹90", "rs 1520", "Rs.2150"
-        for m in re.finditer(r'(?:₹|rs\.?\s*)([\d,]+(?:\.\d{1,2})?)', text, re.IGNORECASE):
-            amt_str = m.group(1).replace(",", "").rstrip('+')
+        for m in re.finditer(r'(?:₹|rs\.?\s*)([\d,]+(?:\.\d{1,2})?)\+?', text, re.IGNORECASE):
+            amt_str = m.group(1).replace(",", "")
             try:
                 val = float(amt_str)
-                if val >= 5:
-                    pos_key = m.start()
-                    if pos_key not in seen_positions:
-                        seen_positions.add(pos_key)
-                        results.append((val, m.start(), m.end()))
+                if val >= 5 and not _overlaps(m.start(), m.end()):
+                    results.append((val, m.start(), m.end()))
+                    seen_ranges.append((m.start(), m.end()))
             except ValueError:
                 continue
 
         # Pattern 2: Number followed by rs/rupees — "1520 rs", "2150 rupees"
         for m in re.finditer(r'([\d,]+(?:\.\d{1,2})?)\s*(?:rs\.?|rupees?)\b', text, re.IGNORECASE):
-            amt_str = m.group(1).replace(",", "").rstrip('+')
+            amt_str = m.group(1).replace(",", "")
             try:
                 val = float(amt_str)
-                if val >= 5:
-                    pos_key = m.start()
-                    if pos_key not in seen_positions:
-                        seen_positions.add(pos_key)
-                        results.append((val, m.start(), m.end()))
+                if val >= 5 and not _overlaps(m.start(), m.end()):
+                    results.append((val, m.start(), m.end()))
+                    seen_ranges.append((m.start(), m.end()))
             except ValueError:
                 continue
 
@@ -864,13 +1009,34 @@ class IntentClassifier:
             amt_str = m.group(1).replace(",", "")
             try:
                 val = float(amt_str)
-                if val >= 1:
-                    pos_key = m.start()
-                    if pos_key not in seen_positions:
-                        seen_positions.add(pos_key)
-                        results.append((val, m.start(), m.end()))
+                if val >= 1 and not _overlaps(m.start(), m.end()):
+                    results.append((val, m.start(), m.end()))
+                    seen_ranges.append((m.start(), m.end()))
             except ValueError:
                 continue
+
+        # Pattern 4: Bare numbers (no currency prefix)
+        # Detects "grocery 2350", "tea 40", "petrol 1500" etc.
+        # Only numbers ≥ 20 that are NOT at date positions and NOT years
+        for m in re.finditer(r'\b(\d{2,6})\b', text):
+            try:
+                val = float(m.group(1))
+            except ValueError:
+                continue
+            # Skip if at a recognized date position (e.g., "jan 12" → 12 is date)
+            if any(m.start(1) == dp[0] and m.end(1) == dp[1] for dp in date_positions):
+                continue
+            # Skip years
+            if 2020 <= val <= 2035:
+                continue
+            # Skip too small (likely dates or noise)
+            if val < 20:
+                continue
+            # Skip if overlapping with already-found prefixed amount
+            if _overlaps(m.start(), m.end()):
+                continue
+            results.append((val, m.start(), m.end()))
+            seen_ranges.append((m.start(), m.end()))
 
         return results
 
@@ -894,11 +1060,12 @@ class IntentClassifier:
         }
 
         # Match "jan 7", "jan 28", "january 5", "feb 14" etc.
-        # Flexible: "jan 7", "on jan 7", "around jan 7", "jan 2 night"
+        # Flexible: "jan 7", "on jan 7", "jan maybe 7", "jan around 12"
         for month_name, month_num in months.items():
-            # "jan 7" or "jan 28" — month followed by day
+            # "jan 7" or "jan maybe 7" — month (optional filler) day
             match = re.search(
-                rf'\b{month_name}\s+(\d{{1,2}})\b', text_lower
+                rf'\b{month_name}\s+(?:(?:maybe|around|about|like|probably|'
+                rf'i\s+think)\s+)?(\d{{1,2}})\b', text_lower
             )
             if match:
                 day = int(match.group(1))
