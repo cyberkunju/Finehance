@@ -779,23 +779,23 @@ class IntentClassifier:
 
     def _parse_freeform_bulk(self, text: str, text_lower: str) -> List[Dict[str, Any]]:
         """
-        Amount-centric parser for messy freeform human text.
+        Two-phase amount parser for messy freeform human text.
 
-        Instead of parsing line-by-line, this finds ALL amounts in the entire
-        text and extracts description/date from the surrounding context ("zone")
-        of each amount. This prevents context bleed between expenses.
+        Phase 1 (Pre-scan): Detect quantity×unit-price patterns across the
+        full text BEFORE extracting amounts. This prevents quantities like
+        "25" in "25 biriyani which 1 biriyani was 132rs" from being mistaken
+        as standalone amounts.
 
-        The "zone" for each amount is the text between the end of the previous
-        amount and the start of this amount. The description is extracted from
-        the LAST CLAUSE of the zone (closest to the amount).
+        Phase 2 (Zone extraction): For remaining amounts not consumed by
+        Phase 1, use the original zone-based description extraction.
 
         Handles:
-        - "jan 1 grocery 2350 reliance" (bare numbers, no ₹/Rs)
-        - "coffee ₹200 ₹220 ₹180" (rapid-fire amounts with shared description)
-        - "auto ₹130, cab ₹210, uber ₹240" (different descriptions per amount)
-        - Paragraph-style with emotional noise and context bleed prevention
+        - "25 biriyani which 1 biriyani was 132rs" → 25×132 = 3300
+        - "23 coffie 1 is 12rs" → 23×12 = 276
+        - "coffee ₹200 ₹220 ₹180" (rapid-fire shared description)
+        - "jan 1 grocery 2350 reliance" (bare numbers, no prefix)
+        - Paragraph-style with emotional noise
         """
-        transactions: List[Dict[str, Any]] = []
 
         # Step 1: Find all date number positions to exclude from amount detection
         date_number_positions: set = set()
@@ -818,23 +818,47 @@ class IntentClassifier:
         for m in re.finditer(date_pos_rev, text_lower):
             date_number_positions.add((m.start(1), m.end(1)))
 
-        # Step 2: Find ALL amounts (₹/Rs/$ prefixed + bare numbers)
-        amounts = self._extract_all_amounts(text, text_lower, date_number_positions)
+        # Step 2: PRE-SCAN for quantity × unit-price patterns
+        qty_transactions, consumed_ranges = self._extract_quantity_price_patterns(
+            text, text_lower
+        )
 
-        if len(amounts) < 2:
-            return []
+        # Replace consumed ranges with spaces so they don't pollute
+        # zone descriptions, quantity-multiplier detection, or amount extraction.
+        text_clean = text
+        text_lower_clean = text_lower
+        if consumed_ranges:
+            chars = list(text)
+            chars_lower = list(text_lower)
+            for cr_start, cr_end in consumed_ranges:
+                for i in range(cr_start, min(cr_end, len(chars))):
+                    chars[i] = ' '
+                    chars_lower[i] = ' '
+            text_clean = ''.join(chars)
+            text_lower_clean = ''.join(chars_lower)
+
+        # Step 3: Find ALL remaining amounts (cleaned text excludes consumed)
+        amounts = self._extract_all_amounts(
+            text_clean, text_lower_clean, date_number_positions
+        )
 
         # Sort by position in text
         amounts.sort(key=lambda x: x[1])
 
-        # Step 3: For each amount, extract description from its "zone"
+        # Need at least 2 total items to be considered bulk
+        if len(amounts) + len(qty_transactions) < 2:
+            return qty_transactions if qty_transactions else []
+
+        # Step 4: For each remaining amount, extract description from its "zone"
         current_date: Optional[date] = None
         last_desc: Optional[str] = None
         last_end = 0
+        regular_transactions: List[tuple] = []  # (position, transaction_dict)
 
         for idx, (amt_val, amt_start, amt_end) in enumerate(amounts):
             # Zone = text between end of previous amount and start of this amount
-            zone = text[last_end:amt_start]
+            # Uses cleaned text so consumed pre-scan regions are blanked out
+            zone = text_clean[last_end:amt_start]
             zone_lower = zone.lower()
 
             # Extract date from zone (update tracking)
@@ -842,9 +866,7 @@ class IntentClassifier:
             if zone_date:
                 current_date = zone_date
 
-            # ---- Quantity multiplication ----
-            # Detect patterns like "3 puffs for 1 puffs its 32" → 3 × 32 = 96
-            # Pattern: "N item(s) ... 1 item ... (its|is|costs|=) AMOUNT"
+            # ---- Quantity multiplication (safety net for ₹-prefixed cases) ----
             quantity = self._detect_quantity_multiplier(zone_lower)
             if quantity and quantity > 1:
                 amt_val = amt_val * quantity
@@ -852,42 +874,147 @@ class IntentClassifier:
             # Extract description from zone (last clause approach)
             desc = self._extract_zone_description(zone)
 
-            # If no description in zone before, INHERIT from previous first.
-            # Only look at after-zone if there's no previous description to inherit.
-            # This prevents rapid-fire amounts (₹200 ₹220 ₹180) from grabbing
-            # the NEXT expense's description instead of sharing the current one.
+            # If no description in zone, INHERIT from previous first.
             if not desc:
                 if last_desc:
                     desc = last_desc
                 else:
-                    # No previous desc to inherit — try small window after amount
                     if idx + 1 < len(amounts):
-                        after_zone = text[amt_end:amounts[idx + 1][1]]
+                        after_zone = text_clean[amt_end:amounts[idx + 1][1]]
                     else:
-                        after_zone = text[amt_end:min(amt_end + 60, len(text))]
+                        after_zone = text_clean[amt_end:min(amt_end + 60, len(text_clean))]
                     after_desc = self._extract_zone_description(after_zone)
                     if after_desc:
                         desc = after_desc
 
-            # Update tracking
             if desc and len(desc) >= 2:
                 last_desc = desc
             else:
                 desc = last_desc or "Expense"
 
-            # Categorize from the CLEAN description only (prevents category leakage)
             category = self._extract_category(desc.lower())
 
-            transactions.append({
+            regular_transactions.append((amt_start, {
                 "amount": amt_val,
                 "description": desc.title()[:200],
                 "date": current_date.isoformat() if current_date else date.today().isoformat(),
                 "category": category,
-            })
+            }))
 
             last_end = amt_end
 
-        return transactions
+        # Step 5: Merge pre-scan + regular transactions, sorted by text position
+        all_positioned: List[tuple] = []
+        for tx, (cr_start, _cr_end) in zip(qty_transactions, consumed_ranges):
+            # Extract date from nearby text for qty transactions
+            nearby = text_lower[max(0, cr_start - 80):cr_start]
+            qt_date = self._extract_freeform_date(nearby)
+            if not qt_date and current_date:
+                qt_date = current_date
+            tx["date"] = qt_date.isoformat() if qt_date else date.today().isoformat()
+            all_positioned.append((cr_start, tx))
+
+        all_positioned.extend(regular_transactions)
+        all_positioned.sort(key=lambda x: x[0])
+
+        return [tx for _pos, tx in all_positioned]
+
+    def _extract_quantity_price_patterns(
+        self, text: str, text_lower: str
+    ) -> tuple:
+        """
+        Pre-scan for quantity × unit-price patterns BEFORE amount extraction.
+
+        Detects patterns like:
+        - "25 biriyani which 1 biriyani was 132rs" → 25 × 132 = 3300
+        - "23 coffie 1 is 12rs" → 23 × 12 = 276
+        - "2 toothpick packet which was 1 is 12rs" → 2 × 12 = 24
+        - "5 samosa each is ₹20" → 5 × 20 = 100
+
+        Returns: (transactions_list, consumed_ranges_list)
+        """
+        transactions: List[Dict[str, Any]] = []
+        consumed_ranges: List[tuple] = []
+
+        # Pattern: QUANTITY ITEM(s) [filler] 1 [ITEM] (is|its|was|costs) [₹|rs] PRICE [rs]
+        # The (?:\s+\w+){0,5}? between item and "1" handles multi-word items
+        # and filler words like "which", "where", "that", "for", "per", "was"
+        pattern = (
+            r'(\d+)\s+'                      # (1) quantity
+            r'(\w+)'                          # (2) item first word
+            r'((?:\s+\w+){0,5}?)'            # (3) extra words (lazy, 0-5)
+            r'\s+1\s+'                        # " 1 " (the unit indicator)
+            r'((?:\w+\s+)*?)'                # (4) optional words before price indicator
+            r'(?:is|its|it\'s|was|costs?|=)\s*'  # price indicator
+            r'(?:₹|rs\.?\s*)?'               # optional currency prefix
+            r'([\d,]+(?:\.\d{1,2})?)'        # (5) unit price
+            r'(?:\s*(?:rs\.?|rupees?))?'     # optional currency suffix
+        )
+
+        for m in re.finditer(pattern, text_lower):
+            qty = int(m.group(1))
+            item_word = m.group(2)
+            extra = m.group(3).strip() if m.group(3) else ''
+
+            unit_price_str = m.group(5).replace(',', '')
+            try:
+                unit_price = float(unit_price_str)
+            except ValueError:
+                continue
+
+            if qty < 2 or qty > 999 or unit_price < 1:
+                continue
+
+            # Build item name: first word + cleaned extra words
+            filler_words = {
+                'which', 'where', 'that', 'and', 'or', 'was', 'is', 'its',
+                'for', 'per', 'each', 'the', 'a', 'an', 'with', 'of',
+                'brought', 'bought', 'ordered', 'had', 'got', 'took',
+            }
+            item_parts = [item_word]
+            if extra:
+                for w in extra.split():
+                    if w.lower() not in filler_words:
+                        item_parts.append(w)
+            item_name = ' '.join(item_parts)
+
+            total = qty * unit_price
+            desc = item_name.title()
+            category = self._extract_category(item_name.lower())
+
+            transactions.append({
+                "amount": total,
+                "description": desc[:200],
+                "category": category,
+            })
+            consumed_ranges.append((m.start(), m.end()))
+
+        # Also detect "N × PRICE" or "N x PRICE" shorthand
+        for m in re.finditer(
+            r'(\d+)\s*[x×]\s*(?:₹|rs\.?\s*)?([\d,]+(?:\.\d{1,2})?)'
+            r'(?:\s*(?:rs\.?|rupees?))?',
+            text_lower
+        ):
+            qty = int(m.group(1))
+            price_str = m.group(2).replace(',', '')
+            try:
+                price = float(price_str)
+            except ValueError:
+                continue
+            if qty < 2 or qty > 999 or price < 1:
+                continue
+            # Check not already consumed
+            if any(not (m.end() <= cr[0] or m.start() >= cr[1])
+                   for cr in consumed_ranges):
+                continue
+            transactions.append({
+                "amount": qty * price,
+                "description": "Expense",
+                "category": None,
+            })
+            consumed_ranges.append((m.start(), m.end()))
+
+        return transactions, consumed_ranges
 
     def _detect_quantity_multiplier(self, zone_lower: str) -> Optional[int]:
         """
@@ -906,7 +1033,7 @@ class IntentClassifier:
         # Pattern 1: "N item(s) ... 1 item (its|is|costs)"
         # e.g., "3 puffs for 1 puffs its" or "2 pazhampori for 1 pazhampori its"
         m = re.search(
-            r'(\d+)\s+(\w+).*?\b1\s+\2.*?\b(?:its|is|costs?|was|=)',
+            r'(\d+)\s+(\w+).*?\b1\s+\2.*?\b(?:its|it\'s|is|costs?|was|=)',
             zone_lower
         )
         if m:
@@ -1028,7 +1155,8 @@ class IntentClassifier:
 
     def _extract_all_amounts(
         self, text: str, text_lower: str,
-        date_positions: Optional[set] = None
+        date_positions: Optional[set] = None,
+        consumed_ranges: Optional[List[tuple]] = None
     ) -> List[tuple]:
         """
         Extract ALL monetary amounts from text.
@@ -1039,9 +1167,13 @@ class IntentClassifier:
         - Dollar amounts ("$250")
         - Bare numbers ("grocery 2350", "petrol 1500") — when date_positions
           is provided, excludes numbers that are part of date patterns
+
+        Skips any positions already consumed by quantity-price pre-scan.
         """
         if date_positions is None:
             date_positions = set()
+        if consumed_ranges is None:
+            consumed_ranges = []
 
         results = []
         seen_ranges: List[tuple] = []  # (start, end) of found amounts
@@ -1049,12 +1181,16 @@ class IntentClassifier:
         def _overlaps(start: int, end: int) -> bool:
             return any(not (end <= sr[0] or start >= sr[1]) for sr in seen_ranges)
 
+        def _in_consumed(start: int, end: int) -> bool:
+            """Check if position overlaps with any consumed range from pre-scan."""
+            return any(not (end <= cr[0] or start >= cr[1]) for cr in consumed_ranges)
+
         # Pattern 1: ₹/Rs followed by number — "₹90", "rs 1520", "Rs.2150"
         for m in re.finditer(r'(?:₹|rs\.?\s*)([\d,]+(?:\.\d{1,2})?)\+?', text, re.IGNORECASE):
             amt_str = m.group(1).replace(",", "")
             try:
                 val = float(amt_str)
-                if val >= 5 and not _overlaps(m.start(), m.end()):
+                if val >= 5 and not _overlaps(m.start(), m.end()) and not _in_consumed(m.start(), m.end()):
                     results.append((val, m.start(), m.end()))
                     seen_ranges.append((m.start(), m.end()))
             except ValueError:
@@ -1065,7 +1201,7 @@ class IntentClassifier:
             amt_str = m.group(1).replace(",", "")
             try:
                 val = float(amt_str)
-                if val >= 5 and not _overlaps(m.start(), m.end()):
+                if val >= 5 and not _overlaps(m.start(), m.end()) and not _in_consumed(m.start(), m.end()):
                     results.append((val, m.start(), m.end()))
                     seen_ranges.append((m.start(), m.end()))
             except ValueError:
@@ -1076,7 +1212,7 @@ class IntentClassifier:
             amt_str = m.group(1).replace(",", "")
             try:
                 val = float(amt_str)
-                if val >= 1 and not _overlaps(m.start(), m.end()):
+                if val >= 1 and not _overlaps(m.start(), m.end()) and not _in_consumed(m.start(), m.end()):
                     results.append((val, m.start(), m.end()))
                     seen_ranges.append((m.start(), m.end()))
             except ValueError:
@@ -1099,8 +1235,8 @@ class IntentClassifier:
             # Skip too small (likely dates or noise)
             if val < 20:
                 continue
-            # Skip if overlapping with already-found prefixed amount
-            if _overlaps(m.start(), m.end()):
+            # Skip if overlapping with already-found prefixed amount or consumed range
+            if _overlaps(m.start(), m.end()) or _in_consumed(m.start(), m.end()):
                 continue
             results.append((val, m.start(), m.end()))
             seen_ranges.append((m.start(), m.end()))
