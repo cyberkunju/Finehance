@@ -41,7 +41,7 @@ function OmniBar() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedSuggestion, setSelectedSuggestion] = useState(-1);
 
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const suggestionsTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
   const omnibarRef = useRef<HTMLDivElement>(null);
@@ -110,9 +110,14 @@ function OmniBar() {
     }, 300);
   }, []);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
     setInputValue(value);
+    // Auto-resize textarea
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+      inputRef.current.style.height = Math.min(inputRef.current.scrollHeight, 120) + 'px';
+    }
     fetchSuggestions(value);
   };
 
@@ -140,7 +145,9 @@ function OmniBar() {
     setIsExpanded(true);
 
     try {
-      const response: OmniBarResponse = await omnibarApi.process(text, messages);
+      // Send only last 6 messages as history to keep request body small
+      const recentHistory = messages.slice(-6);
+      const response: OmniBarResponse = await omnibarApi.process(text, recentHistory);
 
       const assistantMessage: OmniBarMessage = {
         role: 'assistant',
@@ -164,7 +171,7 @@ function OmniBar() {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       if (showSuggestions && selectedSuggestion >= 0) {
@@ -211,6 +218,7 @@ function OmniBar() {
     if (!intent) return null;
     const badges: Record<string, { label: string; className: string }> = {
       add_transaction: { label: 'Transaction Added', className: 'badge-success' },
+      bulk_add_transactions: { label: 'Bulk Import', className: 'badge-success' },
       add_goal: { label: 'Goal Created', className: 'badge-success' },
       add_budget: { label: 'Budget Set', className: 'badge-success' },
       update_goal_progress: { label: 'Goal Updated', className: 'badge-success' },
@@ -227,24 +235,99 @@ function OmniBar() {
 
   // Render markdown-like formatting in messages
   const formatMessage = (text: string) => {
-    // Split into lines and process
     const lines = text.split('\n');
-    return lines.map((line, i) => {
-      // Bold: **text**
+    const result: React.JSX.Element[] = [];
+    let i = 0;
+
+    while (i < lines.length) {
+      const line = lines[i];
+
+      // Detect markdown table: a line starting with | followed by a separator line |---|
+      if (line.trim().startsWith('|') && i + 1 < lines.length) {
+        // Collect all consecutive table lines
+        const tableLines: string[] = [];
+        let j = i;
+        while (j < lines.length && lines[j].trim().startsWith('|')) {
+          tableLines.push(lines[j]);
+          j++;
+        }
+
+        // Need at least 2 lines (header + separator or header + data)
+        if (tableLines.length >= 2) {
+          const parseCells = (row: string): string[] =>
+            row.split('|').slice(1, -1).map(c => c.trim());
+
+          // Check if second line is a separator (e.g., |---|---|)
+          const isSeparator = (row: string): boolean =>
+            /^\|[\s\-:]+(\|[\s\-:]+)+\|?\s*$/.test(row.trim());
+
+          let headerCells: string[] | null = null;
+          let dataStartIdx = 0;
+
+          if (tableLines.length >= 2 && isSeparator(tableLines[1])) {
+            headerCells = parseCells(tableLines[0]);
+            dataStartIdx = 2;
+          } else {
+            dataStartIdx = 0;
+          }
+
+          const dataRows = tableLines.slice(dataStartIdx)
+            .filter(r => !isSeparator(r))
+            .map(r => parseCells(r))
+            .filter(cells => cells.some(c => c.length > 0)); // skip empty rows
+
+          if (dataRows.length > 0 || headerCells) {
+            result.push(
+              <div key={`table-${i}`} className="omni-table-wrapper">
+                <table className="omni-table">
+                  {headerCells && (
+                    <thead>
+                      <tr>
+                        {headerCells.map((cell, ci) => (
+                          <th key={ci} dangerouslySetInnerHTML={{
+                            __html: cell.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                          }} />
+                        ))}
+                      </tr>
+                    </thead>
+                  )}
+                  <tbody>
+                    {dataRows.map((cells, ri) => (
+                      <tr key={ri}>
+                        {cells.map((cell, ci) => (
+                          <td key={ci} dangerouslySetInnerHTML={{
+                            __html: cell.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                          }} />
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+            i = j;
+            continue;
+          }
+        }
+      }
+
+      // Non-table lines: process inline markdown
       let processed = line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-      // Progress bars with blocks
       processed = processed.replace(/([█░]+)/g, '<span class="progress-bar-text">$1</span>');
 
       if (line.startsWith('• ') || line.startsWith('- ')) {
-        return (
+        result.push(
           <div key={i} className="omni-msg-bullet" dangerouslySetInnerHTML={{ __html: processed.slice(2) }} />
         );
+      } else if (line.trim() === '') {
+        result.push(<div key={i} className="omni-msg-spacer" />);
+      } else {
+        result.push(<div key={i} dangerouslySetInnerHTML={{ __html: processed }} />);
       }
-      if (line.trim() === '') {
-        return <div key={i} className="omni-msg-spacer" />;
-      }
-      return <div key={i} dangerouslySetInnerHTML={{ __html: processed }} />;
-    });
+      i++;
+    }
+
+    return result;
   };
 
   if (!isOpen) {
@@ -276,9 +359,8 @@ function OmniBar() {
         <div className="omnibar-header">
           <div className="omnibar-input-row">
             <Sparkles size={18} className="omnibar-icon" />
-            <input
+            <textarea
               ref={inputRef}
-              type="text"
               className="omnibar-input"
               placeholder="Type a command or ask anything... (Esc to close)"
               value={inputValue}
@@ -288,6 +370,8 @@ function OmniBar() {
                 if (inputValue.length >= 2) setShowSuggestions(true);
               }}
               autoFocus
+              maxLength={5000}
+              rows={1}
             />
             {isLoading ? (
               <Loader2 size={18} className="omnibar-loading spin" />
@@ -362,7 +446,11 @@ function OmniBar() {
                   </div>
                 )}
                 <div className="omni-message-content">
-                  {formatMessage(msg.content)}
+                  {formatMessage(
+                    msg.role === 'user' && msg.content.length > 300
+                      ? msg.content.slice(0, 300) + '...'
+                      : msg.content
+                  )}
                 </div>
                 {msg.suggestions && msg.suggestions.length > 0 && (
                   <div className="omni-suggestions-inline">

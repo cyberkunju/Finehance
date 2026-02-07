@@ -2,6 +2,13 @@
    OmniBar — Universal Command Bar
    ============================================ */
 
+/* OmniBar-specific accent (design system accent is monochromatic) */
+:root {
+  --omni-accent: #a78bfa;
+  --omni-accent-hover: #9374e8;
+  --omni-accent-muted: rgba(167, 139, 250, 0.15);
+}
+
 /* ---- Trigger Button (collapsed state) ---- */
 .omni-trigger {
   display: flex;
@@ -29,7 +36,7 @@
 }
 
 .omni-trigger svg {
-  color: var(--color-accent, #a78bfa);
+  color: var(--omni-accent);
   flex-shrink: 0;
 }
 
@@ -108,13 +115,13 @@
 
 .omnibar-input-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-2);
   padding: var(--space-3) var(--space-4);
 }
 
 .omnibar-icon {
-  color: var(--color-accent, #a78bfa);
+  color: var(--omni-accent);
   flex-shrink: 0;
 }
 
@@ -123,10 +130,22 @@
   background: transparent;
   border: none;
   outline: none;
+  box-shadow: none;
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);
   font-family: inherit;
   min-width: 0;
+  resize: none;
+  overflow-y: auto;
+  max-height: 120px;
+  line-height: 1.4;
+  padding: 2px 0;
+}
+
+.omnibar-input:focus {
+  outline: none;
+  border: none;
+  box-shadow: none;
 }
 
 .omnibar-input::placeholder {
@@ -150,7 +169,7 @@
 }
 
 .omnibar-send:hover {
-  background: var(--color-accent, #a78bfa);
+  background: var(--omni-accent);
   color: white;
 }
 
@@ -160,7 +179,7 @@
 }
 
 .omnibar-loading {
-  color: var(--color-accent, #a78bfa);
+  color: var(--omni-accent);
   flex-shrink: 0;
 }
 
@@ -233,12 +252,12 @@
 
 .quick-action-chip:hover {
   background: var(--color-hover-overlay, rgba(255, 255, 255, 0.08));
-  border-color: var(--color-accent, #a78bfa);
+  border-color: var(--omni-accent);
   color: var(--color-text-primary);
 }
 
 .quick-action-chip svg {
-  color: var(--color-accent, #a78bfa);
+  color: var(--omni-accent);
 }
 
 /* ---- Messages Area ---- */
@@ -265,7 +284,7 @@
 }
 
 .omnibar-empty svg {
-  color: var(--color-accent, #a78bfa);
+  color: var(--omni-accent);
   opacity: 0.5;
 }
 
@@ -298,12 +317,19 @@
 }
 
 .omni-message-user .omni-message-content {
-  background: var(--color-accent, #a78bfa);
-  color: white;
+  background: #a78bfa;
+  color: #ffffff;
   border-radius: 12px 12px 4px 12px;
   max-width: 85%;
   padding: var(--space-2) var(--space-3);
   font-size: var(--font-size-sm);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: pre-wrap;
+  overflow: hidden;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
 .omni-message-assistant {
@@ -320,7 +346,7 @@
 }
 
 .omni-message-header svg {
-  color: var(--color-accent, #a78bfa);
+  color: var(--omni-accent);
 }
 
 .omni-message-assistant .omni-message-content {
@@ -332,11 +358,82 @@
   font-size: var(--font-size-sm);
   color: var(--color-text-primary);
   line-height: 1.6;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  overflow: visible;
 }
 
 .omni-message-content strong {
   color: var(--color-text-primary);
   font-weight: 600;
+}
+
+/* Force user bubble strong text to stay white */
+.omni-message-user .omni-message-content strong {
+  color: #ffffff;
+}
+
+/* ---- Rendered Markdown Tables ---- */
+.omni-table-wrapper {
+  overflow-x: auto;
+  margin: 6px 0;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--color-border, #252525);
+}
+
+.omni-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.omni-table th {
+  background: var(--color-surface-hover, #1c1c1c);
+  color: var(--color-text-secondary, #a0a0a0);
+  font-weight: 600;
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 2px solid var(--color-border-strong, #333);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.omni-table td {
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--color-border-subtle, #1e1e1e);
+  color: var(--color-text-primary, #fff);
+}
+
+.omni-table tr:last-child td {
+  border-bottom: none;
+}
+
+.omni-table tr:hover td {
+  background: var(--color-hover-overlay, rgba(255, 255, 255, 0.04));
+}
+
+/* Table inside user bubble */
+.omni-message-user .omni-table-wrapper {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.omni-message-user .omni-table th {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  border-bottom-color: rgba(255, 255, 255, 0.2);
+}
+
+.omni-message-user .omni-table td {
+  color: #ffffff;
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.omni-message-user .omni-table tr:hover td {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .omni-msg-bullet {
@@ -348,7 +445,7 @@
   content: '•';
   position: absolute;
   left: 4px;
-  color: var(--color-accent, #a78bfa);
+  color: var(--omni-accent);
 }
 
 .omni-msg-spacer {
@@ -358,7 +455,7 @@
 .progress-bar-text {
   font-family: monospace;
   letter-spacing: -1px;
-  color: var(--color-accent, #a78bfa);
+  color: var(--omni-accent);
 }
 
 /* ---- Badges ---- */
@@ -382,8 +479,8 @@
 }
 
 .badge-ai {
-  background: rgba(167, 139, 250, 0.15);
-  color: #a78bfa;
+  background: var(--omni-accent-muted);
+  color: var(--omni-accent);
 }
 
 /* ---- Typing Indicator ---- */
@@ -442,7 +539,7 @@
 }
 
 .suggestion-chip:hover {
-  border-color: var(--color-accent, #a78bfa);
+  border-color: var(--omni-accent);
   color: var(--color-text-primary);
   background: var(--color-hover-overlay, rgba(255, 255, 255, 0.06));
 }

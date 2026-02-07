@@ -23,13 +23,15 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         # Paths where output guard should filter responses
         self.ai_response_paths = {"/api/ai/chat", "/api/ai/analyze", "/api/ai/smart-advice"}
 
-    # Paths exempt from input scanning (auth payloads contain "password" key)
+    # Paths exempt from input scanning (auth payloads contain "password" key,
+    # omnibar accepts large tabular data that triggers false positives)
     EXEMPT_PATHS = {
         "/api/auth/register",
         "/api/auth/login",
         "/api/auth/refresh",
         "/api/auth/change-password",
         "/api/auth/profile",
+        "/api/omnibar/process",
     }
 
     async def dispatch(self, request: Request, call_next):
