@@ -244,21 +244,8 @@ async def delete_all_transactions(
         HTTPException: If deletion fails
     """
     try:
-        # Get all transactions
-        from app.schemas.transaction import TransactionFilters, Pagination
-        
-        transactions, total = await service.list_transactions(
-            user_id=user_id,
-            filters=TransactionFilters(),
-            pagination=Pagination(page=1, page_size=10000),
-        )
-        
-        # Delete each transaction
-        deleted_count = 0
-        for transaction in transactions:
-            success = await service.delete_transaction(transaction.id, user_id)
-            if success:
-                deleted_count += 1
+        # Batch delete all transactions
+        deleted_count = await service.delete_all_user_transactions(user_id)
         
         logger.info(f"Deleted {deleted_count} transactions for user {user_id}")
         return DeleteAllResponse(
