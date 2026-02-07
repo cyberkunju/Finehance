@@ -845,6 +845,10 @@ class IntentClassifier:
         # Sort by position in text
         amounts.sort(key=lambda x: x[1])
 
+        # Step 3b: Merge uncertainty-linked amounts
+        # "₹2300 or ₹2400 not sure" → keep first, drop second
+        amounts = self._merge_uncertain_amounts(amounts, text_lower_clean)
+
         # Need at least 2 total items to be considered bulk
         if len(amounts) + len(qty_transactions) < 2:
             return qty_transactions if qty_transactions else []
@@ -918,6 +922,62 @@ class IntentClassifier:
         all_positioned.sort(key=lambda x: x[0])
 
         return [tx for _pos, tx in all_positioned]
+
+    def _merge_uncertain_amounts(
+        self, amounts: List[tuple], text_lower: str
+    ) -> List[tuple]:
+        """
+        Merge amounts linked by uncertainty language.
+
+        When two consecutive amounts have ONLY uncertainty/filler words between
+        them, they represent the same expense with uncertainty about the exact
+        number — not two separate expenses.
+
+        Examples:
+        - "₹2300 or ₹2400 not sure" → keep ₹2300, drop ₹2400
+        - "₹600+ or maybe ₹620" → keep ₹600, drop ₹620
+        - "around ₹3000 ~ ₹3200" → keep ₹3000, drop ₹3200
+
+        Strategy: keep the FIRST amount (user's primary recall).
+        """
+        if len(amounts) < 2:
+            return amounts
+
+        # Words/phrases that indicate uncertainty between two amounts
+        uncertainty_words = {
+            'or', 'maybe', 'around', 'approx', 'approximately', 'about',
+            'roughly', 'not', 'sure', 'idk', 'probably', 'like', 'nearly',
+            'somewhere', 'something', 'think', 'i', 'guess', 'dunno',
+            'dont', "don't", 'know', 'ish', 'close', 'to',
+        }
+
+        merged = [amounts[0]]
+
+        for i in range(1, len(amounts)):
+            prev_end = amounts[i - 1][2]  # end of previous amount
+            curr_start = amounts[i][1]    # start of current amount
+
+            # Get text between the two amounts
+            between = text_lower[prev_end:curr_start].strip()
+
+            # Remove currency symbols and punctuation
+            between_clean = re.sub(r'[₹$~+,.\-!?;:\s]+', ' ', between).strip()
+
+            # Check if ALL remaining words are uncertainty words
+            if between_clean:
+                words = between_clean.split()
+                all_uncertain = all(w.lower() in uncertainty_words for w in words)
+            else:
+                # No text between amounts (e.g., "₹2300₹2400") — unlikely but handle
+                all_uncertain = False
+
+            if all_uncertain and len(between_clean) < 60:
+                # This amount is an uncertain alternative — skip it (keep previous)
+                continue
+            else:
+                merged.append(amounts[i])
+
+        return merged
 
     def _extract_quantity_price_patterns(
         self, text: str, text_lower: str
@@ -1107,17 +1167,19 @@ class IntentClassifier:
         # Clean noise words
         noise = (
             r'\b(uhh|umm|hmm|idk|i think|i guess|maybe|ok|okay|alright|'
-            r'probably|around|approx|like|about|roughly|'
-            r'or something|not sure|'
+            r'probably|around|approx|approximately|like|about|roughly|'
+            r'or something|not sure|somewhere|'
             r'went|was|is|are|am|felt|'
-            r'the|a|an|on|in|at|to|for|from|of|'
+            r'the|a|an|on|in|at|to|for|from|of|or|'
             r'it|its|my|me|i|we|he|she|they|with|this|that|'
             r'did|does|do|had|has|have|got|been|being|be|'
             r'some|any|much|more|too|very|really|actually|honestly|'
+            r'many|several|few|various|different|lots|plenty|'
             r'tho|though|but|then|and|also|plus|later|after|before|'
             r'morning|afternoon|evening|night|late|early|'
+            r'once|twice|another|day|'
             r'paid|gave|spent|bought|ordered|took|'
-            r'filled|charged|wasted|remember|'
+            r'filled|charged|wasted|remember|forgot|forget|'
             r'worth|not worth|exactly|no reason|crazy|hell|'
             r'wallet cried|overprice|cant live without|'
             r'nothing special|random|quick|big|small|normal|average|'
@@ -1133,7 +1195,9 @@ class IntentClassifier:
             r'cycle|repeat|same|finish|end|month|year|week|'
             r'regret|not good|taste|shock|heavy|bags|'
             r'cold|spicy|expensive|man|'
-            r'hurt|addiction|spending|too much|waste|time|traffic)\b'
+            r'hurt|addiction|spending|too much|waste|time|traffic|'
+            r'dont|don\'t|lol|yes|no|near|item|dates|things?|'
+            r'already|memory|also gone)\b'
         )
         cleaned = re.sub(noise, ' ', last_clause, flags=re.IGNORECASE)
         cleaned = re.sub(r'[,\.\!\?;:\-\+\…\"\']+', ' ', cleaned)
