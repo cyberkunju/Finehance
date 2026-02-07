@@ -599,13 +599,35 @@ class IntentClassifier:
             "mcdonalds": "Fast Food",
             "kfc": "Fast Food",
             "dominos": "Fast Food",
+            "cola": "Food & Dining",
+            "coke": "Food & Dining",
+            "pepsi": "Food & Dining",
+            "soda": "Food & Dining",
+            "sprite": "Food & Dining",
+            "fanta": "Food & Dining",
+            "drink": "Food & Dining",
+            "bakery": "Food & Dining",
+            "puff": "Food & Dining",
+            "idli": "Food & Dining",
+            "vada": "Food & Dining",
+            "parotta": "Food & Dining",
+            "egg": "Food & Dining",
+            "chicken": "Food & Dining",
+            "rice": "Food & Dining",
+            "noodles": "Food & Dining",
+            "samosa": "Food & Dining",
+            "outing": "Food & Dining",
+            "charger": "Shopping & Retail",
+            "cable": "Shopping & Retail",
         }
 
         # Check for multi-word categories first (longest match)
+        # Use word-boundary matching to avoid substring false positives
+        # (e.g., "ola" in "cola" → Transportation was wrong)
         for keyword, category in sorted(
             category_map.items(), key=lambda x: len(x[0]), reverse=True
         ):
-            if keyword in text:
+            if re.search(r'\b' + re.escape(keyword) + r'\b', text):
                 return category
 
         return None
@@ -849,6 +871,10 @@ class IntentClassifier:
         # "₹2300 or ₹2400 not sure" → keep first, drop second
         amounts = self._merge_uncertain_amounts(amounts, text_lower_clean)
 
+        # Step 3c: Remove summary totals
+        # "egg puff 30, veg puff 28, tea 20 total 78" → drop 78 (it's a summary)
+        amounts = self._remove_summary_totals(amounts, text_lower_clean)
+
         # Need at least 2 total items to be considered bulk
         if len(amounts) + len(qty_transactions) < 2:
             return qty_transactions if qty_transactions else []
@@ -878,18 +904,26 @@ class IntentClassifier:
             # Extract description from zone (last clause approach)
             desc = self._extract_zone_description(zone)
 
-            # If no description in zone, INHERIT from previous first.
+            # If no description in zone, look ahead first, then inherit.
+            # Only inherit across conjunctions ("and"), not across sentence
+            # boundaries (period, newline, semicolon) — a new sentence
+            # typically means a new expense context.
             if not desc:
-                if last_desc:
-                    desc = last_desc
+                # Check if zone has a sentence boundary → new context, don't inherit
+                has_new_sentence = bool(re.search(r'[.\n;!…]', zone))
+
+                # Always try look-ahead first (text AFTER the amount)
+                # Use first-clause strategy for after-zone (closest to amount)
+                if idx + 1 < len(amounts):
+                    after_zone = text_clean[amt_end:amounts[idx + 1][1]]
                 else:
-                    if idx + 1 < len(amounts):
-                        after_zone = text_clean[amt_end:amounts[idx + 1][1]]
-                    else:
-                        after_zone = text_clean[amt_end:min(amt_end + 60, len(text_clean))]
-                    after_desc = self._extract_zone_description(after_zone)
-                    if after_desc:
-                        desc = after_desc
+                    after_zone = text_clean[amt_end:min(amt_end + 80, len(text_clean))]
+                after_desc = self._extract_zone_description(after_zone, first_clause=True)
+
+                if after_desc:
+                    desc = after_desc
+                elif last_desc and not has_new_sentence:
+                    desc = last_desc
 
             if desc and len(desc) >= 2:
                 last_desc = desc
@@ -978,6 +1012,58 @@ class IntentClassifier:
                 merged.append(amounts[i])
 
         return merged
+
+    def _remove_summary_totals(
+        self, amounts: List[tuple], text_lower: str
+    ) -> List[tuple]:
+        """
+        Remove summary/total amounts that duplicate itemized amounts.
+
+        When a user writes "egg puff 30, veg puff 28, tea 20 total 78",
+        the 78 is the SUM of the preceding items, not a new expense.
+        Keeping both would double-count.
+
+        Detection: If an amount N is preceded by the word "total" and
+        N equals the sum of 2+ consecutive preceding amounts, drop N.
+        Also handles cases where text between amounts has "total" indicator.
+        """
+        if len(amounts) < 3:
+            return amounts
+
+        to_remove: set = set()  # indices to remove
+
+        for i in range(2, len(amounts)):
+            amt_val = amounts[i][0]
+            amt_start = amounts[i][1]
+
+            # Check if "total" appears between previous amount and this one
+            prev_end = amounts[i - 1][2]
+            between = text_lower[prev_end:amt_start].strip()
+            has_total_word = bool(re.search(
+                r'\b(?:total|totals?|in total|all total|sum|altogether|combined)\b',
+                between
+            ))
+
+            if not has_total_word:
+                continue
+
+            # Try to find consecutive preceding amounts that sum to this one
+            running_sum = 0
+            for j in range(i - 1, -1, -1):
+                if j in to_remove:
+                    continue
+                running_sum += amounts[j][0]
+                if abs(running_sum - amt_val) < 1:
+                    # Found a match — this amount is a summary total
+                    to_remove.add(i)
+                    break
+                if running_sum > amt_val:
+                    break
+
+        if not to_remove:
+            return amounts
+
+        return [amt for idx, amt in enumerate(amounts) if idx not in to_remove]
 
     def _extract_quantity_price_patterns(
         self, text: str, text_lower: str
@@ -1120,13 +1206,17 @@ class IntentClassifier:
 
         return None
 
-    def _extract_zone_description(self, zone: str) -> Optional[str]:
+    def _extract_zone_description(self, zone: str, first_clause: bool = False) -> Optional[str]:
         """
         Extract description from the text zone between two amounts.
 
-        Uses a "last clause" strategy: split by sentence/clause boundaries,
-        take the last clause (closest to the amount), and clean it.
+        Uses a "last clause" strategy by default: split by sentence/clause
+        boundaries, take the last clause (closest to the amount), and clean it.
         This naturally prevents context bleed from earlier expenses.
+
+        When first_clause=True (used for look-ahead after an amount), takes
+        the FIRST clause instead — the text immediately after the amount
+        describes the current expense, not the next one.
         """
         if not zone or not zone.strip():
             return None
@@ -1161,8 +1251,8 @@ class IntentClassifier:
         if not clauses:
             return None
 
-        # Take the last clause (closest to the amount)
-        last_clause = clauses[-1]
+        # Take clause based on strategy
+        selected_clause = clauses[0] if first_clause else clauses[-1]
 
         # Clean noise words
         noise = (
@@ -1197,9 +1287,12 @@ class IntentClassifier:
             r'cold|spicy|expensive|man|'
             r'hurt|addiction|spending|too much|waste|time|traffic|'
             r'dont|don\'t|lol|yes|no|near|item|dates|things?|'
-            r'already|memory|also gone)\b'
+            r'already|memory|also gone|next|mid|total|couple|final|'
+            r'exact|properly|done|restock|tried|trying|outing|'
+            r'friend|short|properly|remember|'
+            r'days?|different|times?|exact)\b'
         )
-        cleaned = re.sub(noise, ' ', last_clause, flags=re.IGNORECASE)
+        cleaned = re.sub(noise, ' ', selected_clause, flags=re.IGNORECASE)
         cleaned = re.sub(r'[,\.\!\?;:\-\+\…\"\']+', ' ', cleaned)
         cleaned = ' '.join(cleaned.split()).strip()
 
