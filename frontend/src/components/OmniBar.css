@@ -436,6 +436,53 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
+/* Expand/collapse toggle button for tables and long text */
+.omni-expand-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--color-surface-hover, #1c1c1c);
+  border: none;
+  border-top: 1px solid var(--color-border-subtle, #1e1e1e);
+  color: var(--omni-accent);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  justify-content: center;
+  border-radius: 0 0 var(--radius-md, 8px) var(--radius-md, 8px);
+}
+
+.omni-expand-toggle:hover {
+  background: var(--color-hover-overlay, rgba(255, 255, 255, 0.06));
+  color: var(--omni-accent-hover, #9374e8);
+}
+
+/* Inside user bubble */
+.omni-message-user .omni-expand-toggle {
+  background: rgba(255, 255, 255, 0.08);
+  border-top-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.omni-message-user .omni-expand-toggle:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+/* Expandable text wrapper (for long user messages) */
+.omni-expandable-text .omni-expand-toggle {
+  background: transparent;
+  border-top: none;
+  border-radius: var(--radius-md, 8px);
+  padding: 4px 8px;
+  width: auto;
+  display: inline-flex;
+  margin-top: 4px;
+}
+
 .omni-msg-bullet {
   padding-left: var(--space-3);
   position: relative;

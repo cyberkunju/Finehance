@@ -12,6 +12,7 @@ import {
   X,
   Sparkles,
   ChevronDown,
+  ChevronUp,
   Loader2,
   ArrowRight,
   Zap,
@@ -233,6 +234,92 @@ function OmniBar() {
     return <span className={`omni-badge ${badge.className}`}>{badge.label}</span>;
   };
 
+  // Collapsible table component — shows first N rows with "Show all" toggle
+  const CollapsibleTable = ({
+    headerCells,
+    dataRows,
+    initialRows = 10,
+  }: {
+    headerCells: string[] | null;
+    dataRows: string[][];
+    tableKey?: string;
+    initialRows?: number;
+  }) => {
+    const [expanded, setExpanded] = useState(false);
+    const visibleRows = expanded ? dataRows : dataRows.slice(0, initialRows);
+    const hasMore = dataRows.length > initialRows;
+
+    return (
+      <div className="omni-table-wrapper">
+        <table className="omni-table">
+          {headerCells && (
+            <thead>
+              <tr>
+                {headerCells.map((cell, ci) => (
+                  <th key={ci} dangerouslySetInnerHTML={{
+                    __html: cell.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                  }} />
+                ))}
+              </tr>
+            </thead>
+          )}
+          <tbody>
+            {visibleRows.map((cells, ri) => (
+              <tr key={ri}>
+                {cells.map((cell, ci) => (
+                  <td key={ci} dangerouslySetInnerHTML={{
+                    __html: cell.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                  }} />
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {hasMore && (
+          <button
+            className="omni-expand-toggle"
+            onClick={() => setExpanded(!expanded)}
+          >
+            {expanded ? (
+              <>
+                <ChevronUp size={14} />
+                Show less
+              </>
+            ) : (
+              <>
+                <ChevronDown size={14} />
+                Show all {dataRows.length} rows ({dataRows.length - initialRows} more)
+              </>
+            )}
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  // Expandable text component — for long user messages
+  const ExpandableText = ({ text, limit = 300 }: { text: string; limit?: number }) => {
+    const [expanded, setExpanded] = useState(false);
+    if (text.length <= limit) {
+      return <>{formatMessage(text)}</>;
+    }
+    return (
+      <div className="omni-expandable-text">
+        {formatMessage(expanded ? text : text.slice(0, limit) + '...')}
+        <button
+          className="omni-expand-toggle"
+          onClick={() => setExpanded(!expanded)}
+        >
+          {expanded ? (
+            <><ChevronUp size={14} /> Show less</>
+          ) : (
+            <><ChevronDown size={14} /> Show full message</>
+          )}
+        </button>
+      </div>
+    );
+  };
+
   // Render markdown-like formatting in messages
   const formatMessage = (text: string) => {
     const lines = text.split('\n');
@@ -278,32 +365,12 @@ function OmniBar() {
 
           if (dataRows.length > 0 || headerCells) {
             result.push(
-              <div key={`table-${i}`} className="omni-table-wrapper">
-                <table className="omni-table">
-                  {headerCells && (
-                    <thead>
-                      <tr>
-                        {headerCells.map((cell, ci) => (
-                          <th key={ci} dangerouslySetInnerHTML={{
-                            __html: cell.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                          }} />
-                        ))}
-                      </tr>
-                    </thead>
-                  )}
-                  <tbody>
-                    {dataRows.map((cells, ri) => (
-                      <tr key={ri}>
-                        {cells.map((cell, ci) => (
-                          <td key={ci} dangerouslySetInnerHTML={{
-                            __html: cell.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                          }} />
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <CollapsibleTable
+                key={`table-${i}`}
+                headerCells={headerCells}
+                dataRows={dataRows}
+                tableKey={`table-${i}`}
+              />
             );
             i = j;
             continue;
@@ -446,10 +513,10 @@ function OmniBar() {
                   </div>
                 )}
                 <div className="omni-message-content">
-                  {formatMessage(
-                    msg.role === 'user' && msg.content.length > 300
-                      ? msg.content.slice(0, 300) + '...'
-                      : msg.content
+                  {msg.role === 'user' ? (
+                    <ExpandableText text={msg.content} limit={300} />
+                  ) : (
+                    formatMessage(msg.content)
                   )}
                 </div>
                 {msg.suggestions && msg.suggestions.length > 0 && (

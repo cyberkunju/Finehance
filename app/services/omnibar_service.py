@@ -1410,13 +1410,11 @@ class OmniBarExecutor:
         msg += f"• **{created_count}** transactions added\n"
         msg += f"• Total: **₹{total_amount:,.2f}**\n\n"
 
-        # Show first 10 items
+        # Show ALL items in the table — frontend handles collapse/expand
         msg += "| # | Description | Amount | Category |\n"
         msg += "|---|-------------|--------|----------|\n"
-        for j, item in enumerate(created_items[:10]):
+        for j, item in enumerate(created_items):
             msg += f"| {j+1} | {item['description'][:30]} | ₹{item['amount']:,.0f} | {item['category']} |\n"
-        if len(created_items) > 10:
-            msg += f"\n...and {len(created_items) - 10} more\n"
 
         if errors:
             msg += f"\n⚠️ {len(errors)} row(s) had errors and were skipped."
@@ -1428,7 +1426,7 @@ class OmniBarExecutor:
             data={
                 "created_count": created_count,
                 "total_amount": total_amount,
-                "items": created_items[:20],
+                "items": created_items,
                 "errors": errors[:5],
             },
             confidence=result.confidence,
